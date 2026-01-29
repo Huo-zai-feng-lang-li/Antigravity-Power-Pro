@@ -337,29 +337,39 @@ function getInputValue(input) {
  * @param {string} value
  */
 function setInputValue(input, value) {
-  if (input.contentEditable === "true") {
+  const isContentEditable = input.contentEditable === "true";
+  
+  if (isContentEditable) {
+    // 对于 contenteditable 元素
     input.textContent = value;
-    // 触发 input 事件
     input.dispatchEvent(new Event("input", { bubbles: true }));
-  } else {
-    // 对于 React 受控组件，需要特殊处理
-    const nativeInputValueSetter =
-      Object.getOwnPropertyDescriptor(
-        window.HTMLTextAreaElement.prototype,
-        "value"
-      )?.set ||
-      Object.getOwnPropertyDescriptor(
-        window.HTMLInputElement.prototype,
-        "value"
-      )?.set;
+  } else if (input.tagName === "TEXTAREA") {
+    // 对于 textarea，使用原生 setter 绕过 React 受控组件
+    const nativeSetter = Object.getOwnPropertyDescriptor(
+      window.HTMLTextAreaElement.prototype,
+      "value"
+    )?.set;
 
-    if (nativeInputValueSetter) {
-      nativeInputValueSetter.call(input, value);
+    if (nativeSetter) {
+      nativeSetter.call(input, value);
     } else {
       input.value = value;
     }
+    // 触发 React 的事件
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  } else {
+    // 对于 input 元素
+    const nativeSetter = Object.getOwnPropertyDescriptor(
+      window.HTMLInputElement.prototype,
+      "value"
+    )?.set;
 
-    // 触发 React 的 onChange
+    if (nativeSetter) {
+      nativeSetter.call(input, value);
+    } else {
+      input.value = value;
+    }
     input.dispatchEvent(new Event("input", { bubbles: true }));
     input.dispatchEvent(new Event("change", { bubbles: true }));
   }
@@ -447,31 +457,7 @@ async function performEnhance() {
   }
 }
 
-/**
- * 初始化键盘快捷键（Alt+空格）
- */
-function initKeyboardShortcut() {
-  document.addEventListener(
-    "keydown",
-    (e) => {
-      // Alt+空格 触发增强
-      if (e.key === " " && e.altKey && !e.ctrlKey && !e.metaKey) {
-        // 只在输入框中生效
-        const target = e.target;
-        const isInput =
-          target.tagName === "TEXTAREA" ||
-          target.tagName === "INPUT" ||
-          target.contentEditable === "true";
-
-        if (!isInput) return;
-
-        e.preventDefault();
-        performEnhance();
-      }
-    },
-    true
-  );
-}
+// 快捷键功能已移除，统一使用按钮触发
 
 /**
  * 创建增强按钮元素

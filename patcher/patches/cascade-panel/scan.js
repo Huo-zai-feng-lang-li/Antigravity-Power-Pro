@@ -345,24 +345,46 @@ const initPromptEnhanceButton = async () => {
                 const enhanced = await enhanceModule.enhance(text);
                 
                 // 直接替换输入框内容
-                if (input.value !== undefined) {
-                    // 对于 React 受控组件，需要特殊处理
-                    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+                const isContentEditable = input.contentEditable === 'true';
+                
+                if (isContentEditable) {
+                    // 对于 contenteditable 元素
+                    input.textContent = enhanced;
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                } else if (input.tagName === 'TEXTAREA') {
+                    // 对于 textarea，使用原生 setter 绕过 React 受控组件
+                    const nativeSetter = Object.getOwnPropertyDescriptor(
                         window.HTMLTextAreaElement.prototype, 'value'
-                    )?.set || Object.getOwnPropertyDescriptor(
+                    )?.set;
+                    
+                    if (nativeSetter) {
+                        nativeSetter.call(input, enhanced);
+                    } else {
+                        input.value = enhanced;
+                    }
+                    // 触发 React 的事件
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                } else {
+                    // 对于 input 元素
+                    const nativeSetter = Object.getOwnPropertyDescriptor(
                         window.HTMLInputElement.prototype, 'value'
                     )?.set;
                     
-                    if (nativeInputValueSetter) {
-                        nativeInputValueSetter.call(input, enhanced);
+                    if (nativeSetter) {
+                        nativeSetter.call(input, enhanced);
                     } else {
                         input.value = enhanced;
                     }
                     input.dispatchEvent(new Event('input', { bubbles: true }));
                     input.dispatchEvent(new Event('change', { bubbles: true }));
-                } else {
-                    input.textContent = enhanced;
-                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                
+                // 聚焦输入框并将光标移到末尾
+                input.focus();
+                if (input.setSelectionRange) {
+                    const len = enhanced.length;
+                    input.setSelectionRange(len, len);
                 }
                 
                 // 显示成功提示
@@ -374,14 +396,40 @@ const initPromptEnhanceButton = async () => {
             }
         });
 
-        // 插入按钮到输入框旁边
-        // 尝试找到合适的插入位置
-        const toolbar = parent.querySelector('[class*="toolbar"], [class*="actions"], [class*="buttons"]');
-        if (toolbar) {
-            toolbar.insertBefore(btn, toolbar.firstChild);
+        // 插入按钮到发送按钮旁边
+        // 查找发送按钮的多种可能选择器
+        const sendButtonSelectors = [
+            'button[type="submit"]',
+            'button[aria-label*="send" i]',
+            'button[aria-label*="发送" i]',
+            'button[title*="send" i]',
+            'button[title*="发送" i]',
+            '[class*="send-button"]',
+            '[class*="submit-button"]',
+            '[data-testid*="send"]',
+            '[data-testid*="submit"]',
+        ];
+        
+        let sendButton = null;
+        const inputContainer = input.closest('[class*="input"], [class*="composer"], [class*="chat"], form') || parent;
+        
+        for (const selector of sendButtonSelectors) {
+            sendButton = inputContainer.querySelector(selector);
+            if (sendButton) break;
+        }
+        
+        if (sendButton && sendButton.parentNode) {
+            // 插入到发送按钮之前
+            sendButton.parentNode.insertBefore(btn, sendButton);
         } else {
-            // 如果没有找到工具栏,插入到输入框后面
-            input.parentNode.insertBefore(btn, input.nextSibling);
+            // 备选：查找工具栏或按钮区域
+            const toolbar = inputContainer.querySelector('[class*="toolbar"], [class*="actions"], [class*="buttons"]');
+            if (toolbar) {
+                toolbar.insertBefore(btn, toolbar.firstChild);
+            } else {
+                // 最后备选：插入到输入框后面
+                input.parentNode.insertBefore(btn, input.nextSibling);
+            }
         }
     });
 };
