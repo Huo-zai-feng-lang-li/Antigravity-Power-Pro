@@ -49,9 +49,8 @@ export function init(userConfig = {}) {
     config.systemPrompt = DEFAULT_SYSTEM_PROMPT;
   }
 
-  // 初始化快捷键监听
+  // 注入样式
   if (config.enabled) {
-    initKeyboardShortcut();
     injectStyles();
   }
 }
@@ -482,7 +481,7 @@ function initKeyboardShortcut() {
 export function createEnhanceButton(onClick) {
   const btn = document.createElement("button");
   btn.className = "anti-power-enhance-btn";
-  btn.title = "提示词增强 (Alt+空格)";
+  btn.title = "提示词增强";
   btn.innerHTML = `
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>

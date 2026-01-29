@@ -325,31 +325,37 @@ const initPromptEnhance = async () => {
  * 注入提示词增强按钮到输入框区域
  */
 const injectEnhanceButton = async () => {
-  if (!enhanceModule || !enhanceModule.isEnabled()) return;
+  if (!enhanceModule || !enhanceModule.isEnabled()) {
+    console.log('[Cascade] 增强模块未启用或未配置');
+    return;
+  }
 
   // 查找输入框区域
   const root = getRoot();
-  const inputAreas = root.querySelectorAll(
-    'textarea, [contenteditable="true"]',
-  );
+  
+  // 更广泛的输入框选择器
+  const inputSelectors = [
+    'textarea',
+    '[contenteditable="true"]',
+    'input[type="text"]',
+    '[role="textbox"]',
+  ];
+  
+  const inputAreas = root.querySelectorAll(inputSelectors.join(', '));
+  console.log('[Cascade] 找到输入框数量:', inputAreas.length);
 
   inputAreas.forEach((input) => {
-    // 检查是否已添加按钮
-    const parent = input.parentElement;
-    if (!parent || parent.querySelector(`.${ENHANCE_BTN_CLASS}`)) return;
-
-    // 查找工具栏或按钮区域
-    let toolbar = null;
-    let searchNode = parent;
-    for (let i = 0; i < 5 && searchNode; i++) {
-      toolbar = searchNode.querySelector(
-        '[class*="toolbar"], [class*="actions"], [class*="buttons"]',
-      );
-      if (toolbar) break;
-      searchNode = searchNode.parentElement;
+    // 检查是否已添加按钮（向上查找5层）
+    let hasButton = false;
+    let checkNode = input.parentElement;
+    for (let i = 0; i < 5 && checkNode; i++) {
+      if (checkNode.querySelector(`.${ENHANCE_BTN_CLASS}`)) {
+        hasButton = true;
+        break;
+      }
+      checkNode = checkNode.parentElement;
     }
-
-    if (!toolbar) return;
+    if (hasButton) return;
 
     // 创建增强按钮
     const btn = enhanceModule.createEnhanceButton(async () => {
@@ -390,8 +396,47 @@ const injectEnhanceButton = async () => {
       }
     });
 
-    // 插入按钮到工具栏
-    toolbar.insertBefore(btn, toolbar.firstChild);
+    // 策略1：查找工具栏或按钮区域
+    let toolbar = null;
+    let searchNode = input.parentElement;
+    const toolbarSelectors = [
+      '[class*="toolbar"]',
+      '[class*="actions"]',
+      '[class*="buttons"]',
+      '[class*="controls"]',
+      '[class*="footer"]',
+      '[class*="bottom"]',
+    ];
+    
+    for (let i = 0; i < 8 && searchNode; i++) {
+      toolbar = searchNode.querySelector(toolbarSelectors.join(', '));
+      if (toolbar) break;
+      searchNode = searchNode.parentElement;
+    }
+
+    if (toolbar) {
+      console.log('[Cascade] 找到工具栏，注入按钮');
+      toolbar.insertBefore(btn, toolbar.firstChild);
+      return;
+    }
+
+    // 策略2：直接在输入框的父容器中添加
+    const parent = input.parentElement;
+    if (parent) {
+      console.log('[Cascade] 未找到工具栏，在输入框旁边注入按钮');
+      // 设置按钮为绝对定位
+      btn.style.position = 'absolute';
+      btn.style.top = '8px';
+      btn.style.right = '8px';
+      btn.style.zIndex = '100';
+      
+      // 确保父容器有相对定位
+      const computedStyle = window.getComputedStyle(parent);
+      if (computedStyle.position === 'static') {
+        parent.style.position = 'relative';
+      }
+      parent.appendChild(btn);
+    }
   });
 };
 
