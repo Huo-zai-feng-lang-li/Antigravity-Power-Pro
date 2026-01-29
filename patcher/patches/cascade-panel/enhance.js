@@ -6,21 +6,32 @@
  * 功能特性:
  * - 双击空格快捷键触发增强
  * - 直接替换输入框内容（无弹窗）
+ * - 自动收集 IDE 上下文信息
  * - 简洁的 toast 提示
  */
 
-// 默认系统提示词
-const DEFAULT_SYSTEM_PROMPT = `你是一个专业的提示词优化专家。你的任务是优化用户提供的提示词,使其更加:
-1. 清晰明确 - 消除歧义,让意图更加明显
+// 默认系统提示词 - 包含上下文感知能力
+const DEFAULT_SYSTEM_PROMPT = `你是一个专业的提示词优化专家，专门为 AI 编程助手优化提示词。
+
+你的任务是根据用户提供的原始提示词和上下文信息，生成一个更加清晰、具体、有效的提示词。
+
+优化原则:
+1. 清晰明确 - 消除歧义，让意图更加明显
 2. 结构化 - 添加合理的结构和格式要求
-3. 具体详细 - 补充必要的上下文和约束条件
+3. 具体详细 - 利用上下文信息补充必要的约束条件
 4. 有效高效 - 确保 AI 能够准确理解并给出高质量回答
 
+上下文利用:
+- 如果提供了当前文件路径，在提示词中引用它
+- 如果提供了最近对话历史，理解用户的连续意图
+- 如果提供了代码片段，确保提示词与代码上下文相关
+
 规则:
-- 直接输出优化后的提示词,不要添加任何解释或前缀
+- 直接输出优化后的提示词，不要添加任何解释或前缀
 - 保持用户原始意图不变
 - 使用与用户相同的语言(中文或英文)
-- 如果原始提示词已经很好,可以适当润色但不要过度修改`;
+- 如果原始提示词已经很好，可以适当润色但不要过度修改
+- 不要在提示词中包含"请"、"帮我"等客套话`;
 
 // 配置默认值
 const DEFAULT_CONFIG = {
@@ -28,7 +39,7 @@ const DEFAULT_CONFIG = {
   provider: "anthropic",
   apiBase: "https://api.anthropic.com",
   apiKey: "",
-  model: "claude-sonnet-4-20250514",
+  model: "claude-sonnet-4-5-20250514",
   systemPrompt: DEFAULT_SYSTEM_PROMPT,
 };
 
@@ -73,12 +84,113 @@ function isAnthropicAPI() {
   );
 }
 
+// ============================================
+// 上下文收集功能
+// ============================================
+
+/**
+ * 从 IDE 页面收集上下文信息
+ * @returns {Object} 上下文信息对象
+ */
+function collectIDEContext() {
+  const context = {
+    currentFile: null,
+    recentMessages: [],
+    selectedCode: null,
+    projectInfo: null,
+  };
+
+  try {
+    // 1. 尝试获取当前文件路径
+    // 从标签页、面包屑、标题等位置查找
+    const titleElement = document.querySelector(
+      '[class*="title"], [class*="filename"], [class*="breadcrumb"], [class*="tab"][class*="active"]'
+    );
+    if (titleElement) {
+      const titleText = titleElement.textContent?.trim();
+      if (titleText && titleText.match(/\.(js|ts|vue|py|java|go|rs|cpp|c|h|css|html|json|md|txt|yaml|yml)$/i)) {
+        context.currentFile = titleText;
+      }
+    }
+
+    // 2. 尝试获取最近的对话历史（AI 回复）
+    const messageElements = document.querySelectorAll(
+      '[class*="message"], [class*="prose"], [class*="response"], [class*="assistant"]'
+    );
+    const recentMessages = [];
+    messageElements.forEach((el, index) => {
+      if (index < 3) { // 只取最近3条
+        const text = el.textContent?.trim();
+        if (text && text.length > 20 && text.length < 500) {
+          recentMessages.push(text.substring(0, 200) + (text.length > 200 ? '...' : ''));
+        }
+      }
+    });
+    if (recentMessages.length > 0) {
+      context.recentMessages = recentMessages;
+    }
+
+    // 3. 尝试获取选中的代码（如果有）
+    const selection = window.getSelection();
+    if (selection && selection.toString().trim().length > 10) {
+      const selectedText = selection.toString().trim();
+      if (selectedText.length < 1000) {
+        context.selectedCode = selectedText;
+      }
+    }
+
+    // 4. 尝试从 URL 或其他位置获取项目信息
+    const url = window.location.href;
+    const urlMatch = url.match(/project[\/=]([^\/&]+)/i);
+    if (urlMatch) {
+      context.projectInfo = urlMatch[1];
+    }
+
+  } catch (error) {
+    console.warn('[PromptEnhance] 收集上下文时出错:', error);
+  }
+
+  return context;
+}
+
+/**
+ * 将上下文信息格式化为提示词前缀
+ * @param {Object} context - 上下文对象
+ * @returns {string} 格式化的上下文字符串
+ */
+function formatContextForPrompt(context) {
+  const parts = [];
+
+  if (context.currentFile) {
+    parts.push(`[当前文件: ${context.currentFile}]`);
+  }
+
+  if (context.selectedCode) {
+    parts.push(`[选中代码:\n\`\`\`\n${context.selectedCode}\n\`\`\`]`);
+  }
+
+  if (context.recentMessages && context.recentMessages.length > 0) {
+    parts.push(`[最近对话摘要: ${context.recentMessages[0]}]`);
+  }
+
+  return parts.length > 0 ? parts.join('\n') + '\n\n' : '';
+}
+
+// ============================================
+// API 调用
+// ============================================
+
 /**
  * 调用 Anthropic Claude API
  * @param {string} prompt - 原始提示词
+ * @param {string} contextPrefix - 上下文前缀
  * @returns {Promise<string>} - 增强后的提示词
  */
-async function callAnthropicAPI(prompt) {
+async function callAnthropicAPI(prompt, contextPrefix = '') {
+  const userMessage = contextPrefix 
+    ? `上下文信息:\n${contextPrefix}\n用户原始提示词:\n${prompt.trim()}`
+    : prompt.trim();
+
   const response = await fetch(`${config.apiBase}/v1/messages`, {
     method: "POST",
     headers: {
@@ -90,7 +202,7 @@ async function callAnthropicAPI(prompt) {
       model: config.model,
       max_tokens: 2048,
       system: config.systemPrompt,
-      messages: [{ role: "user", content: prompt.trim() }],
+      messages: [{ role: "user", content: userMessage }],
     }),
   });
 
@@ -114,12 +226,17 @@ async function callAnthropicAPI(prompt) {
 /**
  * 调用 OpenAI 兼容 API
  * @param {string} prompt - 原始提示词
+ * @param {string} contextPrefix - 上下文前缀
  * @returns {Promise<string>} - 增强后的提示词
  */
-async function callOpenAICompatibleAPI(prompt) {
+async function callOpenAICompatibleAPI(prompt, contextPrefix = '') {
+  const userMessage = contextPrefix 
+    ? `上下文信息:\n${contextPrefix}\n用户原始提示词:\n${prompt.trim()}`
+    : prompt.trim();
+
   const messages = [
     { role: "system", content: config.systemPrompt },
-    { role: "user", content: prompt.trim() },
+    { role: "user", content: userMessage },
   ];
 
   const response = await fetch(`${config.apiBase}/chat/completions`, {
@@ -154,7 +271,7 @@ async function callOpenAICompatibleAPI(prompt) {
 }
 
 /**
- * 调用 LLM API 增强提示词
+ * 调用 LLM API 增强提示词（带上下文收集）
  * @param {string} prompt - 原始提示词
  * @returns {Promise<string>} - 增强后的提示词
  */
@@ -167,11 +284,15 @@ export async function enhance(prompt) {
     throw new Error("提示词不能为空");
   }
 
+  // 收集 IDE 上下文
+  const context = collectIDEContext();
+  const contextPrefix = formatContextForPrompt(context);
+
   try {
     if (isAnthropicAPI()) {
-      return await callAnthropicAPI(prompt);
+      return await callAnthropicAPI(prompt, contextPrefix);
     } else {
-      return await callOpenAICompatibleAPI(prompt);
+      return await callOpenAICompatibleAPI(prompt, contextPrefix);
     }
   } catch (error) {
     if (error.name === "TypeError" && error.message.includes("fetch")) {
@@ -180,6 +301,10 @@ export async function enhance(prompt) {
     throw error;
   }
 }
+
+// ============================================
+// 输入框操作
+// ============================================
 
 /**
  * 查找当前活动的输入框
@@ -232,11 +357,11 @@ function setInputValue(input, value) {
     const nativeInputValueSetter =
       Object.getOwnPropertyDescriptor(
         window.HTMLTextAreaElement.prototype,
-        "value",
+        "value"
       )?.set ||
       Object.getOwnPropertyDescriptor(
         window.HTMLInputElement.prototype,
-        "value",
+        "value"
       )?.set;
 
     if (nativeInputValueSetter) {
@@ -256,6 +381,10 @@ function setInputValue(input, value) {
     input.setSelectionRange(value.length, value.length);
   }
 }
+
+// ============================================
+// Toast 提示
+// ============================================
 
 /**
  * 显示 Toast 提示
@@ -368,7 +497,7 @@ function initKeyboardShortcut() {
         }
       }
     },
-    true,
+    true
   );
 }
 
@@ -492,7 +621,7 @@ export function injectStyles() {
 }
 
 /**
- * 显示错误弹窗（保留向后兼容）
+ * 显示错误提示（向后兼容）
  * @param {string} message - 错误信息
  */
 export function showErrorModal(message) {
@@ -500,7 +629,7 @@ export function showErrorModal(message) {
 }
 
 /**
- * 显示结果弹窗（保留向后兼容，但实际不显示弹窗）
+ * 显示结果（向后兼容，直接应用）
  * @param {string} enhancedPrompt - 增强后的提示词
  * @param {Function} onApply - 应用回调
  * @param {Function} onCancel - 取消回调
@@ -511,17 +640,6 @@ export function showResultModal(enhancedPrompt, onApply, onCancel) {
     onApply(enhancedPrompt);
   }
   showToast("✓ 提示词已优化", "success", 1500);
-}
-
-/**
- * HTML 转义
- * @param {string} str
- * @returns {string}
- */
-function escapeHtml(str) {
-  const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
 }
 
 /**

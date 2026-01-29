@@ -1,0 +1,28 @@
+#!/bin/sh
+# 作用：在提交成功后执行
+# 功能：
+# 1. 拉取远程最新代码
+# 2. 推送到远程仓库
+# 何时触发：每次 git commit 成功后
+echo "✅ 提交成功！开始同步远程仓库..."
+
+# 拉取远程最新代码
+echo "🔄 拉取远程最新代码..."
+if ! git pull --rebase; then
+    echo "❌ 拉取远程代码失败，可能存在冲突"
+    echo "🔧 请手动解决冲突后执行:"
+    echo "   git add ."
+    echo "   git rebase --continue"
+    echo "   git push"
+    exit 1
+fi
+echo "✅ 远程代码拉取成功"
+
+# 推送到远程仓库
+echo "➡️ 推送到远程仓库..."
+if ! git push; then
+    echo "❌ 推送失败，请检查网络连接或权限"
+    exit 1
+fi
+
+echo "✅ 成功: 同步远程仓库并推送"

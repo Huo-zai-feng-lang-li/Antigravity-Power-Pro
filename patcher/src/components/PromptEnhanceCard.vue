@@ -174,18 +174,14 @@ interface ProviderInfo {
 const PROVIDERS: Record<string, ProviderInfo> = {
   anthropic: {
     apiBase: "https://api.anthropic.com",
-    defaultModel: "claude-sonnet-4-20250514",
+    defaultModel: "claude-sonnet-4-5-20250514",
     hint: "Anthropic Claude API",
     keyPlaceholder: "sk-ant-...",
-    modelHint: "推荐 Claude 4.5 系列 (最新)",
+    modelHint: "Claude 4.5 系列",
     models: [
-      {
-        label: "Claude Opus 4.5 Thinking",
-        value: "claude-opus-4-5-thinking-20250116",
-      },
-      { label: "Claude Haiku 4.5", value: "claude-haiku-4-5-20250116" },
-      { label: "Claude Sonnet 4 (推荐)", value: "claude-sonnet-4-20250514" },
-      { label: "Claude Sonnet 3.5", value: "claude-3-5-sonnet-20241022" },
+      { label: "Claude Opus 4.5 (思考)", value: "claude-opus-4-5-20250514" },
+      { label: "Claude Sonnet 4.5 (推荐)", value: "claude-sonnet-4-5-20250514" },
+      { label: "Claude Haiku 4.5 (快速)", value: "claude-haiku-4-5-20250514" },
     ],
   },
   openai: {
