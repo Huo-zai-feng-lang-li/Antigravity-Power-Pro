@@ -1,0 +1,90 @@
+// 配置管理模块
+
+use serde::{Deserialize, Serialize};
+use std::fs;
+use std::path::PathBuf;
+
+/// 应用配置
+#[derive(Debug, Serialize, Deserialize, Default)]
+#[serde(default)]
+pub struct AppConfig {
+    /// Antigravity 安装路径
+    #[serde(rename = "antigravityPath")]
+    pub antigravity_path: Option<String>,
+    
+    /// 功能开关
+    pub features: FeatureFlags,
+}
+
+/// 功能开关
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct FeatureFlags {
+    pub mermaid: bool,
+    pub math: bool,
+    #[serde(rename = "copyButton")]
+    pub copy_button: bool,
+    #[serde(rename = "tableColor")]
+    pub table_color: bool,
+    #[serde(rename = "fontSizeEnabled")]
+    pub font_size_enabled: bool,
+    #[serde(rename = "fontSize")]
+    pub font_size: f32,
+}
+
+impl Default for FeatureFlags {
+    fn default() -> Self {
+        Self {
+            mermaid: true,
+            math: true,
+            copy_button: true,
+            table_color: true,
+            font_size_enabled: true,
+            font_size: 20.0,
+        }
+    }
+}
+
+/// 获取配置文件路径
+fn get_config_path() -> PathBuf {
+    dirs::config_dir()
+        .unwrap_or_else(|| PathBuf::from("."))
+        .join("anti-power")
+        .join("config.json")
+}
+
+/// 读取配置, 失败时回退到默认值
+#[tauri::command]
+pub fn get_config() -> AppConfig {
+    let config_path = get_config_path();
+    
+    if config_path.exists() {
+        if let Ok(content) = fs::read_to_string(&config_path) {
+            if let Ok(config) = serde_json::from_str(&content) {
+                return config;
+            }
+        }
+    }
+    
+    AppConfig::default()
+}
+
+/// 保存配置
+#[tauri::command]
+pub fn save_config(config: AppConfig) -> Result<(), String> {
+    let config_path = get_config_path();
+    
+    // 确保配置目录存在
+    if let Some(parent) = config_path.parent() {
+        fs::create_dir_all(parent)
+            .map_err(|e| format!("创建配置目录失败: {}", e))?;
+    }
+    
+    let content = serde_json::to_string_pretty(&config)
+        .map_err(|e| format!("序列化配置失败: {}", e))?;
+    
+    fs::write(&config_path, content)
+        .map_err(|e| format!("保存配置失败: {}", e))?;
+    
+    Ok(())
+}
