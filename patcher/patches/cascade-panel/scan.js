@@ -14,31 +14,32 @@
  * 模块入口为 start() 函数，接收配置并启动扫描。
  */
 
-import { CONTENT_SELECTOR } from './constants.js';
-import { addFeedbackCopyButtons, ensureContentCopyButton } from './copy.js';
-import { renderMath } from './math.js';
-import { renderMermaid } from './mermaid.js';
+import { CONTENT_SELECTOR } from "./constants.js";
+import { addFeedbackCopyButtons, ensureContentCopyButton } from "./copy.js";
+import { renderMath } from "./math.js";
+import { renderMermaid } from "./mermaid.js";
 
 /**
  * 功能配置（由入口传入）
  */
 let config = {
-    mermaid: true,
-    math: true,
-    copyButton: true,
-    tableColor: true,
-    fontSizeEnabled: true,
-    fontSize: 20,
-    promptEnhance: {
-        enabled: false,
-        apiBase: '',
-        apiKey: '',
-        model: '',
-        systemPrompt: '',
-    },
+  mermaid: true,
+  math: true,
+  copyButton: true,
+  tableColor: true,
+  fontSizeEnabled: true,
+  fontSize: 20,
+  promptEnhance: {
+    enabled: false,
+    apiBase: "",
+    apiKey: "",
+    model: "",
+    systemPrompt: "",
+  },
 };
 
-const FEEDBACK_SELECTOR = '[data-tooltip-id^="up-"], [data-tooltip-id^="down-"]';
+const FEEDBACK_SELECTOR =
+  '[data-tooltip-id^="up-"], [data-tooltip-id^="down-"]';
 const MAX_FEEDBACK_DEPTH = 20;
 const STABLE_RENDER_DELAY = 360;
 const STABLE_RENDER_MAX_WAIT = 2500;
@@ -50,16 +51,16 @@ const deferredRenders = new WeakMap();
  * @returns {boolean}
  */
 const hasFeedbackButtons = (contentEl) => {
-    let node = contentEl;
-    for (let i = 0; i < MAX_FEEDBACK_DEPTH && node; i += 1) {
-        if (node.querySelector?.(FEEDBACK_SELECTOR)) {
-            const contents = node.querySelectorAll(CONTENT_SELECTOR);
-            if (contents.length === 0) return false;
-            return contents[contents.length - 1] === contentEl;
-        }
-        node = node.parentElement;
+  let node = contentEl;
+  for (let i = 0; i < MAX_FEEDBACK_DEPTH && node; i += 1) {
+    if (node.querySelector?.(FEEDBACK_SELECTOR)) {
+      const contents = node.querySelectorAll(CONTENT_SELECTOR);
+      if (contents.length === 0) return false;
+      return contents[contents.length - 1] === contentEl;
     }
-    return false;
+    node = node.parentElement;
+  }
+  return false;
 };
 
 /**
@@ -68,10 +69,10 @@ const hasFeedbackButtons = (contentEl) => {
  * @returns {void}
  */
 const clearDeferredRender = (contentEl) => {
-    const state = deferredRenders.get(contentEl);
-    if (!state) return;
-    clearTimeout(state.timerId);
-    deferredRenders.delete(contentEl);
+  const state = deferredRenders.get(contentEl);
+  if (!state) return;
+  clearTimeout(state.timerId);
+  deferredRenders.delete(contentEl);
 };
 
 /**
@@ -80,15 +81,15 @@ const clearDeferredRender = (contentEl) => {
  * @returns {void}
  */
 const renderMermaidWithin = (root) => {
-    if (!config.mermaid) return;
-    const mermaidNodes = [];
-    if (root.matches && root.matches('[class*="language-mermaid"]')) {
-        mermaidNodes.push(root);
-    }
-    mermaidNodes.push(...root.querySelectorAll('[class*="language-mermaid"]'));
-    mermaidNodes.forEach((node) => {
-        void renderMermaid(node);
-    });
+  if (!config.mermaid) return;
+  const mermaidNodes = [];
+  if (root.matches && root.matches('[class*="language-mermaid"]')) {
+    mermaidNodes.push(root);
+  }
+  mermaidNodes.push(...root.querySelectorAll('[class*="language-mermaid"]'));
+  mermaidNodes.forEach((node) => {
+    void renderMermaid(node);
+  });
 };
 
 /**
@@ -97,65 +98,65 @@ const renderMermaidWithin = (root) => {
  * @returns {void}
  */
 const scheduleDeferredRender = (contentEl) => {
+  if (!contentEl || !contentEl.isConnected) return;
+
+  const text = contentEl.textContent || "";
+  const now = Date.now();
+  const existing = deferredRenders.get(contentEl);
+
+  if (existing) {
+    if (existing.lastText !== text) {
+      existing.lastText = text;
+      existing.lastChange = now;
+    }
+    return;
+  }
+
+  const state = {
+    lastText: text,
+    lastChange: now,
+    timerId: 0,
+  };
+
+  const attempt = () => {
+    deferredRenders.delete(contentEl);
     if (!contentEl || !contentEl.isConnected) return;
 
-    const text = contentEl.textContent || '';
-    const now = Date.now();
-    const existing = deferredRenders.get(contentEl);
-
-    if (existing) {
-        if (existing.lastText !== text) {
-            existing.lastText = text;
-            existing.lastChange = now;
-        }
-        return;
+    const currentText = contentEl.textContent || "";
+    const currentTime = Date.now();
+    if (currentText !== state.lastText) {
+      state.lastText = currentText;
+      state.lastChange = currentTime;
+      state.timerId = window.setTimeout(attempt, STABLE_RENDER_DELAY);
+      deferredRenders.set(contentEl, state);
+      return;
     }
 
-    const state = {
-        lastText: text,
-        lastChange: now,
-        timerId: 0,
-    };
+    const idleMs = currentTime - state.lastChange;
+    const complete = hasFeedbackButtons(contentEl);
+    const feedbackExpected = document.querySelector(FEEDBACK_SELECTOR) !== null;
 
-    const attempt = () => {
-        deferredRenders.delete(contentEl);
-        if (!contentEl || !contentEl.isConnected) return;
+    if (complete) {
+      renderContentNode(contentEl, true);
+      return;
+    }
 
-        const currentText = contentEl.textContent || '';
-        const currentTime = Date.now();
-        if (currentText !== state.lastText) {
-            state.lastText = currentText;
-            state.lastChange = currentTime;
-            state.timerId = window.setTimeout(attempt, STABLE_RENDER_DELAY);
-            deferredRenders.set(contentEl, state);
-            return;
-        }
+    if (!feedbackExpected && idleMs >= STABLE_RENDER_DELAY) {
+      renderContentNode(contentEl, true);
+      return;
+    }
 
-        const idleMs = currentTime - state.lastChange;
-        const complete = hasFeedbackButtons(contentEl);
-        const feedbackExpected = document.querySelector(FEEDBACK_SELECTOR) !== null;
-
-        if (complete) {
-            renderContentNode(contentEl, true);
-            return;
-        }
-
-        if (!feedbackExpected && idleMs >= STABLE_RENDER_DELAY) {
-            renderContentNode(contentEl, true);
-            return;
-        }
-
-        if (feedbackExpected && idleMs >= STABLE_RENDER_MAX_WAIT) {
-            renderContentNode(contentEl, true);
-            return;
-        }
-
-        state.timerId = window.setTimeout(attempt, STABLE_RENDER_DELAY);
-        deferredRenders.set(contentEl, state);
-    };
+    if (feedbackExpected && idleMs >= STABLE_RENDER_MAX_WAIT) {
+      renderContentNode(contentEl, true);
+      return;
+    }
 
     state.timerId = window.setTimeout(attempt, STABLE_RENDER_DELAY);
     deferredRenders.set(contentEl, state);
+  };
+
+  state.timerId = window.setTimeout(attempt, STABLE_RENDER_DELAY);
+  deferredRenders.set(contentEl, state);
 };
 
 /**
@@ -165,24 +166,24 @@ const scheduleDeferredRender = (contentEl) => {
  * @returns {void}
  */
 const renderContentNode = (contentEl, force = false) => {
-    if (!contentEl || !contentEl.isConnected) return;
+  if (!contentEl || !contentEl.isConnected) return;
 
-    if (config.copyButton) {
-        ensureContentCopyButton(contentEl);
-    }
+  if (config.copyButton) {
+    ensureContentCopyButton(contentEl);
+  }
 
-    const ready = force || hasFeedbackButtons(contentEl);
-    if (!ready) {
-        scheduleDeferredRender(contentEl);
-        return;
-    }
+  const ready = force || hasFeedbackButtons(contentEl);
+  if (!ready) {
+    scheduleDeferredRender(contentEl);
+    return;
+  }
 
-    clearDeferredRender(contentEl);
+  clearDeferredRender(contentEl);
 
-    if (config.math) {
-        void renderMath(contentEl);
-    }
-    renderMermaidWithin(contentEl);
+  if (config.math) {
+    void renderMath(contentEl);
+  }
+  renderMermaidWithin(contentEl);
 };
 
 /**
@@ -191,33 +192,33 @@ const renderContentNode = (contentEl, force = false) => {
  * @returns {void}
  */
 const scan = (root) => {
-    if (!root || !root.isConnected) return;
+  if (!root || !root.isConnected) return;
 
-    // 检查根节点本身及子节点是否匹配内容选择器
-    const contentNodes = [];
-    if (root.matches && root.matches(CONTENT_SELECTOR)) {
-        contentNodes.push(root);
+  // 检查根节点本身及子节点是否匹配内容选择器
+  const contentNodes = [];
+  if (root.matches && root.matches(CONTENT_SELECTOR)) {
+    contentNodes.push(root);
+  }
+  contentNodes.push(...root.querySelectorAll(CONTENT_SELECTOR));
+
+  const contentSet = new Set(contentNodes);
+  contentNodes.forEach((node) => renderContentNode(node));
+
+  if (config.mermaid) {
+    const mermaidNodes = [];
+    if (root.matches && root.matches('[class*="language-mermaid"]')) {
+      mermaidNodes.push(root);
     }
-    contentNodes.push(...root.querySelectorAll(CONTENT_SELECTOR));
+    mermaidNodes.push(...root.querySelectorAll('[class*="language-mermaid"]'));
 
-    const contentSet = new Set(contentNodes);
-    contentNodes.forEach((node) => renderContentNode(node));
-
-    if (config.mermaid) {
-        const mermaidNodes = [];
-        if (root.matches && root.matches('[class*="language-mermaid"]')) {
-            mermaidNodes.push(root);
-        }
-        mermaidNodes.push(...root.querySelectorAll('[class*="language-mermaid"]'));
-
-        mermaidNodes.forEach((node) => {
-            const contentRoot = node.closest?.(CONTENT_SELECTOR);
-            if (contentRoot && contentSet.has(contentRoot)) {
-                return;
-            }
-            void renderMermaid(node);
-        });
-    }
+    mermaidNodes.forEach((node) => {
+      const contentRoot = node.closest?.(CONTENT_SELECTOR);
+      if (contentRoot && contentSet.has(contentRoot)) {
+        return;
+      }
+      void renderMermaid(node);
+    });
+  }
 };
 
 /**
@@ -225,9 +226,9 @@ const scan = (root) => {
  * @returns {Element}
  */
 const getRoot = () =>
-    document.getElementById('chat') ||
-    document.getElementById('react-app') ||
-    document.body;
+  document.getElementById("chat") ||
+  document.getElementById("react-app") ||
+  document.body;
 
 let pendingNodes = new Set();
 let scheduled = false;
@@ -236,87 +237,162 @@ let scheduled = false;
  * 批量处理待扫描节点
  */
 const flushScan = () => {
-    scheduled = false;
-    const nodes = [...pendingNodes];
-    pendingNodes.clear();
+  scheduled = false;
+  const nodes = [...pendingNodes];
+  pendingNodes.clear();
 
-    nodes.forEach(node => {
-        if (node.isConnected) scan(node);
-    });
+  nodes.forEach((node) => {
+    if (node.isConnected) scan(node);
+  });
 
-    if (config.copyButton) {
-        addFeedbackCopyButtons();
-    }
+  if (config.copyButton) {
+    addFeedbackCopyButtons();
+  }
 };
 
 /**
  * 调度扫描任务
- * @param {NodeList|Array} nodes 
+ * @param {NodeList|Array} nodes
  */
 const resolveScanRoot = (target) => {
-    if (!target) return null;
-    if (target.nodeType === Node.TEXT_NODE) {
-        target = target.parentElement;
-    }
-    if (target.closest) {
-        const contentRoot = target.closest(CONTENT_SELECTOR);
-        if (contentRoot) return contentRoot;
-    }
+  if (!target) return null;
+  if (target.nodeType === Node.TEXT_NODE) {
+    target = target.parentElement;
+  }
+  if (target.closest) {
+    const contentRoot = target.closest(CONTENT_SELECTOR);
+    if (contentRoot) return contentRoot;
+  }
 
-    let node = target;
-    for (let i = 0; i < MAX_FEEDBACK_DEPTH && node; i += 1) {
-        const candidate = node.querySelector?.(CONTENT_SELECTOR);
-        if (candidate) return candidate;
-        node = node.parentElement;
-    }
+  let node = target;
+  for (let i = 0; i < MAX_FEEDBACK_DEPTH && node; i += 1) {
+    const candidate = node.querySelector?.(CONTENT_SELECTOR);
+    if (candidate) return candidate;
+    node = node.parentElement;
+  }
 
-    return target;
+  return target;
 };
 
 const scheduleScan = (nodes) => {
-    let hasElements = false;
-    const enqueue = (target) => {
-        if (!target) return;
-        const scanRoot = resolveScanRoot(target);
-        if (!scanRoot) return;
-        pendingNodes.add(scanRoot);
-        hasElements = true;
-    };
+  let hasElements = false;
+  const enqueue = (target) => {
+    if (!target) return;
+    const scanRoot = resolveScanRoot(target);
+    if (!scanRoot) return;
+    pendingNodes.add(scanRoot);
+    hasElements = true;
+  };
 
-    nodes.forEach((node) => {
-        if (node.nodeType === Node.ELEMENT_NODE) {
-            enqueue(node);
-            return;
-        }
-        if (node.parentElement) {
-            enqueue(node.parentElement);
-        }
-    });
-
-    if (hasElements && !scheduled) {
-        scheduled = true;
-        requestAnimationFrame(flushScan);
+  nodes.forEach((node) => {
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      enqueue(node);
+      return;
     }
+    if (node.parentElement) {
+      enqueue(node.parentElement);
+    }
+  });
+
+  if (hasElements && !scheduled) {
+    scheduled = true;
+    requestAnimationFrame(flushScan);
+  }
 };
 
 /**
  * 提示词增强初始化
  */
 let enhanceModule = null;
+const ENHANCE_BTN_CLASS = "anti-power-enhance-btn";
 
 const initPromptEnhance = async () => {
-    // 延迟加载增强模块
-    if (!enhanceModule) {
-        try {
-            enhanceModule = await import('./enhance.js');
-        } catch (error) {
-            console.warn('[Cascade] 无法加载增强模块:', error);
-            return;
-        }
+  // 延迟加载增强模块
+  if (!enhanceModule) {
+    try {
+      enhanceModule = await import("./enhance.js");
+    } catch (error) {
+      console.warn("[Cascade] 无法加载增强模块:", error);
+      return;
+    }
+  }
+
+  // 使用配置初始化模块（会自动设置双击空格快捷键）
+  enhanceModule.init(config.promptEnhance);
+};
+
+/**
+ * 注入提示词增强按钮到输入框区域
+ */
+const injectEnhanceButton = async () => {
+  if (!enhanceModule || !enhanceModule.isEnabled()) return;
+
+  // 查找输入框区域
+  const root = getRoot();
+  const inputAreas = root.querySelectorAll(
+    'textarea, [contenteditable="true"]',
+  );
+
+  inputAreas.forEach((input) => {
+    // 检查是否已添加按钮
+    const parent = input.parentElement;
+    if (!parent || parent.querySelector(`.${ENHANCE_BTN_CLASS}`)) return;
+
+    // 查找工具栏或按钮区域
+    let toolbar = null;
+    let searchNode = parent;
+    for (let i = 0; i < 5 && searchNode; i++) {
+      toolbar = searchNode.querySelector(
+        '[class*="toolbar"], [class*="actions"], [class*="buttons"]',
+      );
+      if (toolbar) break;
+      searchNode = searchNode.parentElement;
     }
 
-    // 使用配置初始化模块（会自动设置双击空格快捷键）
-    enhanceModule.init(config.promptEnhance);
+    if (!toolbar) return;
+
+    // 创建增强按钮
+    const btn = enhanceModule.createEnhanceButton(async () => {
+      const text = input.value || input.textContent || "";
+      if (!text.trim()) {
+        enhanceModule.showErrorModal("请先输入提示词");
+        return;
+      }
+
+      btn.classList.add("loading");
+      try {
+        const enhanced = await enhanceModule.enhance(text);
+        // 直接应用到输入框
+        if (input.value !== undefined) {
+          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+            window.HTMLTextAreaElement.prototype,
+            "value",
+          )?.set;
+          if (nativeInputValueSetter) {
+            nativeInputValueSetter.call(input, enhanced);
+          } else {
+            input.value = enhanced;
+          }
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+        } else {
+          input.textContent = enhanced;
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+        enhanceModule.showResultModal(
+          enhanced,
+          () => {},
+          () => {},
+        );
+      } catch (error) {
+        enhanceModule.showErrorModal(error.message);
+      } finally {
+        btn.classList.remove("loading");
+      }
+    });
+
+    // 插入按钮到工具栏
+    toolbar.insertBefore(btn, toolbar.firstChild);
+  });
 };
 
 /**
@@ -324,36 +400,47 @@ const initPromptEnhance = async () => {
  * @returns {void}
  */
 const init = () => {
-    const root = getRoot();
-    scan(root);
-    if (config.copyButton) {
-        addFeedbackCopyButtons();
-    }
+  const root = getRoot();
+  scan(root);
+  if (config.copyButton) {
+    addFeedbackCopyButtons();
+  }
 
-    // 初始化提示词增强（双击空格快捷键）
-    if (config.promptEnhance?.enabled) {
-        initPromptEnhance();
-    }
-
-    const observer = new MutationObserver((mutations) => {
-        const nodesToScan = [];
-        mutations.forEach((mutation) => {
-            if (mutation.type === 'characterData') {
-                if (mutation.target.parentElement) {
-                    nodesToScan.push(mutation.target.parentElement);
-                }
-                return;
-            }
-            if (mutation.addedNodes.length > 0) {
-                mutation.addedNodes.forEach((node) => nodesToScan.push(node));
-            }
-        });
-        if (nodesToScan.length > 0) {
-            scheduleScan(nodesToScan);
-        }
+  // 初始化提示词增强（双击空格快捷键 + 按钮）
+  if (config.promptEnhance?.enabled) {
+    initPromptEnhance().then(() => {
+      injectEnhanceButton();
     });
+  }
 
-    observer.observe(root, { childList: true, subtree: true, characterData: true });
+  const observer = new MutationObserver((mutations) => {
+    const nodesToScan = [];
+    mutations.forEach((mutation) => {
+      if (mutation.type === "characterData") {
+        if (mutation.target.parentElement) {
+          nodesToScan.push(mutation.target.parentElement);
+        }
+        return;
+      }
+      if (mutation.addedNodes.length > 0) {
+        mutation.addedNodes.forEach((node) => nodesToScan.push(node));
+      }
+    });
+    if (nodesToScan.length > 0) {
+      scheduleScan(nodesToScan);
+    }
+
+    // 检查是否需要重新注入增强按钮
+    if (config.promptEnhance?.enabled && enhanceModule) {
+      injectEnhanceButton();
+    }
+  });
+
+  observer.observe(root, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+  });
 };
 
 /**
@@ -362,12 +449,12 @@ const init = () => {
  * @returns {void}
  */
 export const start = (userConfig = {}) => {
-    // 合并用户配置
-    config = { ...config, ...userConfig };
+  // 合并用户配置
+  config = { ...config, ...userConfig };
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
 };
