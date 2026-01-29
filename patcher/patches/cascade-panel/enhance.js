@@ -74,71 +74,327 @@ function isAnthropicAPI() {
 }
 
 // ============================================
-// 上下文收集功能
+// 上下文收集功能 - 增强版
 // ============================================
 
-/**
- * 从 IDE 页面收集上下文信息
- * @returns {Object} 上下文信息对象
- */
-function collectIDEContext() {
-  const context = {
-    currentFile: null,
-    recentMessages: [],
-    selectedCode: null,
-    projectInfo: null,
-  };
+// 缓存最近捕获的上下文（从请求拦截中获取）
+let cachedContext = {
+  messages: [],
+  files: [],
+  codeBlocks: [],
+  timestamp: 0,
+};
 
+/**
+ * 初始化请求拦截器，捕获 IDE 发送的上下文
+ */
+function initRequestInterceptor() {
+  if (window.__antiPowerFetchIntercepted) return;
+  window.__antiPowerFetchIntercepted = true;
+
+  const originalFetch = window.fetch;
+  window.fetch = async function(url, options) {
+    try {
+      // 检测可能的 AI API 请求
+      const urlStr = typeof url === 'string' ? url : url.toString();
+      if (options?.body && typeof options.body === 'string') {
+        const isAIRequest = urlStr.includes('api') && (
+          urlStr.includes('chat') ||
+          urlStr.includes('message') ||
+          urlStr.includes('completion') ||
+          urlStr.includes('anthropic') ||
+          urlStr.includes('openai')
+        );
+        
+        if (isAIRequest) {
+          try {
+            const body = JSON.parse(options.body);
+            if (body.messages && Array.isArray(body.messages)) {
+              // 缓存请求中的上下文信息
+              cachedContext = {
+                messages: body.messages.slice(-5), // 最近5条消息
+                files: extractFilesFromMessages(body.messages),
+                codeBlocks: extractCodeFromMessages(body.messages),
+                timestamp: Date.now(),
+              };
+              console.log('[PromptEnhance] 捕获到 AI 请求上下文:', cachedContext);
+            }
+          } catch (e) {
+            // 解析失败，忽略
+          }
+        }
+      }
+    } catch (e) {
+      // 忽略错误，不影响原请求
+    }
+    return originalFetch.apply(this, arguments);
+  };
+}
+
+/**
+ * 从消息中提取文件引用
+ */
+function extractFilesFromMessages(messages) {
+  const files = [];
+  const filePattern = /@(file|codebase|folder)[:\s]*([^\s\n]+)/gi;
+  
+  messages.forEach(msg => {
+    const content = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
+    let match;
+    while ((match = filePattern.exec(content)) !== null) {
+      files.push({ type: match[1], path: match[2] });
+    }
+  });
+  
+  return files;
+}
+
+/**
+ * 从消息中提取代码块
+ */
+function extractCodeFromMessages(messages) {
+  const codeBlocks = [];
+  const codePattern = /```(\w+)?\n([\s\S]*?)```/g;
+  
+  messages.forEach(msg => {
+    const content = typeof msg.content === 'string' ? msg.content : '';
+    let match;
+    while ((match = codePattern.exec(content)) !== null) {
+      codeBlocks.push({ language: match[1] || 'text', code: match[2].substring(0, 500) });
+    }
+  });
+  
+  return codeBlocks.slice(-3); // 最近3个代码块
+}
+
+/**
+ * 尝试从 React Fiber 节点获取组件状态
+ */
+function getReactFiberState(element) {
+  if (!element) return null;
+  
+  // React 17+ 的 Fiber 节点 key
+  const fiberKeys = Object.keys(element).filter(key => 
+    key.startsWith('__reactFiber$') || 
+    key.startsWith('__reactInternalInstance$')
+  );
+  
+  if (fiberKeys.length === 0) return null;
+  
   try {
-    // 1. 尝试获取当前文件路径
-    // 从标签页、面包屑、标题等位置查找
-    const titleElement = document.querySelector(
-      '[class*="title"], [class*="filename"], [class*="breadcrumb"], [class*="tab"][class*="active"]'
-    );
-    if (titleElement) {
-      const titleText = titleElement.textContent?.trim();
-      if (titleText && titleText.match(/\.(js|ts|vue|py|java|go|rs|cpp|c|h|css|html|json|md|txt|yaml|yml)$/i)) {
-        context.currentFile = titleText;
+    const fiber = element[fiberKeys[0]];
+    let current = fiber;
+    const states = [];
+    
+    // 向上遍历 Fiber 树，收集状态
+    for (let i = 0; i < 10 && current; i++) {
+      if (current.memoizedState) {
+        states.push(current.memoizedState);
+      }
+      if (current.memoizedProps) {
+        // 查找可能包含上下文的 props
+        const props = current.memoizedProps;
+        if (props.messages || props.context || props.files || props.conversation) {
+          return props;
+        }
+      }
+      current = current.return;
+    }
+  } catch (e) {
+    // 忽略错误
+  }
+  
+  return null;
+}
+
+/**
+ * 探测 Cascade/Windsurf 的全局状态对象
+ */
+function probeGlobalState() {
+  const context = {
+    conversationId: null,
+    messages: [],
+    activeFile: null,
+    openFiles: [],
+    workspace: null,
+  };
+  
+  try {
+    // 1. 检查 window 上的常见状态对象名称
+    const stateKeys = [
+      '__STORE__', '__store__', 'store', 
+      '__STATE__', '__state__', 'state',
+      '__APP__', '__app__', 'app',
+      'cascade', 'windsurf', 'codeium',
+      '__NUXT__', '__NEXT_DATA__', '__REDUX_DEVTOOLS_EXTENSION__'
+    ];
+    
+    for (const key of stateKeys) {
+      if (window[key]) {
+        const state = window[key];
+        console.log(`[PromptEnhance] 发现全局对象: ${key}`, typeof state);
+        
+        // 尝试提取有用信息
+        if (typeof state === 'object') {
+          if (state.getState) {
+            // Redux store
+            const reduxState = state.getState();
+            if (reduxState.conversation) context.messages = reduxState.conversation.messages || [];
+            if (reduxState.editor) context.activeFile = reduxState.editor.activeFile;
+            if (reduxState.workspace) context.workspace = reduxState.workspace.path;
+          }
+        }
       }
     }
+    
+    // 2. 检查 localStorage/sessionStorage 中的状态
+    try {
+      const lsKeys = Object.keys(localStorage);
+      for (const key of lsKeys) {
+        if (key.includes('conversation') || key.includes('context') || key.includes('session')) {
+          try {
+            const data = JSON.parse(localStorage.getItem(key));
+            if (data && typeof data === 'object') {
+              if (data.messages) context.messages = data.messages;
+              if (data.files) context.openFiles = data.files;
+            }
+          } catch (e) {}
+        }
+      }
+    } catch (e) {}
+    
+  } catch (error) {
+    console.warn('[PromptEnhance] 探测全局状态失败:', error);
+  }
+  
+  return context;
+}
 
-    // 2. 尝试获取最近的对话历史（AI 回复）
-    const messageElements = document.querySelectorAll(
-      '[class*="message"], [class*="prose"], [class*="response"], [class*="assistant"]'
+/**
+ * 从 Cascade DOM 结构中收集上下文
+ * 针对 Cascade/Windsurf 的特定选择器
+ */
+function collectFromCascadeDOM() {
+  const context = {
+    currentFile: null,
+    openTabs: [],
+    selectedCode: null,
+    recentMessages: [],
+    attachedFiles: [],
+  };
+  
+  try {
+    // 1. 获取当前活动文件（从编辑器标签）
+    const activeTab = document.querySelector(
+      '[class*="tab"][class*="active"], ' +
+      '[class*="tab"][aria-selected="true"], ' +
+      '[role="tab"][aria-selected="true"]'
     );
-    const recentMessages = [];
-    messageElements.forEach((el, index) => {
-      if (index < 3) { // 只取最近3条
-        const text = el.textContent?.trim();
-        if (text && text.length > 20 && text.length < 500) {
-          recentMessages.push(text.substring(0, 200) + (text.length > 200 ? '...' : ''));
+    if (activeTab) {
+      context.currentFile = activeTab.textContent?.trim();
+    }
+    
+    // 2. 获取所有打开的文件标签
+    const allTabs = document.querySelectorAll(
+      '[class*="tab"]:not([class*="active"]), ' +
+      '[role="tab"]'
+    );
+    allTabs.forEach(tab => {
+      const name = tab.textContent?.trim();
+      if (name && name.match(/\.\w+$/)) {
+        context.openTabs.push(name);
+      }
+    });
+    
+    // 3. 获取选中的代码
+    const selection = window.getSelection();
+    if (selection && selection.toString().trim().length > 10) {
+      context.selectedCode = selection.toString().trim().substring(0, 2000);
+    }
+    
+    // 4. 获取输入框中已有的 @ 引用（文件、代码库等）
+    const inputArea = document.querySelector(
+      'textarea, [contenteditable="true"], [class*="input"][class*="chat"]'
+    );
+    if (inputArea) {
+      const inputText = inputArea.value || inputArea.textContent || '';
+      const atMentions = inputText.match(/@\w+[:\s][^\s\n]+/g) || [];
+      context.attachedFiles = atMentions;
+    }
+    
+    // 5. 获取对话区域中的最近消息
+    const messageContainers = document.querySelectorAll(
+      '[class*="message-content"], ' +
+      '[class*="prose"], ' +
+      '[class*="markdown"], ' +
+      '[data-message-role]'
+    );
+    
+    const messages = [];
+    messageContainers.forEach((el, idx) => {
+      if (idx < 4) { // 最近4条
+        const role = el.getAttribute('data-message-role') || 
+                     (el.closest('[class*="assistant"]') ? 'assistant' : 'user');
+        const content = el.textContent?.trim().substring(0, 500);
+        if (content && content.length > 20) {
+          messages.push({ role, content });
         }
       }
     });
-    if (recentMessages.length > 0) {
-      context.recentMessages = recentMessages;
-    }
-
-    // 3. 尝试获取选中的代码（如果有）
-    const selection = window.getSelection();
-    if (selection && selection.toString().trim().length > 10) {
-      const selectedText = selection.toString().trim();
-      if (selectedText.length < 1000) {
-        context.selectedCode = selectedText;
-      }
-    }
-
-    // 4. 尝试从 URL 或其他位置获取项目信息
-    const url = window.location.href;
-    const urlMatch = url.match(/project[\/=]([^\/&]+)/i);
-    if (urlMatch) {
-      context.projectInfo = urlMatch[1];
-    }
-
+    context.recentMessages = messages;
+    
   } catch (error) {
-    console.warn('[PromptEnhance] 收集上下文时出错:', error);
+    console.warn('[PromptEnhance] 收集 DOM 上下文失败:', error);
   }
+  
+  return context;
+}
 
+/**
+ * 综合收集 IDE 上下文（使用所有可用策略）
+ * @returns {Object} 上下文信息对象
+ */
+function collectIDEContext() {
+  // 初始化请求拦截器
+  initRequestInterceptor();
+  
+  // 1. 先检查缓存的请求上下文（最准确）
+  const now = Date.now();
+  const cacheValid = cachedContext.timestamp && (now - cachedContext.timestamp < 60000); // 1分钟内有效
+  
+  // 2. 从 DOM 收集
+  const domContext = collectFromCascadeDOM();
+  
+  // 3. 探测全局状态
+  const globalContext = probeGlobalState();
+  
+  // 4. 尝试从输入框容器的 React Fiber 获取
+  const inputEl = document.querySelector('textarea, [contenteditable="true"]');
+  const fiberState = inputEl ? getReactFiberState(inputEl.closest('[class*="chat"], [class*="input"], form')) : null;
+  
+  // 合并所有上下文
+  const context = {
+    // 从缓存的请求上下文
+    cachedMessages: cacheValid ? cachedContext.messages : [],
+    cachedFiles: cacheValid ? cachedContext.files : [],
+    cachedCode: cacheValid ? cachedContext.codeBlocks : [],
+    
+    // 从 DOM
+    currentFile: domContext.currentFile,
+    openTabs: domContext.openTabs,
+    selectedCode: domContext.selectedCode,
+    recentMessages: domContext.recentMessages,
+    attachedFiles: domContext.attachedFiles,
+    
+    // 从全局状态
+    workspace: globalContext.workspace,
+    activeFile: globalContext.activeFile,
+    
+    // 从 React Fiber
+    fiberContext: fiberState,
+  };
+  
+  console.log('[PromptEnhance] 收集到的上下文:', context);
   return context;
 }
 
@@ -150,16 +406,39 @@ function collectIDEContext() {
 function formatContextForPrompt(context) {
   const parts = [];
 
-  if (context.currentFile) {
-    parts.push(`[当前文件: ${context.currentFile}]`);
+  // 1. 当前文件
+  if (context.currentFile || context.activeFile) {
+    parts.push(`[当前文件: ${context.currentFile || context.activeFile}]`);
   }
-
+  
+  // 2. 打开的文件
+  if (context.openTabs && context.openTabs.length > 0) {
+    parts.push(`[打开的文件: ${context.openTabs.slice(0, 5).join(', ')}]`);
+  }
+  
+  // 3. 附加的文件引用（用户在输入框中 @ 引用的）
+  if (context.attachedFiles && context.attachedFiles.length > 0) {
+    parts.push(`[已引用: ${context.attachedFiles.join(', ')}]`);
+  }
+  
+  // 4. 选中的代码
   if (context.selectedCode) {
-    parts.push(`[选中代码:\n\`\`\`\n${context.selectedCode}\n\`\`\`]`);
+    parts.push(`[选中代码:\n\`\`\`\n${context.selectedCode.substring(0, 1000)}\n\`\`\`]`);
   }
-
+  
+  // 5. 从缓存的请求中提取的代码
+  if (context.cachedCode && context.cachedCode.length > 0) {
+    const codeInfo = context.cachedCode.map(c => `${c.language}: ${c.code.substring(0, 200)}...`).join('\n');
+    parts.push(`[相关代码:\n${codeInfo}]`);
+  }
+  
+  // 6. 最近的对话摘要
   if (context.recentMessages && context.recentMessages.length > 0) {
-    parts.push(`[最近对话摘要: ${context.recentMessages[0]}]`);
+    const msgSummary = context.recentMessages
+      .slice(0, 2)
+      .map(m => `${m.role}: ${m.content.substring(0, 150)}...`)
+      .join('\n');
+    parts.push(`[最近对话:\n${msgSummary}]`);
   }
 
   return parts.length > 0 ? parts.join('\n') + '\n\n' : '';
