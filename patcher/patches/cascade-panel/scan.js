@@ -334,8 +334,14 @@ const initPromptEnhanceButton = async () => {
 
         // 创建增强按钮
         const btn = enhanceModule.createEnhanceButton(async () => {
-            // 重新获取当前活动的输入框（避免闭包引用问题）
-            const currentInput = document.querySelector('textarea:focus, [contenteditable="true"]:focus') || input;
+            // 重新获取当前活动的输入框
+            const root = getRoot();
+            const currentInput = root.querySelector('textarea, [contenteditable="true"]');
+            
+            if (!currentInput) {
+                enhanceModule.showErrorModal('找不到输入框');
+                return;
+            }
             
             const text = currentInput.value || currentInput.textContent || '';
             if (!text.trim()) {
@@ -346,66 +352,22 @@ const initPromptEnhanceButton = async () => {
             btn.classList.add('loading');
             try {
                 const enhanced = await enhanceModule.enhance(text);
-                console.log('[PromptEnhance] 增强完成，准备填入输入框:', enhanced.substring(0, 100) + '...');
+                console.log('[PromptEnhance] 增强完成，准备填入输入框');
                 
-                // 直接替换输入框内容
-                const targetInput = document.querySelector('textarea:focus, [contenteditable="true"]:focus') || currentInput;
-                const isContentEditable = targetInput.contentEditable === 'true';
+                // 使用更可靠的方式设置输入框的值
+                const success = await setInputValueReliably(currentInput, enhanced);
                 
-                if (isContentEditable) {
-                    // 对于 contenteditable 元素
-                    targetInput.textContent = enhanced;
-                    targetInput.innerHTML = enhanced.replace(/\n/g, '<br>');
-                    // 触发多种事件确保 React 能捕获
-                    targetInput.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: enhanced }));
-                    targetInput.dispatchEvent(new Event('change', { bubbles: true }));
-                    console.log('[PromptEnhance] contenteditable 填入完成');
-                } else if (targetInput.tagName === 'TEXTAREA') {
-                    // 对于 textarea，使用原生 setter 绕过 React 受控组件
-                    const nativeSetter = Object.getOwnPropertyDescriptor(
-                        window.HTMLTextAreaElement.prototype, 'value'
-                    )?.set;
-                    
-                    if (nativeSetter) {
-                        nativeSetter.call(targetInput, enhanced);
-                    } else {
-                        targetInput.value = enhanced;
-                    }
-                    
-                    // 触发多种事件确保 React 能捕获
-                    targetInput.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: enhanced }));
-                    targetInput.dispatchEvent(new Event('input', { bubbles: true }));
-                    targetInput.dispatchEvent(new Event('change', { bubbles: true }));
-                    console.log('[PromptEnhance] textarea 填入完成, value:', targetInput.value.substring(0, 50) + '...');
+                if (success) {
+                    console.log('[PromptEnhance] 输入框填入成功');
+                    enhanceModule.showResultModal(enhanced, () => {}, () => {});
                 } else {
-                    // 对于 input 元素
-                    const nativeSetter = Object.getOwnPropertyDescriptor(
-                        window.HTMLInputElement.prototype, 'value'
-                    )?.set;
-                    
-                    if (nativeSetter) {
-                        nativeSetter.call(targetInput, enhanced);
-                    } else {
-                        targetInput.value = enhanced;
-                    }
-                    targetInput.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: enhanced }));
-                    targetInput.dispatchEvent(new Event('change', { bubbles: true }));
-                    console.log('[PromptEnhance] input 填入完成');
+                    // 如果自动填入失败，让用户手动复制
+                    console.warn('[PromptEnhance] 自动填入可能失败，显示结果供复制');
+                    enhanceModule.showResultModal(enhanced, 
+                        () => copyToClipboard(enhanced), 
+                        () => {}
+                    );
                 }
-                
-                // 聚焦输入框并将光标移到末尾
-                targetInput.focus();
-                if (targetInput.setSelectionRange) {
-                    const len = enhanced.length;
-                    try {
-                        targetInput.setSelectionRange(len, len);
-                    } catch (e) {
-                        // 某些类型的 input 不支持 setSelectionRange
-                    }
-                }
-                
-                // 显示成功提示
-                enhanceModule.showResultModal(enhanced, () => {}, () => {});
             } catch (error) {
                 console.error('[PromptEnhance] 增强失败:', error);
                 enhanceModule.showErrorModal(error.message);
@@ -413,6 +375,95 @@ const initPromptEnhanceButton = async () => {
                 btn.classList.remove('loading');
             }
         });
+        
+        /**
+         * 可靠地设置输入框的值（处理 React 受控组件）
+         */
+        async function setInputValueReliably(input, value) {
+            const isContentEditable = input.contentEditable === 'true';
+            
+            // 先聚焦输入框
+            input.focus();
+            await sleep(50);
+            
+            if (isContentEditable) {
+                // 对于 contenteditable，使用 execCommand
+                // 先选中全部内容
+                document.execCommand('selectAll', false, null);
+                await sleep(10);
+                // 然后插入新内容（会替换选中的内容）
+                const success = document.execCommand('insertText', false, value);
+                if (!success) {
+                    // 备选：直接设置
+                    input.innerHTML = value.replace(/\n/g, '<br>');
+                    input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText' }));
+                }
+                return true;
+            } else {
+                // 对于 textarea/input
+                // 方法1: 使用原生 setter + React 合成事件
+                const nativeSetter = Object.getOwnPropertyDescriptor(
+                    input.tagName === 'TEXTAREA' 
+                        ? window.HTMLTextAreaElement.prototype 
+                        : window.HTMLInputElement.prototype,
+                    'value'
+                )?.set;
+                
+                if (nativeSetter) {
+                    nativeSetter.call(input, value);
+                } else {
+                    input.value = value;
+                }
+                
+                // 触发 React 能识别的事件
+                // React 17+ 使用这种方式
+                const inputEvent = new InputEvent('input', {
+                    bubbles: true,
+                    cancelable: true,
+                    inputType: 'insertText',
+                    data: value,
+                });
+                input.dispatchEvent(inputEvent);
+                
+                // 同时触发原生事件
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+                
+                // 方法2: 如果上面的方式对 React 不生效，尝试模拟键盘输入
+                // 检查值是否真的设置成功
+                await sleep(100);
+                if (input.value !== value) {
+                    console.log('[PromptEnhance] 尝试备选方案: 模拟键盘输入');
+                    // 先清空
+                    input.value = '';
+                    input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'deleteContentBackward' }));
+                    
+                    // 使用 execCommand (某些 Electron 应用支持)
+                    input.focus();
+                    document.execCommand('selectAll', false, null);
+                    document.execCommand('insertText', false, value);
+                }
+                
+                // 将光标移到末尾
+                try {
+                    input.setSelectionRange(value.length, value.length);
+                } catch (e) {}
+                
+                return input.value === value;
+            }
+        }
+        
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                console.log('[PromptEnhance] 已复制到剪贴板');
+            }).catch(err => {
+                console.error('[PromptEnhance] 复制失败:', err);
+            });
+        }
 
         // 插入按钮到发送按钮旁边
         // 查找发送按钮的多种可能选择器
