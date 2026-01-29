@@ -177,12 +177,15 @@ const PROVIDERS: Record<string, ProviderInfo> = {
     defaultModel: "claude-sonnet-4-20250514",
     hint: "Anthropic Claude API",
     keyPlaceholder: "sk-ant-...",
-    modelHint: "推荐 Claude Sonnet 4 (最新)",
+    modelHint: "推荐 Claude 4.5 系列 (最新)",
     models: [
+      {
+        label: "Claude Opus 4.5 Thinking",
+        value: "claude-opus-4-5-thinking-20250116",
+      },
+      { label: "Claude Haiku 4.5", value: "claude-haiku-4-5-20250116" },
       { label: "Claude Sonnet 4 (推荐)", value: "claude-sonnet-4-20250514" },
       { label: "Claude Sonnet 3.5", value: "claude-3-5-sonnet-20241022" },
-      { label: "Claude Haiku 3.5", value: "claude-3-5-haiku-20241022" },
-      { label: "Claude Opus 3", value: "claude-3-opus-20240229" },
     ],
   },
   openai: {

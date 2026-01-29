@@ -38,18 +38,14 @@
 
 ---
 
-## Manager 补丁导致 "安装损坏" 提示
+## ~~Manager 补丁导致 "安装损坏" 提示~~ (已修复)
+
+> ✅ **此问题已在 v2.3.1 版本中修复**
+>
+> 现在安装 Manager 补丁时，Patcher 会自动清空 `product.json` 中的 `checksums` 字段，从而避免"安装损坏"提示。
 
 **问题描述**: 启用 Manager 补丁后, 打开 Antigravity 时左下角会弹出 "Antigravity 安装似乎损坏. 请重新安装." 的提示.
 
-**影响范围**:
-- 仅当 Manager 补丁启用时出现
-- 侧边栏补丁不受影响
-
 **原因**: Manager 补丁需要修改 `workbench-jetski-agent.html` 文件, Antigravity 启动时会检测该文件的完整性, 发现被修改后会弹出此警告.
 
-**说明**: 这是预期行为, 不影响 Antigravity 的正常使用. 如果不希望看到此提示, 可以在 Patcher 中禁用 Manager 补丁.
-
-**变通方案**:
-1. 忽略该提示, 点击关闭即可
-2. 如确实不需要 Manager 功能增强, 在 Patcher 中关闭 "Manager 窗口设置 -> 启用补丁" 开关
+**解决方案**: Patcher 在安装 Manager 补丁时会自动清空 `product.json` 的 checksums 字段, 绕过完整性校验.

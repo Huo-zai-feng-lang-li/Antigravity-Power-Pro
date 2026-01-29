@@ -153,6 +153,13 @@ pub fn install_patch(
         // 备份并安装 Manager 补丁
         backup_manager_files(&workbench_dir)?;
         write_manager_patches(&workbench_dir, &manager_features)?;
+        
+        // 清空 product.json 的 checksums 字段，消除"安装损坏"提示
+        let product_json_path = antigravity_path
+            .join("resources")
+            .join("app")
+            .join("product.json");
+        clear_product_checksums(&product_json_path)?;
     } else {
         // 禁用时还原 Manager 文件
         restore_manager_files(&workbench_dir)?;
@@ -501,5 +508,46 @@ fn restore_manager_files(workbench_dir: &PathBuf) -> Result<(), String> {
 fn restore_backup_files(extensions_dir: &PathBuf, workbench_dir: &PathBuf) -> Result<(), String> {
     restore_cascade_files(extensions_dir)?;
     restore_manager_files(workbench_dir)?;
+    Ok(())
+}
+
+/// 清空 product.json 的 checksums 字段
+/// 
+/// Antigravity 启动时会校验文件的 checksums，修改 workbench-jetski-agent.html 后
+/// 校验和不匹配会导致"安装似乎损坏"提示。清空 checksums 字段可以绕过此校验。
+fn clear_product_checksums(product_json_path: &PathBuf) -> Result<(), String> {
+    if !product_json_path.exists() {
+        // product.json 不存在时跳过，不报错
+        return Ok(());
+    }
+
+    // 备份 product.json（仅首次）
+    let backup_path = product_json_path.with_extension("json.bak");
+    if !backup_path.exists() {
+        fs::copy(product_json_path, &backup_path)
+            .map_err(|e| format!("备份 product.json 失败: {}", e))?;
+    }
+
+    // 读取并解析 JSON
+    let content = fs::read_to_string(product_json_path)
+        .map_err(|e| format!("读取 product.json 失败: {}", e))?;
+    
+    let mut json: serde_json::Value = serde_json::from_str(&content)
+        .map_err(|e| format!("解析 product.json 失败: {}", e))?;
+
+    // 清空 checksums 字段
+    if let Some(obj) = json.as_object_mut() {
+        if obj.contains_key("checksums") {
+            obj.insert("checksums".to_string(), serde_json::json!({}));
+            
+            // 写回文件（保持格式化）
+            let formatted = serde_json::to_string_pretty(&json)
+                .map_err(|e| format!("序列化 product.json 失败: {}", e))?;
+            
+            fs::write(product_json_path, formatted)
+                .map_err(|e| format!("写入 product.json 失败: {}", e))?;
+        }
+    }
+
     Ok(())
 }

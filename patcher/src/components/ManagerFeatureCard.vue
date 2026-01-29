@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <section class="card" :class="{ 'is-disabled': !model.enabled }">
     <div class="card-header">
       <h2 class="card-title">Manager 窗口设置</h2>
@@ -8,10 +8,6 @@
       </label>
     </div>
 
-    <div v-if="model.enabled" class="warning-tip">
-      ⚠️ 启用后，Antigravity 左下角会提示"安装似乎损坏"，这是预期行为。
-    </div>
-    
     <div class="feature-list">
       <label class="feature-item" :class="{ 'item-disabled': !model.enabled }">
         <div class="feature-info">
@@ -133,16 +129,6 @@ const model = defineModel<ManagerFeatureFlags>({ required: true });
 .toggle-label {
   font-size: 12px;
   color: var(--ag-text-secondary);
-}
-
-.warning-tip {
-  background: rgba(234, 179, 8, 0.15);
-  border: 1px solid rgba(234, 179, 8, 0.3);
-  border-radius: 6px;
-  padding: 8px 12px;
-  margin-bottom: 12px;
-  font-size: 12px;
-  color: #eab308;
 }
 
 .feature-list {

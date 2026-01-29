@@ -2,6 +2,11 @@
  * 提示词增强模块
  * 调用自定义 LLM API 优化用户输入的提示词
  * 支持 OpenAI 兼容格式和 Anthropic Claude 格式
+ *
+ * 功能特性:
+ * - 双击空格快捷键触发增强
+ * - 直接替换输入框内容（无弹窗）
+ * - 简洁的 toast 提示
  */
 
 // 默认系统提示词
@@ -29,6 +34,10 @@ const DEFAULT_CONFIG = {
 
 let config = { ...DEFAULT_CONFIG };
 
+// 双击空格检测状态
+let lastSpaceTime = 0;
+const DOUBLE_SPACE_THRESHOLD = 300; // 毫秒
+
 /**
  * 初始化配置
  * @param {Object} userConfig - 用户配置
@@ -37,6 +46,12 @@ export function init(userConfig = {}) {
   config = { ...DEFAULT_CONFIG, ...userConfig };
   if (!config.systemPrompt) {
     config.systemPrompt = DEFAULT_SYSTEM_PROMPT;
+  }
+
+  // 初始化快捷键监听
+  if (config.enabled) {
+    initKeyboardShortcut();
+    injectStyles();
   }
 }
 
@@ -167,6 +182,197 @@ export async function enhance(prompt) {
 }
 
 /**
+ * 查找当前活动的输入框
+ * @returns {HTMLTextAreaElement|HTMLInputElement|null}
+ */
+function findActiveInput() {
+  const active = document.activeElement;
+  if (
+    active &&
+    (active.tagName === "TEXTAREA" ||
+      (active.tagName === "INPUT" && active.type === "text") ||
+      active.contentEditable === "true")
+  ) {
+    return active;
+  }
+
+  // 尝试查找 Cascade 的输入框
+  const cascadeInput =
+    document.querySelector('textarea[placeholder*="Ask"]') ||
+    document.querySelector("textarea[data-testid]") ||
+    document.querySelector(".chat-input textarea") ||
+    document.querySelector('[contenteditable="true"]');
+  return cascadeInput;
+}
+
+/**
+ * 获取输入框的值
+ * @param {HTMLElement} input
+ * @returns {string}
+ */
+function getInputValue(input) {
+  if (input.contentEditable === "true") {
+    return input.textContent || "";
+  }
+  return input.value || "";
+}
+
+/**
+ * 设置输入框的值
+ * @param {HTMLElement} input
+ * @param {string} value
+ */
+function setInputValue(input, value) {
+  if (input.contentEditable === "true") {
+    input.textContent = value;
+    // 触发 input 事件
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  } else {
+    // 对于 React 受控组件，需要特殊处理
+    const nativeInputValueSetter =
+      Object.getOwnPropertyDescriptor(
+        window.HTMLTextAreaElement.prototype,
+        "value",
+      )?.set ||
+      Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        "value",
+      )?.set;
+
+    if (nativeInputValueSetter) {
+      nativeInputValueSetter.call(input, value);
+    } else {
+      input.value = value;
+    }
+
+    // 触发 React 的 onChange
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  // 聚焦并将光标移到末尾
+  input.focus();
+  if (input.setSelectionRange) {
+    input.setSelectionRange(value.length, value.length);
+  }
+}
+
+/**
+ * 显示 Toast 提示
+ * @param {string} message
+ * @param {'info'|'success'|'error'} type
+ * @param {number} duration
+ */
+function showToast(message, type = "info", duration = 2000) {
+  // 移除已有的 toast
+  const existing = document.querySelector(".anti-power-toast");
+  if (existing) existing.remove();
+
+  const toast = document.createElement("div");
+  toast.className = `anti-power-toast anti-power-toast-${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  // 显示动画
+  requestAnimationFrame(() => {
+    toast.classList.add("show");
+  });
+
+  // 自动隐藏
+  if (duration > 0) {
+    setTimeout(() => {
+      toast.classList.remove("show");
+      setTimeout(() => toast.remove(), 200);
+    }, duration);
+  }
+
+  return toast;
+}
+
+/**
+ * 执行提示词增强（直接替换输入框内容）
+ */
+async function performEnhance() {
+  if (!isEnabled()) {
+    showToast("提示词增强未配置", "error");
+    return;
+  }
+
+  const input = findActiveInput();
+  if (!input) {
+    showToast("未找到输入框", "error");
+    return;
+  }
+
+  const originalPrompt = getInputValue(input).trim();
+  if (!originalPrompt) {
+    showToast("请先输入提示词", "error");
+    return;
+  }
+
+  // 显示加载状态
+  const loadingToast = showToast("✨ 正在优化提示词...", "info", 0);
+
+  try {
+    const enhanced = await enhance(originalPrompt);
+
+    // 直接替换输入框内容
+    setInputValue(input, enhanced);
+
+    // 移除加载提示，显示成功
+    loadingToast.remove();
+    showToast("✓ 提示词已优化", "success", 1500);
+  } catch (error) {
+    loadingToast.remove();
+    showToast(`✗ ${error.message}`, "error", 3000);
+    console.error("[PromptEnhance] Error:", error);
+  }
+}
+
+/**
+ * 初始化键盘快捷键（双击空格）
+ */
+function initKeyboardShortcut() {
+  document.addEventListener(
+    "keydown",
+    (e) => {
+      // 只在输入框中生效
+      const target = e.target;
+      const isInput =
+        target.tagName === "TEXTAREA" ||
+        target.tagName === "INPUT" ||
+        target.contentEditable === "true";
+
+      if (!isInput) return;
+
+      // 检测空格键
+      if (e.key === " " && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        const now = Date.now();
+
+        if (now - lastSpaceTime < DOUBLE_SPACE_THRESHOLD) {
+          // 双击空格检测成功
+          e.preventDefault();
+
+          // 删除第一个空格（回退一个字符）
+          const input = target;
+          const value = getInputValue(input);
+          if (value.endsWith(" ")) {
+            setInputValue(input, value.slice(0, -1));
+          }
+
+          // 触发增强
+          performEnhance();
+          lastSpaceTime = 0;
+        } else {
+          lastSpaceTime = now;
+        }
+      }
+    },
+    true,
+  );
+}
+
+/**
  * 创建增强按钮元素
  * @param {Function} onClick - 点击回调
  * @returns {HTMLButtonElement}
@@ -174,18 +380,18 @@ export async function enhance(prompt) {
 export function createEnhanceButton(onClick) {
   const btn = document.createElement("button");
   btn.className = "anti-power-enhance-btn";
-  btn.title = "提示词增强 (AI 优化)";
+  btn.title = "提示词增强 (双击空格)";
   btn.innerHTML = `
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
         </svg>
     `;
-  btn.addEventListener("click", onClick);
+  btn.addEventListener("click", onClick || performEnhance);
   return btn;
 }
 
 /**
- * 注入增强按钮的样式
+ * 注入样式
  */
 export function injectStyles() {
   if (document.getElementById("anti-power-enhance-styles")) {
@@ -195,6 +401,7 @@ export function injectStyles() {
   const style = document.createElement("style");
   style.id = "anti-power-enhance-styles";
   style.textContent = `
+        /* 增强按钮样式 */
         .anti-power-enhance-btn {
             display: inline-flex;
             align-items: center;
@@ -241,181 +448,69 @@ export function injectStyles() {
             height: 14px;
         }
 
-        /* 增强结果弹窗 */
-        .anti-power-enhance-modal {
+        /* Toast 提示样式 */
+        .anti-power-toast {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            backdrop-filter: blur(4px);
-        }
-
-        .anti-power-enhance-modal-content {
-            background: #1e1e1e;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 20px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 80vh;
-            overflow: auto;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-        }
-
-        .anti-power-enhance-modal h3 {
-            margin: 0 0 16px;
-            font-size: 16px;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 13px;
             font-weight: 500;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            z-index: 99999;
+            opacity: 0;
+            transition: all 0.2s ease;
+            pointer-events: none;
+            white-space: nowrap;
         }
 
-        .anti-power-enhance-modal h3 svg {
-            color: #fbbf24;
+        .anti-power-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
         }
 
-        .anti-power-enhance-result {
-            background: #2d2d2d;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 12px;
-            font-size: 14px;
-            line-height: 1.6;
-            color: #e0e0e0;
-            white-space: pre-wrap;
-            word-break: break-word;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .anti-power-enhance-actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 16px;
-            justify-content: flex-end;
-        }
-
-        .anti-power-enhance-actions button {
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-
-        .anti-power-enhance-actions .primary {
-            background: #3b82f6;
-            border: none;
+        .anti-power-toast-info {
+            background: rgba(59, 130, 246, 0.95);
             color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
         }
 
-        .anti-power-enhance-actions .primary:hover {
-            background: #2563eb;
+        .anti-power-toast-success {
+            background: rgba(34, 197, 94, 0.95);
+            color: white;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
         }
 
-        .anti-power-enhance-actions .secondary {
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #e0e0e0;
-        }
-
-        .anti-power-enhance-actions .secondary:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .anti-power-enhance-error {
-            color: #ef4444;
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            border-radius: 8px;
-            padding: 12px;
-            font-size: 14px;
+        .anti-power-toast-error {
+            background: rgba(239, 68, 68, 0.95);
+            color: white;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
         }
     `;
   document.head.appendChild(style);
 }
 
 /**
- * 显示增强结果弹窗
+ * 显示错误弹窗（保留向后兼容）
+ * @param {string} message - 错误信息
+ */
+export function showErrorModal(message) {
+  showToast(`✗ ${message}`, "error", 3000);
+}
+
+/**
+ * 显示结果弹窗（保留向后兼容，但实际不显示弹窗）
  * @param {string} enhancedPrompt - 增强后的提示词
  * @param {Function} onApply - 应用回调
  * @param {Function} onCancel - 取消回调
  */
 export function showResultModal(enhancedPrompt, onApply, onCancel) {
-  const modal = document.createElement("div");
-  modal.className = "anti-power-enhance-modal";
-  modal.innerHTML = `
-        <div class="anti-power-enhance-modal-content">
-            <h3>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
-                </svg>
-                提示词增强结果
-            </h3>
-            <div class="anti-power-enhance-result">${escapeHtml(enhancedPrompt)}</div>
-            <div class="anti-power-enhance-actions">
-                <button class="secondary" data-action="cancel">取消</button>
-                <button class="secondary" data-action="copy">复制</button>
-                <button class="primary" data-action="apply">应用</button>
-            </div>
-        </div>
-    `;
-
-  modal.addEventListener("click", (e) => {
-    const action = e.target.dataset?.action;
-    if (action === "apply") {
-      onApply(enhancedPrompt);
-      modal.remove();
-    } else if (action === "cancel" || e.target === modal) {
-      onCancel?.();
-      modal.remove();
-    } else if (action === "copy") {
-      navigator.clipboard.writeText(enhancedPrompt).then(() => {
-        e.target.textContent = "已复制!";
-        setTimeout(() => {
-          e.target.textContent = "复制";
-        }, 1500);
-      });
-    }
-  });
-
-  document.body.appendChild(modal);
-  return modal;
-}
-
-/**
- * 显示错误弹窗
- * @param {string} message - 错误信息
- */
-export function showErrorModal(message) {
-  const modal = document.createElement("div");
-  modal.className = "anti-power-enhance-modal";
-  modal.innerHTML = `
-        <div class="anti-power-enhance-modal-content">
-            <h3>增强失败</h3>
-            <div class="anti-power-enhance-error">${escapeHtml(message)}</div>
-            <div class="anti-power-enhance-actions">
-                <button class="primary" data-action="close">关闭</button>
-            </div>
-        </div>
-    `;
-
-  modal.addEventListener("click", (e) => {
-    if (e.target.dataset?.action === "close" || e.target === modal) {
-      modal.remove();
-    }
-  });
-
-  document.body.appendChild(modal);
-  return modal;
+  // 直接应用，不再显示弹窗
+  if (onApply) {
+    onApply(enhancedPrompt);
+  }
+  showToast("✓ 提示词已优化", "success", 1500);
 }
 
 /**
@@ -435,4 +530,11 @@ function escapeHtml(str) {
  */
 export function getConfig() {
   return { ...config };
+}
+
+/**
+ * 手动触发增强（供外部调用）
+ */
+export function triggerEnhance() {
+  performEnhance();
 }

@@ -300,14 +300,11 @@ const scheduleScan = (nodes) => {
 };
 
 /**
- * 提示词增强按钮初始化
- * 在输入框区域注入增强按钮
+ * 提示词增强初始化
  */
-const INPUT_SELECTOR = 'textarea, [contenteditable="true"], input[type="text"]';
-const ENHANCE_BTN_CLASS = 'anti-power-enhance-btn';
 let enhanceModule = null;
 
-const initPromptEnhanceButton = async () => {
+const initPromptEnhance = async () => {
     // 延迟加载增强模块
     if (!enhanceModule) {
         try {
@@ -318,59 +315,8 @@ const initPromptEnhanceButton = async () => {
         }
     }
 
-    if (!enhanceModule.isEnabled()) return;
-
-    // 查找输入框区域
-    const root = getRoot();
-    const inputAreas = root.querySelectorAll(INPUT_SELECTOR);
-    
-    inputAreas.forEach((input) => {
-        // 检查是否已添加按钮
-        const parent = input.parentElement;
-        if (!parent || parent.querySelector(`.${ENHANCE_BTN_CLASS}`)) return;
-
-        // 创建增强按钮
-        const btn = enhanceModule.createEnhanceButton(async () => {
-            const text = input.value || input.textContent || '';
-            if (!text.trim()) {
-                enhanceModule.showErrorModal('请先输入提示词');
-                return;
-            }
-
-            btn.classList.add('loading');
-            try {
-                const enhanced = await enhanceModule.enhance(text);
-                enhanceModule.showResultModal(
-                    enhanced,
-                    (result) => {
-                        // 应用增强结果
-                        if (input.value !== undefined) {
-                            input.value = result;
-                            input.dispatchEvent(new Event('input', { bubbles: true }));
-                        } else {
-                            input.textContent = result;
-                            input.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-                    },
-                    () => {} // 取消
-                );
-            } catch (error) {
-                enhanceModule.showErrorModal(error.message);
-            } finally {
-                btn.classList.remove('loading');
-            }
-        });
-
-        // 插入按钮到输入框旁边
-        // 尝试找到合适的插入位置
-        const toolbar = parent.querySelector('[class*="toolbar"], [class*="actions"], [class*="buttons"]');
-        if (toolbar) {
-            toolbar.insertBefore(btn, toolbar.firstChild);
-        } else {
-            // 如果没有找到工具栏,插入到输入框后面
-            input.parentNode.insertBefore(btn, input.nextSibling);
-        }
-    });
+    // 使用配置初始化模块（会自动设置双击空格快捷键）
+    enhanceModule.init(config.promptEnhance);
 };
 
 /**
@@ -384,9 +330,9 @@ const init = () => {
         addFeedbackCopyButtons();
     }
 
-    // 初始化提示词增强按钮
+    // 初始化提示词增强（双击空格快捷键）
     if (config.promptEnhance?.enabled) {
-        initPromptEnhanceButton();
+        initPromptEnhance();
     }
 
     const observer = new MutationObserver((mutations) => {
@@ -404,11 +350,6 @@ const init = () => {
         });
         if (nodesToScan.length > 0) {
             scheduleScan(nodesToScan);
-        }
-
-        // 检查是否需要重新注入增强按钮
-        if (config.promptEnhance?.enabled) {
-            initPromptEnhanceButton();
         }
     });
 
