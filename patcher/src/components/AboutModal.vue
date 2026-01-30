@@ -5,34 +5,33 @@
         <h2 class="modal-title">关于</h2>
         <button class="close-btn" @click="$emit('close')">×</button>
       </div>
-      
+
       <div class="modal-body">
         <div class="about-logo">
-          <img src="../assets/logo.png" alt="logo" class="about-icon" />
+          <img src="../assets/LOGO.gif" alt="logo" class="about-icon" />
         </div>
-        
-        <h3 class="about-name">Anti-Power</h3>
+
+        <h3 class="about-name">Antigravity-Power-Pro</h3>
         <p class="about-version">版本 {{ version }}</p>
-        
+
         <p class="about-desc">
           Antigravity AI IDE 增强补丁管理工具，让你的 AI 对话体验更上一层楼。
         </p>
-        
+
         <p class="about-qq">
-          QQ 交流群: <a href="#" @click.prevent="openQQGroup" class="qq-link">993975349</a>
+          QQ 交流群:
+          <a href="#" @click.prevent="openQQGroup" class="qq-link">993975349</a>
         </p>
 
         <div class="about-actions">
-          <button 
+          <button
             class="about-btn"
             @click="checkUpdate"
             :disabled="isCheckingUpdate"
           >
-            {{ isCheckingUpdate ? '检查中...' : '检查更新' }}
+            {{ isCheckingUpdate ? "检查中..." : "检查更新" }}
           </button>
-          <button class="about-btn" @click="openGitHub">
-            GitHub 仓库
-          </button>
+          <button class="about-btn" @click="openGitHub">GitHub 仓库</button>
         </div>
 
         <div v-if="updateInfo" class="update-info">
@@ -51,14 +50,14 @@
       </div>
 
       <div class="modal-footer">
-        <p>© 2026 Anti-Power · MIT License</p>
+        <p>© 2026 Antigravity-Power-Pro · MIT License</p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref } from "vue";
 
 const props = defineProps<{
   show: boolean;
@@ -66,15 +65,17 @@ const props = defineProps<{
   githubUrl: string;
 }>();
 
-defineEmits(['close']);
+defineEmits(["close"]);
 
 const isCheckingUpdate = ref(false);
-const updateInfo = ref<{ hasUpdate: boolean; latestVersion: string } | null>(null);
+const updateInfo = ref<{ hasUpdate: boolean; latestVersion: string } | null>(
+  null,
+);
 
 // 比较语义版本 (返回: 1 if a > b, -1 if a < b, 0 if equal)
 function compareVersions(a: string, b: string): number {
-  const partsA = a.split('.').map(Number);
-  const partsB = b.split('.').map(Number);
+  const partsA = a.split(".").map(Number);
+  const partsB = b.split(".").map(Number);
   for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
     const numA = partsA[i] || 0;
     const numB = partsB[i] || 0;
@@ -90,39 +91,42 @@ async function checkUpdate() {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
-    
-    const res = await fetch(`https://api.github.com/repos/daoif/anti-power/releases/latest`, {
-      signal: controller.signal
-    });
+
+    const res = await fetch(
+      `https://api.github.com/repos/daoif/Antigravity-Power-Pro/releases/latest`,
+      {
+        signal: controller.signal,
+      },
+    );
     clearTimeout(timeoutId);
-    
+
     if (res.ok) {
       const data = await res.json();
-      const latestVersion = data.tag_name?.replace('v', '') || data.name;
+      const latestVersion = data.tag_name?.replace("v", "") || data.name;
       // 只有当远程版本大于本地版本时才提示更新
       updateInfo.value = {
         hasUpdate: compareVersions(latestVersion, props.version) > 0,
-        latestVersion
+        latestVersion,
       };
     } else {
-      updateInfo.value = { hasUpdate: false, latestVersion: '检查失败' };
+      updateInfo.value = { hasUpdate: false, latestVersion: "检查失败" };
     }
   } catch (e) {
     console.error("检查更新失败:", e);
-    updateInfo.value = { hasUpdate: false, latestVersion: '网络错误' };
+    updateInfo.value = { hasUpdate: false, latestVersion: "网络错误" };
   } finally {
     isCheckingUpdate.value = false;
   }
 }
 
 async function openGitHub() {
-  const { openUrl } = await import('@tauri-apps/plugin-opener');
+  const { openUrl } = await import("@tauri-apps/plugin-opener");
   await openUrl(props.githubUrl);
 }
 
 async function openQQGroup() {
-  const { openUrl } = await import('@tauri-apps/plugin-opener');
-  await openUrl('https://qm.qq.com/q/AHUKoyLVKg');
+  const { openUrl } = await import("@tauri-apps/plugin-opener");
+  await openUrl("https://qm.qq.com/q/AHUKoyLVKg");
 }
 </script>
 

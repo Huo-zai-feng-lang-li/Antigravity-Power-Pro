@@ -1,4 +1,4 @@
-// Anti-Power Patcher Rust 后端.
+// Antigravity-Power-Pro Patcher Rust 后端.
 // 负责路径检测, 补丁安装/卸载, 配置读写.
 
 mod commands;

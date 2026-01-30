@@ -1,6 +1,6 @@
 # 已知问题
 
-本文档记录 Anti-Power 的已知问题和限制.
+本文档记录 Antigravity-Power-Pro 的已知问题和限制.
 
 ---
 
@@ -9,6 +9,7 @@
 **问题描述**: 在 Markdown 表格中使用包含 `|` 字符的 LaTeX 公式时, 公式可能无法正常渲染.
 
 **影响范围**:
+
 - 绝对值: `$|x|$`
 - 行列式: `$\left| ... \right|$`
 - 其他使用裸露 `|` 的公式
@@ -23,7 +24,7 @@
 
 2. **纯文本**: 使用反斜杠转义 `\|` 来显示竖线字符
 
-**详细信息**: [Issue #7](https://github.com/daoif/anti-power/issues/7)
+**详细信息**: [Issue #7](https://github.com/daoif/Antigravity-Power-Pro/issues/7)
 
 ---
 
@@ -32,6 +33,7 @@
 **问题描述**: Manager 窗口的字体大小开关与数值目前不会影响实际渲染.
 
 **影响范围**:
+
 - Manager 窗口设置中的 "字体大小"
 
 **备注**: 该功能保留为占位, 后续会在 Manager 渲染链路稳定后补齐.

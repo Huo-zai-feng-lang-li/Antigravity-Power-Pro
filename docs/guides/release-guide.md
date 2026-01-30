@@ -1,17 +1,17 @@
-# Anti-Power Patcher 发布指南
+# Antigravity-Power-Pro Patcher 发布指南
 
 ## 版本号同步
 
 发布前确保以下文件版本号一致:
 
-| 文件 | 路径 |
-|------|------|
-| package.json | `patcher/package.json` -> `version` |
-| Tauri 配置 | `patcher/src-tauri/tauri.conf.json` -> `version` |
-| Cargo 配置 | `patcher/src-tauri/Cargo.toml` -> `version` |
-| 前端显示 | `patcher/src/App.vue` -> `APP_VERSION` |
-| README 版本徽章 | `README.md` -> 顶部版本号徽章 |
-| README 版本表格 | `README.md` -> "版本信息" 表格 |
+| 文件            | 路径                                             |
+| --------------- | ------------------------------------------------ |
+| package.json    | `patcher/package.json` -> `version`              |
+| Tauri 配置      | `patcher/src-tauri/tauri.conf.json` -> `version` |
+| Cargo 配置      | `patcher/src-tauri/Cargo.toml` -> `version`      |
+| 前端显示        | `patcher/src/App.vue` -> `APP_VERSION`           |
+| README 版本徽章 | `README.md` -> 顶部版本号徽章                    |
+| README 版本表格 | `README.md` -> "版本信息" 表格                   |
 
 ---
 
@@ -22,17 +22,17 @@ cd patcher
 npm run tauri:build
 ```
 
-产物位置: `patcher/src-tauri/target/release/anti-power.exe`
+产物位置: `patcher/src-tauri/target/release/Antigravity-Power-Pro.exe`
 
 ### 编译选项
 
 修改 `tauri.conf.json` 中的 `bundle.targets`:
 
-| 值 | 说明 |
-|----|------|
-| `[]` | 仅生成单体 exe |
+| 值         | 说明                |
+| ---------- | ------------------- |
+| `[]`       | 仅生成单体 exe      |
 | `["nsis"]` | 生成 Windows 安装包 |
-| `"all"` | 生成所有格式 |
+| `"all"`    | 生成所有格式        |
 
 ---
 
@@ -42,10 +42,11 @@ npm run tauri:build
 
 ```powershell
 # 以项目根目录执行
-Compress-Archive -Path patcher\patches\* -DestinationPath anti-power-patches.zip -Force
+Compress-Archive -Path patcher\patches\* -DestinationPath Antigravity-Power-Pro-patches.zip -Force
 ```
 
 压缩包应包含:
+
 - `cascade-panel.html`
 - `cascade-panel/`
 - `workbench-jetski-agent.html`
@@ -68,14 +69,14 @@ git push origin vX.Y.Z
 
 # 3. 使用 gh 发布
 gh release create vX.Y.Z `
-  "patcher/src-tauri/target/release/anti-power.exe" `
-  "anti-power-patches.zip" `
+  "patcher/src-tauri/target/release/Antigravity-Power-Pro.exe" `
+  "Antigravity-Power-Pro-patches.zip" `
   --title "vX.Y.Z" `
   --notes-file release-notes.md
 
 # 4. 清理临时文件
 Remove-Item release-notes.md
-Remove-Item anti-power-patches.zip
+Remove-Item Antigravity-Power-Pro-patches.zip
 ```
 
 > ⚠️ 关于 release-notes.md
@@ -83,19 +84,24 @@ Remove-Item anti-power-patches.zip
 > 发布说明较长或包含特殊字符时, 手动创建 `release-notes.md` 文件 (使用编辑器), 避免在命令行中拼接内容导致解析问题.
 >
 > 模板:
+>
 > ```markdown
 > ## 新功能
+>
 > - 功能描述
-> 
+>
 > ## 修复
+>
 > - 修复描述
-> 
+>
 > ## 致谢
+>
 > - 感谢 @mikessslxxx
-> 
+>
 > ## 安装
-> - Windows: 下载 `anti-power.exe` 安装
-> - macOS: 下载 `anti-power-patches.zip` 手动安装
+>
+> - Windows: 下载 `Antigravity-Power-Pro.exe` 安装
+> - macOS: 下载 `Antigravity-Power-Pro-patches.zip` 手动安装
 > ```
 
 ---

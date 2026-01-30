@@ -12,20 +12,14 @@ import ConfirmModal from "./components/ConfirmModal.vue";
 
 // 常量
 const APP_VERSION = "2.3.0";
-const GITHUB_URL = "https://github.com/daoif/anti-power";
+const GITHUB_URL = "https://github.com/daoif/Antigravity-Power-Pro";
 
 // 补丁文件清单
 const PATCH_FILES = {
   // 将被修改的原始文件
-  modified: [
-    "cascade-panel.html",
-    "workbench-jetski-agent.html",
-  ],
+  modified: ["cascade-panel.html", "workbench-jetski-agent.html"],
   // 将添加的新文件/目录
-  added: [
-    "cascade-panel/  (侧边栏模块)",
-    "manager-panel/  (Manager模块)",
-  ],
+  added: ["cascade-panel/  (侧边栏模块)", "manager-panel/  (Manager模块)"],
   // 废弃文件（旧版本遗留，新版本不再使用）
   deprecated: [] as string[],
 };
@@ -48,24 +42,34 @@ const features = ref({
   fontSize: 20,
   promptEnhance: {
     enabled: false,
-    provider: 'anthropic',
-    apiBase: 'https://api.anthropic.com',
-    apiKey: '',
-    model: 'claude-sonnet-4-5-20250514',
-    systemPrompt: `你是一个提示词优化专家。你的唯一任务是：将用户输入的原始提示词优化为更好的版本。
+    provider: "anthropic",
+    apiBase: "https://api.anthropic.com",
+    apiKey: "",
+    model: "claude-sonnet-4-5-20250514",
+    systemPrompt: `你是一个智能提示词优化器，专门帮助用户生成更有效的 AI 对话提示词。
 
-重要规则：
-1. 你必须直接输出优化后的提示词，不能有任何前缀、解释或额外内容
-2. 不要回答用户的问题，只需优化提示词本身
-3. 如果用户输入很短或模糊（如"hi"、"帮我"），将其扩展为一个更具体、更有效的提示词
-4. 保持用户的原始意图和语言（中文/英文）
-5. 让优化后的提示词更加清晰、具体、结构化
+## 核心任务
+将用户输入的原始提示词优化为更清晰、更具体、更有效的版本。
 
-示例：
-- 输入："hi" -> 输出："你好，我需要你帮助我完成一个编程任务。请先了解我的需求，然后提供解决方案。"
-- 输入："这个代码有bug" -> 输出："请分析以下代码中的潜在bug，找出问题根源并提供修复方案。请详细解释bug产生的原因。"
+## 你会收到的信息
+1. **对话上下文**：之前的对话历史（如果有）
+2. **当前文件**：用户正在编辑的文件（如果有）
+3. **选中代码**：用户选中的代码片段（如果有）
+4. **用户原始提示词**：需要优化的内容
 
-如果提供了上下文信息（如当前文件、选中代码），请在优化后的提示词中合理引用这些上下文。`,
+## 优化规则
+1. **理解上下文**：仔细阅读对话历史，理解当前讨论的主题和背景
+2. **保持连贯性**：优化后的提示词应该与之前的对话保持逻辑连贯
+3. **具体化**：让模糊的问题变得具体，如果上下文中有相关信息就引用它
+4. **结构化**：为复杂问题添加清晰的结构
+5. **保持意图**：不改变用户的原始意图，只是表达得更清晰
+
+## 输出要求
+- **只输出优化后的提示词**，不要任何解释、前缀或额外内容
+- 保持用户使用的语言（中文/英文）
+- 如果原始提示词是追问或继续之前的话题，保持这种连续性
+
+记住：直接输出优化后的提示词，不要任何其他内容。`,
   },
 });
 
@@ -126,7 +130,11 @@ async function checkPatchStatus(path: string) {
         fontSize?: number;
       } | null>("read_manager_patch_config", { path });
       if (managerConfig) {
-        managerFeatures.value = { ...managerFeatures.value, ...managerConfig, enabled: true };
+        managerFeatures.value = {
+          ...managerFeatures.value,
+          ...managerConfig,
+          enabled: true,
+        };
       }
     }
   } catch (e) {
@@ -160,16 +168,16 @@ async function confirmInstall() {
   showConfirm.value = false;
   if (!antigravityPath.value) return;
   try {
-    await invoke("install_patch", { 
+    await invoke("install_patch", {
       path: antigravityPath.value,
       features: features.value,
-      managerFeatures: managerFeatures.value
+      managerFeatures: managerFeatures.value,
     });
     isInstalled.value = true;
-    showToast('✓ 补丁安装成功');
+    showToast("✓ 补丁安装成功");
   } catch (e) {
     console.error("安装失败:", e);
-    showToast('✗ 安装失败');
+    showToast("✗ 安装失败");
   }
 }
 
@@ -179,15 +187,15 @@ async function uninstallPatch() {
   try {
     await invoke("uninstall_patch", { path: antigravityPath.value });
     isInstalled.value = false;
-    showToast('✓ 已恢复原版');
+    showToast("✓ 已恢复原版");
   } catch (e) {
     console.error("卸载失败:", e);
-    showToast('✗ 恢复失败');
+    showToast("✗ 恢复失败");
   }
 }
 
 // Toast 提示
-const toastMessage = ref('');
+const toastMessage = ref("");
 const showToastFlag = ref(false);
 
 function showToast(message: string) {
@@ -202,15 +210,15 @@ function showToast(message: string) {
 async function updateConfigOnly() {
   if (!antigravityPath.value) return;
   try {
-    await invoke("update_config", { 
+    await invoke("update_config", {
       path: antigravityPath.value,
       features: features.value,
-      managerFeatures: managerFeatures.value
+      managerFeatures: managerFeatures.value,
     });
-    showToast('✓ 配置已更新');
+    showToast("✓ 配置已更新");
   } catch (e) {
     console.error("更新配置失败:", e);
-    showToast('✗ 更新失败');
+    showToast("✗ 更新失败");
   }
 }
 
@@ -221,10 +229,10 @@ onMounted(() => {
 
 <template>
   <div class="app-wrapper">
-    <TitleBar title="Anti-Power" @openAbout="showAbout = true" />
-    
+    <TitleBar title="Antigravity-Power-Pro" @openAbout="showAbout = true" />
+
     <main class="app-container">
-      <PathCard 
+      <PathCard
         v-model="antigravityPath"
         :isDetecting="isDetecting"
         @detect="detectPath"
@@ -238,15 +246,15 @@ onMounted(() => {
       <PromptEnhanceCard v-model="features.promptEnhance" />
 
       <section class="actions">
-        <button 
+        <button
           @click="requestInstall"
           :disabled="!antigravityPath"
           class="primary-btn"
         >
-          {{ isInstalled ? '重新安装' : '安装补丁' }}
+          {{ isInstalled ? "重新安装" : "安装补丁" }}
         </button>
-        
-        <button 
+
+        <button
           @click="updateConfigOnly"
           :disabled="!antigravityPath"
           class="secondary-btn"
@@ -254,8 +262,8 @@ onMounted(() => {
         >
           更新配置
         </button>
-        
-        <button 
+
+        <button
           @click="uninstallPatch"
           :disabled="!antigravityPath"
           class="secondary-btn danger"
@@ -265,23 +273,24 @@ onMounted(() => {
       </section>
 
       <footer class="footer">
-        <p>v{{ APP_VERSION }} · 
+        <p>
+          v{{ APP_VERSION }} ·
           <a :href="GITHUB_URL" target="_blank" class="link">GitHub</a>
         </p>
       </footer>
     </main>
 
-    <AboutModal 
-      :show="showAbout" 
+    <AboutModal
+      :show="showAbout"
       :version="APP_VERSION"
       :githubUrl="GITHUB_URL"
-      @close="showAbout = false" 
+      @close="showAbout = false"
     />
 
     <ConfirmModal
       :show="showConfirm"
       title="确认安装补丁"
-      message="即将安装 Anti-Power 补丁，请确认以下文件变更："
+      message="即将安装 Antigravity-Power-Pro 补丁，请确认以下文件变更："
       :modifiedFiles="PATCH_FILES.modified"
       :addedFiles="PATCH_FILES.added"
       :deprecatedFiles="PATCH_FILES.deprecated"
@@ -411,7 +420,3 @@ onMounted(() => {
   transform: translateX(-50%) translateY(20px);
 }
 </style>
-
-
-
-

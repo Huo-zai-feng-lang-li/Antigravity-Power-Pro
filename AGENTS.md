@@ -1,10 +1,10 @@
-# AGENTS.md (Anti-Power 项目关键上下文)
+# AGENTS.md (Antigravity-Power-Pro 项目关键上下文)
 
 > 目标: 让 AI 一眼理解本项目在做什么, 补丁如何落地, 关键入口在哪里.
 
 ## 项目定位
 
-- Anti-Power 是 Antigravity AI IDE 的增强补丁.
+- Antigravity-Power-Pro 是 Antigravity AI IDE 的增强补丁.
 - 主要增强侧边栏对话区域 (cascade-panel): Mermaid 渲染, 数学公式渲染, 一键复制, 表格颜色修复, 字体大小控制等.
 - 当前重点支持 Windows, macOS 仅手动安装流程 (见 `README.md` / `patcher/patches/manual-install.md`).
 

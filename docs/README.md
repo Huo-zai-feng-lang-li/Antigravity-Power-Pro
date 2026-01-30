@@ -1,6 +1,6 @@
 # 文档索引
 
-本目录汇总 Anti-Power 的使用, 维护, 参考类文档.
+本目录汇总 Antigravity-Power-Pro 的使用, 维护, 参考类文档.
 
 ## 指南
 

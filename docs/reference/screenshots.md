@@ -1,8 +1,11 @@
-# Anti-Power 效果展示
+# Antigravity-Power-Pro 效果展示
 
 ## 工具预览
 
-![Anti-Power Patcher](../assets/images/patcher-screenshot.png)
+![Antigravity-Power-Pro Patcher](../assets/images/patcher-screenshot.png)
+
+## 模仿AugmentCode 提示词增强
+![提示词增强效果](../assets/images/7.gif)
 
 ## Mermaid 流程图渲染
 

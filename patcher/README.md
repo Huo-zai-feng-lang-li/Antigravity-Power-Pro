@@ -1,4 +1,4 @@
-# Anti-Power Patcher
+# Antigravity-Power-Pro Patcher
 
 Tauri + Vue + TypeScript 安装器, 负责检测 Antigravity 安装路径, 安装与卸载补丁, 写入配置文件.
 

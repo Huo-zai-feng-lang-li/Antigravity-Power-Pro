@@ -20,7 +20,7 @@ patcher/src-tauri/Cargo.lock
 patcher/src-tauri/gen/
 
 # 构建产物
-anti-power-patches.zip
+Antigravity-Power-Pro-patches.zip
 release-notes.md
 
 .DS_Store

@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Usage:
-# 1. chmod +x ./anti-power.sh
-# 2. sudo ./anti-power.sh
+# 1. chmod +x ./Antigravity-Power-Pro.sh
+# 2. sudo ./Antigravity-Power-Pro.sh
 #
 # This script supports both macOS and Linux:
 # - macOS: /Applications/Antigravity.app/Contents/Resources/app

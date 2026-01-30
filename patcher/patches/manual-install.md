@@ -1,15 +1,15 @@
-# Anti-Power 补丁手动安装说明
+# Antigravity-Power-Pro 补丁手动安装说明
 
 适用于 Windows 和 macOS 的手动安装与配置.
 
 ## 适用场景
 
-- Windows: 推荐优先使用 anti-power.exe 安装器, 也可手动安装
-- macOS: 推荐优先使用 anti-power-macOS.sh 脚本, 也可手动安装
+- Windows: 推荐优先使用 Antigravity-Power-Pro.exe 安装器, 也可手动安装
+- macOS: 推荐优先使用 Antigravity-Power-Pro-macOS.sh 脚本, 也可手动安装
 
 ## 补丁包内容
 
-- anti-power-macOS.sh (macOS 安装脚本)
+- Antigravity-Power-Pro-macOS.sh (macOS 安装脚本)
 - cascade-panel.html
 - cascade-panel/ 目录
 - workbench-jetski-agent.html
@@ -18,7 +18,7 @@
 
 ## Windows (推荐: 安装器方式)
 
-1. 下载 anti-power.exe
+1. 下载 Antigravity-Power-Pro.exe
 2. 双击运行, 自动检测 Antigravity 安装路径
 3. 勾选功能并点击 安装补丁
 4. 重新打开 Antigravity 与 Manager 窗口
@@ -41,11 +41,11 @@
 1. 解压补丁包, 打开 Terminal (终端) 进入目录
 2. 赋予脚本执行权限:
    ```bash
-   chmod +x ./anti-power-macOS.sh
+   chmod +x ./Antigravity-Power-Pro-macOS.sh
    ```
 3. 运行脚本 (需要 sudo 权限):
    ```bash
-   sudo ./anti-power-macOS.sh
+   sudo ./Antigravity-Power-Pro-macOS.sh
    ```
 4. 脚本会自动备份原文件并完成替换
 5. 重新打开 Antigravity 与 Manager 窗口
