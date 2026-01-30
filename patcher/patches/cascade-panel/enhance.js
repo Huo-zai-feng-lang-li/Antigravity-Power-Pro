@@ -26,13 +26,15 @@ const DEFAULT_SYSTEM_PROMPT = `你是一个智能提示词优化器，专门帮�
 1. **理解上下文**：仔细阅读对话历史，理解当前讨论的主题和背景
 2. **保持连贯性**：优化后的提示词应该与之前的对话保持逻辑连贯
 3. **具体化**：让模糊的问题变得具体，如果上下文中有相关信息就引用它
-4. **结构化**：为复杂问题添加清晰的结构
+4. **结构化**：为复杂问题添加清晰的结构，使用 Markdown 列表
 5. **保持意图**：不改变用户的原始意图，只是表达得更清晰
+6. **保留格式**：必须使用 Markdown 格式（换行、列表、代码块），确保生成的提示词易于阅读
 
 ## 输出要求
 - **只输出优化后的提示词**，不要任何解释、前缀或额外内容
 - 保持用户使用的语言（中文/英文）
 - 如果原始提示词是追问或继续之前的话题，保持这种连续性
+- **关键**：确保输出包含必要的换行符，不要将长文本压缩成一行
 
 ## 示例
 
@@ -48,7 +50,12 @@ const DEFAULT_SYSTEM_PROMPT = `你是一个智能提示词优化器，专门帮�
 ### 示例 3 - 引用代码
 选中代码: function getData() { ... }
 输入: 优化这个
-输出: 请帮我优化上面选中的 getData 函数。具体需要：1) 提高性能 2) 改进可读性 3) 添加错误处理。请解释每处修改的原因。
+输出: 请帮我优化上面选中的 getData 函数。具体需要：
+1. 提高性能
+2. 改进可读性
+3. 添加错误处理
+
+请解释每处修改的原因。
 
 记住：直接输出优化后的提示词，不要任何其他内容。`;
 
@@ -107,17 +114,24 @@ function isAnthropicAPI() {
  * 按优先级排序，确保能在不同版本中找到对话区域
  */
 const CONVERSATION_SELECTORS = [
+  // 截图中的滚动容器特征
+  '[class*="overflow-y-auto"]',
   // Cascade 特定选择器
   '[class*="conversation"]',
   '[class*="chat-messages"]',
   '[class*="message-list"]',
   '[class*="messages-container"]',
+  '[data-testid="chat-list"]',
+  '[data-testid="chat-history"]',
+
   // 通用选择器
   '[role="log"]',
   '[aria-label*="conversation"]',
   '[aria-label*="chat"]',
+
   // 回退选择器
   'main [class*="scroll"]',
+  ".chat-scrollable",
 ];
 
 /**
@@ -127,13 +141,13 @@ const MESSAGE_SELECTORS = [
   // 用户消息
   {
     selector:
-      '[data-message-author-role="user"], [class*="user-message"], [class*="human-message"]',
+      '[data-message-author-role="user"], [class*="user-message"], [class*="human-message"], [data-testid*="user-message"], .bg-user-message',
     role: "user",
   },
   // AI 消息
   {
     selector:
-      '[data-message-author-role="assistant"], [class*="assistant-message"], [class*="ai-message"], [class*="bot-message"]',
+      '[data-message-author-role="assistant"], [class*="assistant-message"], [class*="ai-message"], [class*="bot-message"], [data-testid*="ai-message"], [class*="text-ide-message-block"]',
     role: "assistant",
   },
 ];
@@ -147,6 +161,7 @@ const MESSAGE_CONTENT_SELECTORS = [
   '[class*="markdown-body"]',
   '[class*="markdown"]',
   ".message-text",
+  '[data-testid="message-content"]',
   "p",
 ];
 
@@ -266,6 +281,9 @@ function findMessageBlocks(container) {
     '[class*="message-row"]',
     '[class*="message-block"]',
     '[class*="chat-message"]',
+    '[data-testid*="message-row"]',
+    '[class*="text-ide-message-block"]', // 截图发现的新类名
+    '[class*="gap-y-3"] > div', // 截图中的消息间距容器
     '& > div[class*="message"]', // 直接子元素
   ];
 
@@ -822,7 +840,14 @@ export async function setInputValue(input, value) {
 
     // 备选: 直接设置 innerHTML
     console.log("[PromptEnhance] execCommand 失败，尝试直接设置 innerHTML");
-    input.innerHTML = value.replace(/\n/g, "<br>");
+    // 处理换行符，将其转换为 div 或 br，取决于具体编辑器的行为
+    // 大多数现代编辑器 (如 ProseMirror, Monaco) 在 contenteditable 中使用 div 或 p 表示换行
+    const formattedHtml = value
+      .split("\n")
+      .map((line) => (line ? `<div>${line}</div>` : "<div><br></div>"))
+      .join("");
+
+    input.innerHTML = formattedHtml;
     input.dispatchEvent(
       new InputEvent("input", { bubbles: true, inputType: "insertText" }),
     );
