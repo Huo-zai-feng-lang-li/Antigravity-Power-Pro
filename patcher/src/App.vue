@@ -16,39 +16,7 @@ import { getVersion } from "@tauri-apps/api/app";
 const APP_VERSION = ref("");
 const GITHUB_URL = "https://github.com/daoif/Antigravity-Power-Pro";
 
-// 补丁文件清单
-const PATCH_FILES = {
-  // 将被修改的原始文件
-  modified: ["cascade-panel.html", "workbench-jetski-agent.html"],
-  // 将添加的新文件/目录
-  added: ["cascade-panel/  (侧边栏模块)", "manager-panel/  (Manager模块)"],
-  // 废弃文件（旧版本遗留，新版本不再使用）
-  deprecated: [] as string[],
-};
-
-// 状态
-const antigravityPath = ref<string | null>(null);
-const isDetecting = ref(false);
-const isInstalled = ref(false);
-const showAbout = ref(false);
-const showConfirm = ref(false);
-
-// 侧边栏功能开关
-const features = ref({
-  enabled: true,
-  mermaid: true,
-  math: true,
-  copyButton: true,
-  tableColor: true,
-  fontSizeEnabled: true,
-  fontSize: 20,
-  promptEnhance: {
-    enabled: false,
-    provider: "anthropic",
-    apiBase: "https://api.anthropic.com",
-    apiKey: "",
-    model: "claude-sonnet-4-5-20250514",
-    systemPrompt: `你是一个智能提示词优化器，专门帮助用户生成更有效的 AI 对话提示词。
+const DEFAULT_SYSTEM_PROMPT = `你是一个智能提示词优化器，专门帮助用户生成更有效的 AI 对话提示词。
 
 ## 核心任务
 将用户输入的原始提示词优化为更清晰、更具体、更有效的版本。
@@ -94,7 +62,44 @@ const features = ref({
 
 请解释每处修改的原因。
 
-记住：直接输出优化后的提示词，不要任何其他内容。`,
+记住：直接输出优化后的提示词，不要任何其他内容。`;
+
+// Tab 切换
+const activeTab = ref<"antigravity" | "windsurf">("antigravity");
+
+// 补丁文件清单
+const PATCH_FILES = {
+  // 将被修改的原始文件
+  modified: ["cascade-panel.html", "workbench-jetski-agent.html"],
+  // 将添加的新文件/目录
+  added: ["cascade-panel/  (侧边栏模块)", "manager-panel/  (Manager模块)"],
+  // 废弃文件（旧版本遗留，新版本不再使用）
+  deprecated: [] as string[],
+};
+
+// 状态
+const antigravityPath = ref<string | null>(null);
+const isDetecting = ref(false);
+const isInstalled = ref(false);
+const showAbout = ref(false);
+const showConfirm = ref(false);
+
+// 侧边栏功能开关
+const features = ref({
+  enabled: true,
+  mermaid: true,
+  math: true,
+  copyButton: true,
+  tableColor: true,
+  fontSizeEnabled: true,
+  fontSize: 20,
+  promptEnhance: {
+    enabled: false,
+    provider: "anthropic",
+    apiBase: "https://api.anthropic.com",
+    apiKey: "",
+    model: "claude-sonnet-4-5-20250514",
+    systemPrompt: DEFAULT_SYSTEM_PROMPT,
   },
 });
 
@@ -115,7 +120,7 @@ const windsurfFeatures = ref({
     apiBase: "https://api.anthropic.com",
     apiKey: "",
     model: "claude-sonnet-4-5-20250514",
-    systemPrompt: "",
+    systemPrompt: DEFAULT_SYSTEM_PROMPT,
   },
 });
 
@@ -383,112 +388,129 @@ onMounted(async () => {
     <TitleBar title="Antigravity-Power-Pro" @openAbout="showAbout = true" />
 
     <main class="app-container">
-      <PathCard
-        v-model="antigravityPath"
-        :isDetecting="isDetecting"
-        @detect="detectPath"
-        @browse="browsePath"
-      />
-
-      <FeatureCard v-model="features" />
-
-      <ManagerFeatureCard v-model="managerFeatures" />
-
-      <PromptEnhanceCard v-model="features.promptEnhance" />
-
-      <section class="actions">
+      <!-- Tab 导航 -->
+      <nav class="tab-nav">
         <button
-          @click="requestInstall"
-          :disabled="!antigravityPath"
-          class="primary-btn"
+          class="tab-btn"
+          :class="{ active: activeTab === 'antigravity' }"
+          @click="activeTab = 'antigravity'"
         >
-          {{ isInstalled ? "重新安装" : "安装补丁" }}
+          Antigravity
         </button>
-
         <button
-          @click="updateConfigOnly"
-          :disabled="!antigravityPath"
-          class="secondary-btn"
-          title="仅更新功能开关配置，不重新复制补丁文件"
+          class="tab-btn"
+          :class="{ active: activeTab === 'windsurf' }"
+          @click="activeTab = 'windsurf'"
         >
-          更新配置
+          Windsurf
         </button>
+      </nav>
 
-        <button
-          @click="uninstallPatch"
-          :disabled="!antigravityPath"
-          class="secondary-btn danger"
-        >
-          恢复原版
-        </button>
-      </section>
+      <!-- Antigravity 面板 -->
+      <div v-show="activeTab === 'antigravity'" class="tab-panel">
+        <PathCard
+          v-model="antigravityPath"
+          :isDetecting="isDetecting"
+          @detect="detectPath"
+          @browse="browsePath"
+        />
 
-      <!-- ============================================ -->
-      <!-- Windsurf IDE 区域 -->
-      <!-- ============================================ -->
-      <div class="section-divider">
-        <span>Windsurf IDE</span>
+        <FeatureCard v-model="features" />
+
+        <ManagerFeatureCard v-model="managerFeatures" />
+
+        <PromptEnhanceCard v-model="features.promptEnhance" />
+
+        <section class="actions">
+          <button
+            @click="requestInstall"
+            :disabled="!antigravityPath"
+            class="primary-btn"
+          >
+            {{ isInstalled ? "重新安装" : "安装补丁" }}
+          </button>
+
+          <button
+            @click="updateConfigOnly"
+            :disabled="!antigravityPath"
+            class="secondary-btn"
+            title="仅更新功能开关配置，不重新复制补丁文件"
+          >
+            更新配置
+          </button>
+
+          <button
+            @click="uninstallPatch"
+            :disabled="!antigravityPath"
+            class="secondary-btn danger"
+          >
+            恢复原版
+          </button>
+        </section>
       </div>
 
-      <PathCard
-        v-model="windsurfPath"
-        :isDetecting="isDetectingWindsurf"
-        @detect="detectWindsurfPath"
-        @browse="browseWindsurfPath"
-      />
+      <!-- Windsurf 面板 -->
+      <div v-show="activeTab === 'windsurf'" class="tab-panel">
+        <PathCard
+          v-model="windsurfPath"
+          :isDetecting="isDetectingWindsurf"
+          @detect="detectWindsurfPath"
+          @browse="browseWindsurfPath"
+        />
 
-      <section v-if="windsurfPath" class="card">
-        <h3 class="card-title">Windsurf 功能配置</h3>
+        <section v-if="windsurfPath" class="card">
+          <h3 class="card-title">Windsurf 功能配置</h3>
 
-        <label class="toggle-row">
-          <span>字体大小调节</span>
-          <input type="checkbox" v-model="windsurfFeatures.fontSizeEnabled" />
-        </label>
+          <label class="toggle-row">
+            <span>字体大小调节</span>
+            <input type="checkbox" v-model="windsurfFeatures.fontSizeEnabled" />
+          </label>
 
-        <div v-if="windsurfFeatures.fontSizeEnabled" class="slider-row">
-          <span class="slider-label">{{ windsurfFeatures.fontSize }}px</span>
-          <input
-            type="range"
-            min="12"
-            max="28"
-            step="1"
-            v-model.number="windsurfFeatures.fontSize"
-            class="slider"
-          />
-        </div>
-      </section>
+          <div v-if="windsurfFeatures.fontSizeEnabled" class="slider-row">
+            <span class="slider-label">{{ windsurfFeatures.fontSize }}px</span>
+            <input
+              type="range"
+              min="12"
+              max="28"
+              step="1"
+              v-model.number="windsurfFeatures.fontSize"
+              class="slider"
+            />
+          </div>
+        </section>
 
-      <PromptEnhanceCard
-        v-if="windsurfPath"
-        v-model="windsurfFeatures.promptEnhance"
-      />
+        <PromptEnhanceCard
+          v-if="windsurfPath"
+          v-model="windsurfFeatures.promptEnhance"
+        />
 
-      <section v-if="windsurfPath" class="actions">
-        <button
-          @click="requestWindsurfInstall"
-          :disabled="!windsurfPath"
-          class="primary-btn windsurf-btn"
-        >
-          {{ isWindsurfInstalled ? "重新安装" : "安装补丁" }}
-        </button>
+        <section v-if="windsurfPath" class="actions">
+          <button
+            @click="requestWindsurfInstall"
+            :disabled="!windsurfPath"
+            class="primary-btn windsurf-btn"
+          >
+            {{ isWindsurfInstalled ? "重新安装" : "安装补丁" }}
+          </button>
 
-        <button
-          @click="updateWindsurfConfigOnly"
-          :disabled="!windsurfPath"
-          class="secondary-btn"
-          title="仅更新 Windsurf 配置"
-        >
-          更新配置
-        </button>
+          <button
+            @click="updateWindsurfConfigOnly"
+            :disabled="!windsurfPath"
+            class="secondary-btn"
+            title="仅更新 Windsurf 配置"
+          >
+            更新配置
+          </button>
 
-        <button
-          @click="uninstallWindsurfPatch"
-          :disabled="!windsurfPath"
-          class="secondary-btn danger"
-        >
-          恢复原版
-        </button>
-      </section>
+          <button
+            @click="uninstallWindsurfPatch"
+            :disabled="!windsurfPath"
+            class="secondary-btn danger"
+          >
+            恢复原版
+          </button>
+        </section>
+      </div>
 
       <footer class="footer">
         <p>
@@ -622,28 +644,43 @@ onMounted(async () => {
   text-decoration: underline;
 }
 
-/* Windsurf 分隔线 */
-.section-divider {
+/* Tab 导航 */
+.tab-nav {
   display: flex;
-  align-items: center;
-  margin: 28px 0 16px;
-  gap: 12px;
+  gap: 4px;
+  margin-bottom: 20px;
+  background: var(--ag-surface-2);
+  border-radius: 10px;
+  padding: 4px;
 }
 
-.section-divider::before,
-.section-divider::after {
-  content: "";
+.tab-btn {
   flex: 1;
-  height: 1px;
-  background: var(--ag-border);
-}
-
-.section-divider span {
+  padding: 10px 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ag-text-secondary);
   font-size: 13px;
   font-weight: 600;
-  color: var(--ag-text-secondary);
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.3px;
+}
+
+.tab-btn:hover:not(.active) {
+  color: var(--ag-text);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tab-btn.active {
+  background: var(--ag-surface);
+  color: var(--ag-text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.tab-panel {
+  min-height: 0;
 }
 
 /* Windsurf 功能卡片 */
