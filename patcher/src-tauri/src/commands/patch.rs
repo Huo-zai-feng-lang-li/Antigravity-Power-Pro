@@ -511,6 +511,207 @@ fn restore_backup_files(extensions_dir: &PathBuf, workbench_dir: &PathBuf) -> Re
     Ok(())
 }
 
+// ============================================
+// Windsurf IDE 补丁
+// ============================================
+
+/// Windsurf 功能配置
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct WindsurfFeatureConfig {
+    #[serde(rename = "fontSizeEnabled")]
+    pub font_size_enabled: bool,
+    #[serde(rename = "fontSize")]
+    pub font_size: f32,
+    #[serde(rename = "promptEnhance")]
+    pub prompt_enhance: PromptEnhanceConfig,
+}
+
+impl Default for WindsurfFeatureConfig {
+    fn default() -> Self {
+        Self {
+            font_size_enabled: false,
+            font_size: 16.0,
+            prompt_enhance: PromptEnhanceConfig::default(),
+        }
+    }
+}
+
+/// 安装 Windsurf 补丁
+#[tauri::command]
+pub fn install_windsurf_patch(path: String, features: WindsurfFeatureConfig) -> Result<(), String> {
+    let windsurf_path = PathBuf::from(&path);
+    let workbench_dir = windsurf_path
+        .join("resources").join("app").join("out")
+        .join("vs").join("code").join("electron-browser").join("workbench");
+
+    if !workbench_dir.exists() {
+        return Err("无效的 Windsurf 安装目录".to_string());
+    }
+
+    backup_windsurf_files(&workbench_dir)?;
+    write_windsurf_patches(&workbench_dir, &features)?;
+
+    Ok(())
+}
+
+/// 卸载 Windsurf 补丁
+#[tauri::command]
+pub fn uninstall_windsurf_patch(path: String) -> Result<(), String> {
+    let windsurf_path = PathBuf::from(&path);
+    let workbench_dir = windsurf_path
+        .join("resources").join("app").join("out")
+        .join("vs").join("code").join("electron-browser").join("workbench");
+
+    if !workbench_dir.exists() {
+        return Err("无效的 Windsurf 安装目录".to_string());
+    }
+
+    restore_windsurf_files(&workbench_dir)?;
+    Ok(())
+}
+
+/// 更新 Windsurf 配置
+#[tauri::command]
+pub fn update_windsurf_config(path: String, features: WindsurfFeatureConfig) -> Result<(), String> {
+    let windsurf_path = PathBuf::from(&path);
+    let config_path = windsurf_path
+        .join("resources").join("app").join("out")
+        .join("vs").join("code").join("electron-browser").join("workbench")
+        .join("windsurf-panel").join("config.json");
+
+    if !config_path.parent().map(|p| p.exists()).unwrap_or(false) {
+        return Err("Windsurf 补丁尚未安装".to_string());
+    }
+
+    write_windsurf_config_file(&config_path, &features)?;
+    Ok(())
+}
+
+/// 检测 Windsurf 补丁状态
+#[tauri::command]
+pub fn check_windsurf_patch_status(path: String) -> Result<bool, String> {
+    let windsurf_path = PathBuf::from(&path);
+    let config_path = windsurf_path
+        .join("resources").join("app").join("out")
+        .join("vs").join("code").join("electron-browser").join("workbench")
+        .join("windsurf-panel").join("config.json");
+
+    Ok(config_path.exists())
+}
+
+/// 读取 Windsurf 补丁配置
+#[tauri::command]
+pub fn read_windsurf_patch_config(path: String) -> Result<Option<WindsurfFeatureConfig>, String> {
+    let windsurf_path = PathBuf::from(&path);
+    let config_path = windsurf_path
+        .join("resources").join("app").join("out")
+        .join("vs").join("code").join("electron-browser").join("workbench")
+        .join("windsurf-panel").join("config.json");
+
+    if !config_path.exists() {
+        return Ok(None);
+    }
+
+    let content = fs::read_to_string(&config_path)
+        .map_err(|e| format!("读取 Windsurf 配置失败: {}", e))?;
+    let config: WindsurfFeatureConfig = serde_json::from_str(&content)
+        .map_err(|e| format!("解析 Windsurf 配置失败: {}", e))?;
+    Ok(Some(config))
+}
+
+/// 备份 Windsurf workbench.html
+fn backup_windsurf_files(workbench_dir: &PathBuf) -> Result<(), String> {
+    let workbench_html = workbench_dir.join("workbench.html");
+    let backup = workbench_dir.join("workbench.html.bak");
+    if workbench_html.exists() && !backup.exists() {
+        fs::copy(&workbench_html, &backup)
+            .map_err(|e| format!("备份 workbench.html 失败: {}", e))?;
+    }
+    Ok(())
+}
+
+/// 写入 Windsurf 补丁文件
+fn write_windsurf_patches(workbench_dir: &PathBuf, features: &WindsurfFeatureConfig) -> Result<(), String> {
+    let panel_dir = workbench_dir.join("windsurf-panel");
+
+    if panel_dir.exists() {
+        fs::remove_dir_all(&panel_dir)
+            .map_err(|e| format!("删除旧 windsurf-panel 目录失败: {}", e))?;
+    }
+    fs::create_dir_all(&panel_dir)
+        .map_err(|e| format!("创建 windsurf-panel 目录失败: {}", e))?;
+
+    let patch_files = embedded::get_all_files_runtime()?;
+    for (relative_path, content) in patch_files {
+        if relative_path != "workbench-windsurf.html" && !relative_path.starts_with("windsurf-panel/") {
+            continue;
+        }
+
+        // workbench-windsurf.html 写入为 workbench.html
+        let target_path = if relative_path == "workbench-windsurf.html" {
+            workbench_dir.join("workbench.html")
+        } else {
+            workbench_dir.join(&relative_path)
+        };
+
+        if let Some(parent) = target_path.parent() {
+            if !parent.exists() {
+                fs::create_dir_all(parent)
+                    .map_err(|e| format!("创建目录失败: {}", e))?;
+            }
+        }
+
+        fs::write(&target_path, content)
+            .map_err(|e| format!("写入文件失败 {:?}: {}", target_path, e))?;
+    }
+
+    let config_path = panel_dir.join("config.json");
+    write_windsurf_config_file(&config_path, features)?;
+
+    Ok(())
+}
+
+/// 写入 Windsurf 配置文件
+fn write_windsurf_config_file(config_path: &PathBuf, features: &WindsurfFeatureConfig) -> Result<(), String> {
+    let config_content = serde_json::json!({
+        "fontSizeEnabled": features.font_size_enabled,
+        "fontSize": features.font_size,
+        "promptEnhance": {
+            "enabled": features.prompt_enhance.enabled,
+            "provider": features.prompt_enhance.provider,
+            "apiBase": features.prompt_enhance.api_base,
+            "apiKey": features.prompt_enhance.api_key,
+            "model": features.prompt_enhance.model,
+            "systemPrompt": features.prompt_enhance.system_prompt
+        }
+    });
+
+    fs::write(config_path, serde_json::to_string_pretty(&config_content).unwrap())
+        .map_err(|e| format!("写入 Windsurf 配置失败: {}", e))?;
+    Ok(())
+}
+
+/// 恢复 Windsurf 文件
+fn restore_windsurf_files(workbench_dir: &PathBuf) -> Result<(), String> {
+    let workbench_html = workbench_dir.join("workbench.html");
+    let backup = workbench_dir.join("workbench.html.bak");
+    if backup.exists() {
+        fs::copy(&backup, &workbench_html)
+            .map_err(|e| format!("恢复 workbench.html 失败: {}", e))?;
+        fs::remove_file(&backup)
+            .map_err(|e| format!("删除备份失败: {}", e))?;
+    }
+
+    let panel_dir = workbench_dir.join("windsurf-panel");
+    if panel_dir.exists() {
+        fs::remove_dir_all(&panel_dir)
+            .map_err(|e| format!("删除 windsurf-panel 目录失败: {}", e))?;
+    }
+
+    Ok(())
+}
+
 /// 清空 product.json 的 checksums 字段
 /// 
 /// Antigravity 启动时会校验文件的 checksums，修改 workbench-jetski-agent.html 后

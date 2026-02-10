@@ -1,0 +1,88 @@
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta
+			http-equiv="Content-Security-Policy"
+			content="
+				default-src
+					'none'
+				;
+				img-src
+					'self'
+					data:
+					blob:
+					vscode-remote-resource:
+					vscode-managed-remote-resource:
+					https:
+				;
+				media-src
+					'self'
+				;
+				frame-src
+					'self'
+					vscode-webview:
+				;
+				script-src
+					'self'
+					'unsafe-eval'
+					blob:
+				;
+				style-src
+					'self'
+					'unsafe-inline'
+				;
+				connect-src
+					'self'
+					http://127.0.0.1:*
+					http://*.localhost:*
+					https:
+					ws:
+				;
+				font-src
+					'self'
+					vscode-remote-resource:
+					vscode-managed-remote-resource:
+					https://*.vscode-unpkg.net
+				;
+				require-trusted-types-for
+					'script'
+				;
+				trusted-types
+					amdLoader
+					cellRendererEditorText
+					codeMapViewer
+					collapsedCellPreview
+					defaultWorkerFactory
+					diffDeletionZone
+					diffEditorWidget
+					diffReview
+					domLineBreaksComputer
+					dompurify
+					editorGhostText
+					editorViewLayer
+					notebookRenderer
+					stickyScrollViewLayer
+					tokenizeToString
+					notebookChatEditController
+					richScreenReaderContent
+				;
+		"/>
+
+		<!-- Workbench CSS -->
+		<link rel="stylesheet" href="../../../workbench/workbench.desktop.main.css">
+
+		<!-- Antigravity-Power-Pro Windsurf Panel CSS -->
+		<link rel="stylesheet" href="./windsurf-panel/windsurf-panel.css" />
+	</head>
+
+	<body aria-label="">
+	</body>
+
+	<!-- Startup (do not modify order of script tags!) -->
+	<script src="./workbench.js" type="module"></script>
+
+	<!-- Antigravity-Power-Pro Windsurf Panel -->
+	<script src="./windsurf-panel/windsurf-panel.js" type="module"></script>
+</html>

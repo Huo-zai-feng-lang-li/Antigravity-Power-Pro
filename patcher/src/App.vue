@@ -98,6 +98,33 @@ const features = ref({
   },
 });
 
+// ============================================
+// Windsurf IDE 状态
+// ============================================
+const windsurfPath = ref<string | null>(null);
+const isDetectingWindsurf = ref(false);
+const isWindsurfInstalled = ref(false);
+const showWindsurfConfirm = ref(false);
+
+const windsurfFeatures = ref({
+  fontSizeEnabled: false,
+  fontSize: 16,
+  promptEnhance: {
+    enabled: false,
+    provider: "anthropic",
+    apiBase: "https://api.anthropic.com",
+    apiKey: "",
+    model: "claude-sonnet-4-5-20250514",
+    systemPrompt: "",
+  },
+});
+
+const WINDSURF_PATCH_FILES = {
+  modified: ["workbench.html"],
+  added: ["windsurf-panel/  (字体+提示词增强)"],
+  deprecated: [] as string[],
+};
+
 // Manager 功能开关（独立配置，默认禁用）
 const managerFeatures = ref({
   enabled: false,
@@ -109,6 +136,103 @@ const managerFeatures = ref({
   fontSizeEnabled: false,
   fontSize: 16,
 });
+
+// ============================================
+// Windsurf 操作函数
+// ============================================
+async function detectWindsurfPath() {
+  isDetectingWindsurf.value = true;
+  try {
+    const path = await invoke<string | null>("detect_windsurf_path");
+    windsurfPath.value = path;
+    if (path) {
+      await checkWindsurfPatchStatus(path);
+    }
+  } catch (e) {
+    console.error("Windsurf 检测失败:", e);
+  } finally {
+    isDetectingWindsurf.value = false;
+  }
+}
+
+async function checkWindsurfPatchStatus(path: string) {
+  try {
+    isWindsurfInstalled.value = await invoke<boolean>("check_windsurf_patch_status", { path });
+    if (isWindsurfInstalled.value) {
+      const config = await invoke<any>("read_windsurf_patch_config", { path });
+      if (config) {
+        windsurfFeatures.value = { ...windsurfFeatures.value, ...config };
+      }
+    }
+  } catch (e) {
+    console.error("Windsurf 补丁状态检测失败:", e);
+  }
+}
+
+async function browseWindsurfPath() {
+  try {
+    const selected = await open({
+      directory: true,
+      title: "选择 Windsurf 安装目录",
+    });
+    if (selected) {
+      windsurfPath.value = selected as string;
+    }
+  } catch (e) {
+    console.error("选择目录失败:", e);
+  }
+}
+
+function requestWindsurfInstall() {
+  if (!windsurfPath.value) return;
+  showWindsurfConfirm.value = true;
+}
+
+async function confirmWindsurfInstall() {
+  showWindsurfConfirm.value = false;
+  if (!windsurfPath.value) return;
+  try {
+    await invoke("install_windsurf_patch", {
+      path: windsurfPath.value,
+      features: windsurfFeatures.value,
+    });
+    isWindsurfInstalled.value = true;
+    showToast("✓ Windsurf 补丁安装成功");
+  } catch (e) {
+    console.error("Windsurf 安装失败:", e);
+    showToast("✗ Windsurf 安装失败: " + e);
+  }
+}
+
+async function uninstallWindsurfPatch() {
+  if (!windsurfPath.value) return;
+  try {
+    await invoke("uninstall_windsurf_patch", { path: windsurfPath.value });
+    isWindsurfInstalled.value = false;
+    showToast("✓ Windsurf 已恢复原版");
+  } catch (e) {
+    console.error("Windsurf 卸载失败:", e);
+    showToast("✗ Windsurf 恢复失败");
+  }
+}
+
+async function updateWindsurfConfigOnly() {
+  if (!windsurfPath.value) return;
+  try {
+    await invoke("update_windsurf_config", {
+      path: windsurfPath.value,
+      features: windsurfFeatures.value,
+    });
+    showToast("✓ Windsurf 配置已更新");
+  } catch (e) {
+    console.error("Windsurf 更新配置失败:", e);
+    showToast("✗ Windsurf 更新失败");
+  }
+}
+
+// ============================================
+// Antigravity 操作函数
+// ============================================
 
 // 检测 Antigravity 安装路径
 async function detectPath() {
@@ -250,6 +374,7 @@ async function updateConfigOnly() {
 onMounted(async () => {
   APP_VERSION.value = await getVersion();
   detectPath();
+  detectWindsurfPath();
 });
 </script>
 
@@ -298,6 +423,73 @@ onMounted(async () => {
         </button>
       </section>
 
+      <!-- ============================================ -->
+      <!-- Windsurf IDE 区域 -->
+      <!-- ============================================ -->
+      <div class="section-divider">
+        <span>Windsurf IDE</span>
+      </div>
+
+      <PathCard
+        v-model="windsurfPath"
+        :isDetecting="isDetectingWindsurf"
+        @detect="detectWindsurfPath"
+        @browse="browseWindsurfPath"
+      />
+
+      <section v-if="windsurfPath" class="card">
+        <h3 class="card-title">Windsurf 功能配置</h3>
+
+        <label class="toggle-row">
+          <span>字体大小调节</span>
+          <input type="checkbox" v-model="windsurfFeatures.fontSizeEnabled" />
+        </label>
+
+        <div v-if="windsurfFeatures.fontSizeEnabled" class="slider-row">
+          <span class="slider-label">{{ windsurfFeatures.fontSize }}px</span>
+          <input
+            type="range"
+            min="12"
+            max="28"
+            step="1"
+            v-model.number="windsurfFeatures.fontSize"
+            class="slider"
+          />
+        </div>
+      </section>
+
+      <PromptEnhanceCard
+        v-if="windsurfPath"
+        v-model="windsurfFeatures.promptEnhance"
+      />
+
+      <section v-if="windsurfPath" class="actions">
+        <button
+          @click="requestWindsurfInstall"
+          :disabled="!windsurfPath"
+          class="primary-btn windsurf-btn"
+        >
+          {{ isWindsurfInstalled ? "重新安装" : "安装补丁" }}
+        </button>
+
+        <button
+          @click="updateWindsurfConfigOnly"
+          :disabled="!windsurfPath"
+          class="secondary-btn"
+          title="仅更新 Windsurf 配置"
+        >
+          更新配置
+        </button>
+
+        <button
+          @click="uninstallWindsurfPatch"
+          :disabled="!windsurfPath"
+          class="secondary-btn danger"
+        >
+          恢复原版
+        </button>
+      </section>
+
       <footer class="footer">
         <p>
           v{{ APP_VERSION }} ·
@@ -322,6 +514,17 @@ onMounted(async () => {
       :deprecatedFiles="PATCH_FILES.deprecated"
       @confirm="confirmInstall"
       @cancel="showConfirm = false"
+    />
+
+    <ConfirmModal
+      :show="showWindsurfConfirm"
+      title="确认安装 Windsurf 补丁"
+      message="即将安装 Windsurf 增强补丁，请确认以下文件变更："
+      :modifiedFiles="WINDSURF_PATCH_FILES.modified"
+      :addedFiles="WINDSURF_PATCH_FILES.added"
+      :deprecatedFiles="WINDSURF_PATCH_FILES.deprecated"
+      @confirm="confirmWindsurfInstall"
+      @cancel="showWindsurfConfirm = false"
     />
 
     <!-- Toast 提示 -->
@@ -417,6 +620,82 @@ onMounted(async () => {
 
 .link:hover {
   text-decoration: underline;
+}
+
+/* Windsurf 分隔线 */
+.section-divider {
+  display: flex;
+  align-items: center;
+  margin: 28px 0 16px;
+  gap: 12px;
+}
+
+.section-divider::before,
+.section-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--ag-border);
+}
+
+.section-divider span {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ag-text-secondary);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* Windsurf 功能卡片 */
+.card {
+  background: var(--ag-surface);
+  border: 1px solid var(--ag-border);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 12px;
+  color: var(--ag-text);
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.slider-label {
+  font-size: 13px;
+  color: var(--ag-text-secondary);
+  min-width: 42px;
+  text-align: right;
+}
+
+.slider {
+  flex: 1;
+  accent-color: var(--ag-accent);
+}
+
+.windsurf-btn {
+  background: #0ea5e9;
+}
+
+.windsurf-btn:hover:not(:disabled) {
+  background: #0284c7;
 }
 
 /* Toast 提示样式 */

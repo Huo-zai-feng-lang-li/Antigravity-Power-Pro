@@ -122,6 +122,127 @@ fn try_common_paths_windows() -> Option<String> {
     None
 }
 
+/// 检测 Windsurf 安装路径
+#[tauri::command]
+pub fn detect_windsurf_path() -> Option<String> {
+    #[cfg(target_os = "windows")]
+    {
+        detect_windsurf_windows()
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        detect_windsurf_macos()
+    }
+
+    #[cfg(not(any(target_os = "windows", target_os = "macos")))]
+    {
+        None
+    }
+}
+
+/// 验证路径是否为有效的 Windsurf 安装目录
+fn is_valid_windsurf_path(path: &PathBuf) -> bool {
+    let workbench_path = path
+        .join("resources")
+        .join("app")
+        .join("out")
+        .join("vs")
+        .join("code")
+        .join("electron-browser")
+        .join("workbench")
+        .join("workbench.html");
+
+    workbench_path.exists()
+}
+
+#[cfg(target_os = "windows")]
+fn detect_windsurf_windows() -> Option<String> {
+    if let Some(path) = try_windsurf_registry() {
+        return Some(path);
+    }
+    if let Some(path) = try_windsurf_common_paths_windows() {
+        return Some(path);
+    }
+    None
+}
+
+#[cfg(target_os = "windows")]
+fn try_windsurf_registry() -> Option<String> {
+    use winreg::enums::*;
+    use winreg::RegKey;
+
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let uninstall_path = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
+
+    if let Ok(uninstall_key) = hkcu.open_subkey(uninstall_path) {
+        for name in uninstall_key.enum_keys().filter_map(|k| k.ok()) {
+            if let Ok(sub_key) = uninstall_key.open_subkey(&name) {
+                if let Ok(display_name) = sub_key.get_value::<String, _>("DisplayName") {
+                    let lower = display_name.to_lowercase();
+                    if lower.contains("windsurf") && !lower.contains("account") && !lower.contains("assistant") {
+                        if let Ok(install_location) = sub_key.get_value::<String, _>("InstallLocation") {
+                            let path = PathBuf::from(&install_location);
+                            if is_valid_windsurf_path(&path) {
+                                return Some(install_location);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    None
+}
+
+#[cfg(target_os = "windows")]
+fn try_windsurf_common_paths_windows() -> Option<String> {
+    if let Some(local_data) = dirs::data_local_dir() {
+        let user_path = local_data.join("Programs").join("Windsurf");
+        if is_valid_windsurf_path(&user_path) {
+            return user_path.to_str().map(String::from);
+        }
+    }
+
+    let literal_paths = [
+        r"C:\Program Files\Windsurf",
+        r"D:\Program Files\Windsurf",
+    ];
+
+    for path_str in literal_paths {
+        let path = PathBuf::from(path_str);
+        if is_valid_windsurf_path(&path) {
+            return Some(path_str.to_string());
+        }
+    }
+
+    None
+}
+
+#[cfg(target_os = "macos")]
+fn detect_windsurf_macos() -> Option<String> {
+    let paths = [
+        "/Applications/Windsurf.app",
+    ];
+
+    for path_str in paths {
+        let path = PathBuf::from(path_str);
+        if is_valid_windsurf_path(&path) {
+            return Some(path_str.to_string());
+        }
+    }
+
+    if let Some(home) = dirs::home_dir() {
+        let user_app = home.join("Applications").join("Windsurf.app");
+        if is_valid_windsurf_path(&user_app) {
+            return user_app.to_str().map(String::from);
+        }
+    }
+
+    None
+}
+
 // macOS 实现
 #[cfg(target_os = "macos")]
 fn detect_macos() -> Option<String> {
