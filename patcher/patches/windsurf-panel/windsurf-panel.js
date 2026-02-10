@@ -190,8 +190,18 @@ const initPromptEnhance = async (config) => {
 const SCROLL_BTN_ID = "windsurf-scroll-bottom-btn";
 const SCROLL_THRESHOLD = 120;
 
-const initScrollToBottom = (panel) => {
-  const scrollEl = panel.querySelector(".cascade-scrollbar");
+const initScrollToBottom = async (panel) => {
+  let scrollEl = panel.querySelector(".cascade-scrollbar");
+  if (!scrollEl) {
+    scrollEl = await new Promise((resolve) => {
+      const obs = new MutationObserver(() => {
+        const el = panel.querySelector(".cascade-scrollbar");
+        if (el) { obs.disconnect(); resolve(el); }
+      });
+      obs.observe(panel, { childList: true, subtree: true });
+      setTimeout(() => { obs.disconnect(); resolve(null); }, 15000);
+    });
+  }
   if (!scrollEl) return;
 
   if (document.getElementById(SCROLL_BTN_ID)) return;
@@ -222,9 +232,15 @@ const initScrollToBottom = (panel) => {
   }
   wrapper.appendChild(btn);
 
+  const setVisible = (show) => {
+    btn.style.opacity = show ? "1" : "0";
+    btn.style.pointerEvents = show ? "auto" : "none";
+    btn.style.transform = show ? "translateY(0)" : "translateY(8px)";
+  };
+
   const updateVisibility = () => {
     const gap = scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight;
-    btn.classList.toggle("visible", gap > SCROLL_THRESHOLD);
+    setVisible(gap > SCROLL_THRESHOLD);
   };
 
   btn.addEventListener("click", () => {
