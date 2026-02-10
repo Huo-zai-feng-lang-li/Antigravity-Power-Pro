@@ -6,6 +6,21 @@
  * Cascade 面板直接在主窗口 DOM 中, 无 iframe 隔离
  */
 
+/**
+ * Windsurf CSP 启用了 require-trusted-types-for 'script',
+ * 必须在任何 innerHTML 赋值之前创建 default 策略.
+ * workbench-windsurf.html 的 CSP trusted-types 白名单已添加 'default'.
+ */
+if (window.trustedTypes && !window.trustedTypes.defaultPolicy) {
+  try {
+    window.trustedTypes.createPolicy("default", {
+      createHTML: (s) => s,
+      createScript: (s) => s,
+      createScriptURL: (s) => s,
+    });
+  } catch { /* policy already exists */ }
+}
+
 const SCRIPT_BASE = new URL("./", import.meta.url).href;
 
 const DEFAULT_CONFIG = {
@@ -148,7 +163,11 @@ const initPromptEnhance = async (config) => {
           }
         });
 
-        input.parentNode.insertBefore(btn, input.nextSibling);
+        const inputWrapper = input.parentElement;
+        if (inputWrapper) {
+          inputWrapper.style.position = "relative";
+          inputWrapper.appendChild(btn);
+        }
       };
 
       injectButton();
@@ -180,7 +199,22 @@ const initScrollToBottom = (panel) => {
   const btn = document.createElement("button");
   btn.id = SCROLL_BTN_ID;
   btn.title = "滚动到底部";
-  btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 13 12 18 17 13"/><polyline points="7 6 12 11 17 6"/></svg>`;
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("width", "16");
+  svg.setAttribute("height", "16");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "currentColor");
+  svg.setAttribute("stroke-width", "2.5");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+  const p1 = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+  p1.setAttribute("points", "7 13 12 18 17 13");
+  const p2 = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+  p2.setAttribute("points", "7 6 12 11 17 6");
+  svg.appendChild(p1);
+  svg.appendChild(p2);
+  btn.appendChild(svg);
 
   const wrapper = scrollEl.parentElement || panel;
   if (getComputedStyle(wrapper).position === "static") {

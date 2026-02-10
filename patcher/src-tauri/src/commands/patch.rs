@@ -552,6 +552,10 @@ pub fn install_windsurf_patch(path: String, features: WindsurfFeatureConfig) -> 
     backup_windsurf_files(&workbench_dir)?;
     write_windsurf_patches(&workbench_dir, &features)?;
 
+    let product_json = windsurf_path
+        .join("resources").join("app").join("product.json");
+    clear_product_checksums(&product_json)?;
+
     Ok(())
 }
 

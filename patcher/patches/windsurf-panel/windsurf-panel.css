@@ -59,6 +59,14 @@
   transform: scale(0.92);
 }
 
+/* 提示词增强按钮 - 定位在输入框内部右上角 */
+.Antigravity-Power-Pro-enhance-btn {
+  position: absolute !important;
+  top: 4px !important;
+  right: 4px !important;
+  z-index: 10 !important;
+}
+
 /* 排除代码块 - 保持等宽字体原始大小 */
 .chat-client-root pre,
 .chat-client-root pre *,
