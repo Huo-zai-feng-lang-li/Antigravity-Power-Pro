@@ -43,6 +43,14 @@
 
       <label class="feature-item" :class="{ 'item-disabled': !model.enabled }">
         <div class="feature-info">
+          <span class="feature-name">滚动到底部按钮</span>
+          <p class="feature-desc">在 Cascade 面板添加一键滚动到底部按钮</p>
+        </div>
+        <input type="checkbox" v-model="model.scrollToBottom" class="checkbox" :disabled="!model.enabled">
+      </label>
+
+      <label class="feature-item" :class="{ 'item-disabled': !model.enabled }">
+        <div class="feature-info">
           <span class="feature-name">侧边栏字体大小</span>
           <p class="feature-desc">调整 Cascade 面板整体字体大小</p>
         </div>
@@ -70,6 +78,7 @@ export interface FeatureFlags {
   math: boolean;
   copyButton: boolean;
   tableColor: boolean;
+  scrollToBottom: boolean;
   fontSizeEnabled: boolean;
   fontSize: number;
 }
