@@ -135,6 +135,11 @@ body {
     justify-content: center;
     width: 32px;
     height: 32px;
+    min-width: 32px;
+    max-width: 32px;
+    aspect-ratio: 1 / 1;
+    flex-shrink: 0;
+    align-self: flex-end;
     padding: 0;
     border: 1px solid rgba(251, 191, 36, 0.4);
     border-radius: 50%;
@@ -145,6 +150,7 @@ body {
         border-color 0.15s;
     pointer-events: none;
     opacity: 0;
+    box-sizing: border-box;
 }
 
 #cascade-scroll-bottom-btn:hover {
