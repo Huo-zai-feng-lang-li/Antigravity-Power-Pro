@@ -1066,7 +1066,7 @@ export function injectStyles() {
             width: 26px !important;
             height: 26px !important;
             padding: 0 !important;
-            margin-top: -11px !important;
+            margin: -8px 4px 0 0;
             background: rgba(255, 255, 255, 0.1) !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
             border-radius: 4px !important;
