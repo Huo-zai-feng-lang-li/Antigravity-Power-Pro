@@ -1063,10 +1063,10 @@ export function injectStyles() {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
-            width: 28px !important;
-            height: 24px !important;
+            width: 26px !important;
+            height: 26px !important;
             padding: 0 !important;
-            margin: 0 2px !important;
+            margin-top: -11px !important;
             background: rgba(255, 255, 255, 0.1) !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
             border-radius: 4px !important;
