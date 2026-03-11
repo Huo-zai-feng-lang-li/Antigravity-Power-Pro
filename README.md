@@ -10,10 +10,10 @@
 
 <p align="center">
   <a href="https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro/releases">
-    <img src="https://img.shields.io/badge/版本-v2.5.5-blue.svg?style=flat-square" alt="版本">
+    <img src="https://img.shields.io/badge/版本-v2.5.6-blue.svg?style=flat-square" alt="版本">
   </a>
   <a href="https://codeium.com/antigravity">
-    <img src="https://img.shields.io/badge/支持_Antigravity-v1.14.2-green.svg?style=flat-square" alt="Antigravity">
+    <img src="https://img.shields.io/badge/支持_Antigravity-v1.15.8-green.svg?style=flat-square" alt="Antigravity">
   </a>
   <a href="https://codeium.com/windsurf">
     <img src="https://img.shields.io/badge/支持_Windsurf-✓-00b4d8.svg?style=flat-square" alt="Windsurf">
@@ -73,14 +73,8 @@
 3. ✅ 勾选你想要的功能模块，点击 **「安装补丁」**。
 4. 🔄 重启 IDE，立即享受增强体验。
 
-### 🍎 macOS & Linux 用户
-
-1. 下载 [Antigravity-Power-Pro.sh](patcher/patches/Antigravity-Power-Pro.sh) 脚本。
-2. 在终端中运行：
-   ```bash
-   chmod +x ./Antigravity-Power-Pro.sh
-   sudo ./Antigravity-Power-Pro.sh
-   ```
+> [!TIP]
+> **进阶推荐**：配合 [Auto-Agent-AntiGravity](https://github.com/Huo-zai-feng-lang-li/Auto-Agent-AntiGravity) 项目，可实现自动点击「允许」并支持自动重试，让自动化流程更顺滑。
 
 ---
 
@@ -98,14 +92,15 @@
 > [!NOTE]
 > 查看官方更新动态：[Antigravity Changelog](https://antigravity.google/changelog)
 
-| 补丁版本   | 支持 IDE 版本      | 发布日期   | 重大更新内容                                     |
-| :--------- | :----------------- | :--------- | :----------------------------------------------- |
-| **v2.5.5** | v1.15.8 / Windsurf | 2026-03-11 | 提示词增强模块复用优化，修复滚动按钮，去除冗余项 |
-| **v2.5.0** | v1.15.8 / Windsurf | 2026-02-10 | **新增 Windsurf IDE 支持**，提示词增强功能上线   |
-| **v2.3.9** | v1.15.8            | 2026-01-30 | 修复受控组件下的输入冲突，实现版本号自动侦测     |
-| **v2.3.7** | v1.15.8            | 2026-01-29 | 初代提示词增强功能发布，支持自定义 LLM 配置      |
-| **v2.2.0** | v1.14.2            | 2026-01-21 | Manager 窗口 Mermaid 渲染与布局调节功能上线      |
-| **v2.1.0** | v1.14.2            | 2026-01-19 | 侧边栏字体调节，优化 Markdown 复制逻辑           |
+| 补丁版本   | 支持 IDE 版本      | 发布日期   | 重大更新内容                                           |
+| :--------- | :----------------- | :--------- | :----------------------------------------------------- |
+| **v2.5.6** | v1.15.8 / Windsurf | 2026-03-11 | 优化提示词增强按钮样式（改为圆角矩形），提升视觉吸引力 |
+| **v2.5.5** | v1.15.8 / Windsurf | 2026-03-11 | 提示词增强模块复用优化，修复滚动按钮，去除冗余项       |
+| **v2.5.0** | v1.15.8 / Windsurf | 2026-02-10 | **新增 Windsurf IDE 支持**，提示词增强功能上线         |
+| **v2.3.9** | v1.15.8            | 2026-01-30 | 修复受控组件下的输入冲突，实现版本号自动侦测           |
+| **v2.3.7** | v1.15.8            | 2026-01-29 | 初代提示词增强功能发布，支持自定义 LLM 配置            |
+| **v2.2.0** | v1.14.2            | 2026-01-21 | Manager 窗口 Mermaid 渲染与布局调节功能上线            |
+| **v2.1.0** | v1.14.2            | 2026-01-19 | 侧边栏字体调节，优化 Markdown 复制逻辑                 |
 
 ---
 
