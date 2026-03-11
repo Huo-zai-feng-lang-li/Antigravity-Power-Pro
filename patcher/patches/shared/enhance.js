@@ -1063,27 +1063,26 @@ export function injectStyles() {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
-            width: 30px !important;
+            width: 28px !important;
             height: 24px !important;
             padding: 0 !important;
-            margin: 0 4px !important;
-            background: rgba(255, 255, 255, 0.12) !important;
+            margin: 0 2px !important;
+            background: rgba(255, 255, 255, 0.1) !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
             border-radius: 4px !important;
-            color: rgba(255, 255, 255, 0.8) !important;
+            color: rgba(255, 255, 255, 0.7) !important;
             cursor: pointer !important;
             transition: all 0.2s ease !important;
             flex-shrink: 0 !important;
             position: relative !important;
-            z-index: 10 !important;
+            z-index: 1 !important;
             pointer-events: auto !important;
         }
 
         .Antigravity-Power-Pro-enhance-btn:hover {
-            background: rgba(251, 191, 36, 0.25) !important;
+            background: rgba(251, 191, 36, 0.2) !important;
             color: #fbbf24 !important;
             border-color: rgba(251, 191, 36, 0.4) !important;
-            transform: scale(1.05) !important;
         }
 
         .Antigravity-Power-Pro-enhance-btn:active {

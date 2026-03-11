@@ -466,8 +466,8 @@ const initPromptEnhanceButton = async () => {
     }
 
     if (sendButton && sendButton.parentNode) {
-      // 插入到发送按钮之前
-      sendButton.parentNode.insertBefore(btn, sendButton);
+      // 插入到容器最前面，避开发送/评论按钮
+      sendButton.parentNode.insertBefore(btn, sendButton.parentNode.firstChild);
     } else {
       // 备选：查找工具栏或按钮区域
       const toolbar = inputContainer.querySelector(
