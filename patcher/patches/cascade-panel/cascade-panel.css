@@ -142,7 +142,7 @@ body {
     align-self: flex-end;
     padding: 0;
     border: 1px solid rgba(251, 191, 36, 0.4);
-    border-radius: 50%;
+    border-radius: 5px;
     background: var(--vscode-editor-background, rgba(30, 30, 30, 0.85));
     color: #fbbf24;
     cursor: pointer;

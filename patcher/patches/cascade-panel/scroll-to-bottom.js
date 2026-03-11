@@ -55,7 +55,7 @@ export const init = () => {
 
     const btn = document.createElement("button");
     btn.id = BTN_ID;
-    btn.title = "滚动到底部";
+    // btn.title = "滚动到底部";
     btn.appendChild(createArrowSVG());
 
     // 滚动容器自身 position: relative，直接 append
