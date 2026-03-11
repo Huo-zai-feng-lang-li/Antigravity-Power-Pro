@@ -1060,33 +1060,34 @@ export function injectStyles() {
   style.textContent = `
         /* 增强按钮样式 */
         .Antigravity-Power-Pro-enhance-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 28px;
-            height: 28px;
-            padding: 0;
-            margin: 0 4px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            color: rgba(255, 255, 255, 0.65);
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            flex-shrink: 0;
-            backdrop-filter: blur(4px);
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 30px !important;
+            height: 24px !important;
+            padding: 0 !important;
+            margin: 0 4px !important;
+            background: rgba(255, 255, 255, 0.12) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 4px !important;
+            color: rgba(255, 255, 255, 0.8) !important;
+            cursor: pointer !important;
+            transition: all 0.2s ease !important;
+            flex-shrink: 0 !important;
+            position: relative !important;
+            z-index: 10 !important;
+            pointer-events: auto !important;
         }
 
         .Antigravity-Power-Pro-enhance-btn:hover {
-            background: rgba(251, 191, 36, 0.15);
-            color: #fbbf24;
-            border-color: rgba(251, 191, 36, 0.5);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            background: rgba(251, 191, 36, 0.25) !important;
+            color: #fbbf24 !important;
+            border-color: rgba(251, 191, 36, 0.4) !important;
+            transform: scale(1.05) !important;
         }
 
         .Antigravity-Power-Pro-enhance-btn:active {
-            transform: translateY(0) scale(0.95);
+            transform: scale(0.9) !important;
         }
 
         .Antigravity-Power-Pro-enhance-btn.loading {
