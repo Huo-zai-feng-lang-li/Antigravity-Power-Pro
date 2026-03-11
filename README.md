@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro/releases">
-    <img src="https://img.shields.io/badge/版本-v2.5.6-blue.svg?style=flat-square" alt="版本">
+    <img src="https://img.shields.io/badge/版本-v2.5.7-blue.svg?style=flat-square" alt="版本">
   </a>
   <a href="https://codeium.com/antigravity">
     <img src="https://img.shields.io/badge/支持_Antigravity-v1.15.8-green.svg?style=flat-square" alt="Antigravity">
@@ -94,6 +94,7 @@
 
 | 补丁版本   | 支持 IDE 版本      | 发布日期   | 重大更新内容                                           |
 | :--------- | :----------------- | :--------- | :----------------------------------------------------- |
+| **v2.5.7** | v1.15.8 / Windsurf | 2026-03-11 | 提示词增强逻辑优化与路径修复                          |
 | **v2.5.6** | v1.15.8 / Windsurf | 2026-03-11 | 优化提示词增强按钮样式（改为圆角矩形），提升视觉吸引力 |
 | **v2.5.5** | v1.15.8 / Windsurf | 2026-03-11 | 提示词增强模块复用优化，修复滚动按钮，去除冗余项       |
 | **v2.5.0** | v1.15.8 / Windsurf | 2026-02-10 | **新增 Windsurf IDE 支持**，提示词增强功能上线         |

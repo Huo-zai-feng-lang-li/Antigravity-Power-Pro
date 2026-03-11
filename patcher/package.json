@@ -1,7 +1,7 @@
 {
   "name": "patcher",
   "private": true,
-  "version": "2.5.5",
+  "version": "2.5.7",
   "type": "module",
   "scripts": {
     "dev": "vite",

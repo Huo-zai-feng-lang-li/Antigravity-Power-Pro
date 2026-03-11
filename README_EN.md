@@ -6,10 +6,10 @@
 
 <p align="center">
   <a href="https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro/releases">
-    <img src="https://img.shields.io/badge/Version-v2.2.0-blue.svg" alt="Version">
+    <img src="https://img.shields.io/badge/Version-v2.5.7-blue.svg" alt="Version">
   </a>
   <a href="https://codeium.com/antigravity">
-    <img src="https://img.shields.io/badge/Supports_Antigravity-v1.14.2-green.svg" alt="Antigravity">
+    <img src="https://img.shields.io/badge/Supports_Antigravity-v1.15.8-green.svg" alt="Antigravity">
   </a>
   <a href="LICENSE">
     <img src="https://img.shields.io/badge/License-MIT-orange.svg" alt="License">
@@ -111,6 +111,8 @@ For manual installation, please refer to [manual-install.md](patcher/patches/man
 
 | Patch Version | Supported Antigravity Version | Date       | Update Content                                                                     |
 | ------------- | ----------------------------- | ---------- | ---------------------------------------------------------------------------------- |
+| v2.5.7        | v1.15.8 / Windsurf            | 2026-03-11 | Prompt enhancement logic optimization and path fix                                 |
+| v2.5.6        | v1.15.8 / Windsurf            | 2026-03-11 | Optimize prompt enhancement button style (rounded rectangle)                       |
 | v2.2.0        | v1.14.2                       | 2026-01-21 | Manager Mermaid/Math rendering, width/font size adjustment, thanks to @mikessslxxx |
 | v2.1.0        | v1.14.2                       | 2026-01-19 | Sidebar font adjustment, Mermaid error hint optimization, Manager one-click copy   |
 | v2.0.1        | v1.14.2                       | 2026-01-14 | Performance optimization                                                           |

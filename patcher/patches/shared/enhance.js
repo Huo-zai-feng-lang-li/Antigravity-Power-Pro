@@ -1066,7 +1066,7 @@ export function injectStyles() {
             width: 26px !important;
             height: 26px !important;
             padding: 0 !important;
-            margin: -8px 4px 0 0;
+            margin: -6px 4px 0 0 !important;
             background: rgba(255, 255, 255, 0.1) !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
             border-radius: 4px !important;
@@ -1075,8 +1075,6 @@ export function injectStyles() {
             transition: all 0.2s ease !important;
             flex-shrink: 0 !important;
             position: relative !important;
-            z-index: 1 !important;
-            pointer-events: auto !important;
         }
 
         .Antigravity-Power-Pro-enhance-btn:hover {
