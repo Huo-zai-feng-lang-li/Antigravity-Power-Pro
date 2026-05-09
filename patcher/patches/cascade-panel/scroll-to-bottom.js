@@ -6,51 +6,29 @@
  * 2. 挂载到根容器，并通过 scrollHeight 识别目标。
  */
 
-const BTN_ID = "cascade-scroll-bottom-btn";
+const BTN_CLASS = "antigravity-scroll-btn";
 const THRESHOLD = 150;
 
-/** 查找侧边栏根容器 */
-const findRoot = () => 
-  document.querySelector(".antigravity-agent-side-panel") || document.body;
-
-/** 查找主滚动容器：递归穿透 Shadow DOM，取最大的 scrollHeight */
-const findScrollEl = () => {
-    const scrollables = [];
-    
-    function traverse(root) {
-        if (!root) return;
-        // 查找当前层级的滚动容器
-        const els = root.querySelectorAll(".overflow-y-auto, .overflow-auto");
-        els.forEach(el => {
-            if (el.clientHeight > 50) scrollables.push(el);
-        });
-        
-        // 递归进入影子 DOM
-        const all = root.querySelectorAll("*");
-        all.forEach(el => {
-            if (el.shadowRoot) traverse(el.shadowRoot);
-        });
-    }
-
-    traverse(document);
-    
-    if (scrollables.length === 0) return null;
-    // 按 scrollHeight 降序排
-    return scrollables.sort((a, b) => b.scrollHeight - a.scrollHeight)[0];
+/** 查找所有可能的侧边栏/编辑器根容器 */
+const findRoots = () => {
+  const roots = Array.from(document.querySelectorAll(".antigravity-agent-side-panel, .chat-container, #chat, #react-app"));
+  if (roots.length === 0) return [document.body];
+  return roots;
 };
 
-/** 创建双箭头 SVG */
+/** 创建三重箭头 SVG */
 const createArrowSVG = () => {
   const ns = "http://www.w3.org/2000/svg";
   const svg = document.createElementNS(ns, "svg");
   const attrs = {
-    width: "16", height: "16", viewBox: "0 0 24 24",
-    fill: "none", stroke: "currentColor", "stroke-width": "3",
+    width: "20", height: "20", viewBox: "0 0 24 24",
+    fill: "none", stroke: "currentColor", "stroke-width": "2.5",
     "stroke-linecap": "round", "stroke-linejoin": "round",
   };
   for (const [k, v] of Object.entries(attrs)) svg.setAttribute(k, v);
 
-  const pts = ["7 13 12 18 17 13", "7 6 12 11 17 6"];
+  // 三重箭头，更具动感
+  const pts = ["7 17 12 22 17 17", "7 10 12 15 17 10", "7 3 12 8 17 3"];
   for (const p of pts) {
     const poly = document.createElementNS(ns, "polyline");
     poly.setAttribute("points", p);
@@ -60,64 +38,55 @@ const createArrowSVG = () => {
 };
 
 export const init = () => {
-  let trackedEl = null;
+    const panels = new Map(); // Map<root, {btn, scrollEl}>
 
-  const ensureButton = () => {
-    const root = findRoot();
-    const el = findScrollEl();
-    
-    if (!el || !root) return;
+    const syncButtons = () => {
+        const roots = findRoots();
+        
+        roots.forEach(root => {
+            if (panels.has(root)) return;
 
-    let btn = document.getElementById(BTN_ID);
-    if (!btn) {
-      btn = document.createElement("button");
-      btn.id = BTN_ID;
-      btn.appendChild(createArrowSVG());
-      root.appendChild(btn);
-      
-      if (window.getComputedStyle(root).position === "static") {
-        root.style.position = "relative";
-      }
+            const btn = document.createElement("button");
+            btn.className = BTN_CLASS;
+            btn.appendChild(createArrowSVG());
+            
+            if (window.getComputedStyle(root).position === "static") {
+                root.style.position = "relative";
+            }
+            
+            root.appendChild(btn);
 
-      btn.addEventListener("click", () => {
-        const target = findScrollEl();
-        if (target) target.scrollTo({ top: target.scrollHeight, behavior: "instant" });
-      });
-    }
+            const update = () => {
+                const el = root.querySelector(".overflow-y-auto, .overflow-auto") || root;
+                if (!el || el.clientHeight === 0) {
+                    btn.classList.remove("visible");
+                    return;
+                }
+                const gap = el.scrollHeight - el.scrollTop - el.clientHeight;
+                const isVisible = gap > THRESHOLD;
+                
+                if (isVisible) {
+                    btn.classList.add("visible");
+                } else {
+                    btn.classList.remove("visible");
+                }
+            };
 
-    const update = () => {
-      const currentScrollEl = findScrollEl();
-      if (!currentScrollEl || !currentScrollEl.isConnected) {
-        btn.style.opacity = "0";
-        btn.style.pointerEvents = "none";
-        return;
-      }
-      
-      const gap = currentScrollEl.scrollHeight - currentScrollEl.scrollTop - currentScrollEl.clientHeight;
-      const isVisible = currentScrollEl.clientHeight > 0 && gap > THRESHOLD;
-      
-      btn.style.opacity = isVisible ? "1" : "0";
-      btn.style.pointerEvents = isVisible ? "auto" : "none";
-      btn.style.transform = isVisible ? "translateY(0) scale(1)" : "translateY(12px) scale(0.9)";
+            btn.addEventListener("click", () => {
+                const el = root.querySelector(".overflow-y-auto, .overflow-auto") || root;
+                el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+            });
+
+            const scrollEl = root.querySelector(".overflow-y-auto, .overflow-auto") || root;
+            scrollEl.addEventListener("scroll", update, { passive: true });
+            
+            panels.set(root, { btn, update });
+            update();
+        });
     };
 
-    if (el !== trackedEl) {
-        trackedEl?.removeEventListener("scroll", update);
-        el.addEventListener("scroll", update, { passive: true });
-        trackedEl = el;
-    }
-
-    update();
-  };
-
-  ensureButton();
-
-  let timer = null;
-  const observer = new MutationObserver(() => {
-    clearTimeout(timer);
-    timer = setTimeout(ensureButton, 300);
-  });
-  
-  observer.observe(document.body, { childList: true, subtree: true });
-  console.log("[Cascade] 滚动到底部按钮已启动 (Shadow Penetrating Mode)");
+    syncButtons();
+    const observer = new MutationObserver(() => syncButtons());
+    observer.observe(document.body, { childList: true, subtree: true });
+    console.log("[Cascade] 多个滚动到底部按钮监听已启动");
 };

@@ -2,38 +2,38 @@
  * Windsurf Panel - 滚动按钮 + 提示词增强样式
  */
 
-/* 滚动到底部按钮 */
+/* 滚动到底部按钮 (Ultra Premium) */
 #windsurf-scroll-bottom-btn {
   position: absolute !important;
   bottom: 80px !important;
-  right: 16px !important;
-  z-index: 100 !important;
+  right: 24px !important;
+  z-index: 1000 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 32px !important;
-  height: 32px !important;
+  width: 40px !important;
+  height: 40px !important;
   padding: 0 !important;
-  border: 1px solid rgba(251, 191, 36, 0.4) !important;
+  border: 2px solid rgba(251, 191, 36, 0.6) !important;
   border-radius: 50% !important;
-  background: rgba(30, 30, 30, 0.85) !important;
-  backdrop-filter: blur(4px) !important;
+  background: linear-gradient(145deg, rgba(50, 50, 50, 0.9), rgba(20, 20, 20, 0.95)) !important;
+  backdrop-filter: blur(8px) !important;
   color: #fbbf24 !important;
   cursor: pointer !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
 }
 
 #windsurf-scroll-bottom-btn:hover {
   background: #fbbf24 !important;
-  color: #ffffff !important;
-  border-color: #fbbf24 !important;
-  transform: translateY(-2px) scale(1.1) !important;
-  box-shadow: 0 6px 16px rgba(251, 191, 36, 0.4) !important;
+  color: #000000 !important;
+  border-color: #ffffff !important;
+  transform: translateY(-4px) scale(1.1) !important;
+  box-shadow: 0 12px 28px rgba(251, 191, 36, 0.5) !important;
 }
 
 #windsurf-scroll-bottom-btn:active {
-  transform: scale(0.95) !important;
+  transform: scale(0.9) !important;
 }
 
 /* 提示词增强按钮 - 定位在输入框内部右上角 */

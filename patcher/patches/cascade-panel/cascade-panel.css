@@ -133,45 +133,58 @@ body {
     opacity: 1 !important;
 }
 
-/* ── 滚动到底部按钮 ── */
-#cascade-scroll-bottom-btn {
+/* ── 滚动到底部按钮 (Ultra Premium) ── */
+#cascade-scroll-bottom-btn, 
+.antigravity-scroll-btn {
     position: absolute;
-    bottom: 20px;
-    right: 20px;
-    left: auto;
-    z-index: 100;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    min-width: 36px;
-    max-width: 36px;
-    aspect-ratio: 1 / 1;
-    flex-shrink: 0;
-    align-self: flex-end;
-    padding: 0;
-    border: 1px solid rgba(251, 191, 36, 0.4);
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
-    background: var(--vscode-editor-background, rgba(30, 30, 30, 0.85));
-    backdrop-filter: blur(4px);
+    background: linear-gradient(145deg, rgba(50, 50, 50, 0.9), rgba(20, 20, 20, 0.95));
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1.5px solid rgba(251, 191, 36, 0.5);
     color: #fbbf24;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    pointer-events: none;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     opacity: 0;
-    box-sizing: border-box;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 0 8px rgba(251, 191, 36, 0.1);
+    visibility: hidden;
+    transform: translateY(20px) scale(0.8);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 
+                0 0 15px rgba(251, 191, 36, 0.15);
 }
 
-#cascade-scroll-bottom-btn:hover {
-    color: #ffffff;
+#cascade-scroll-bottom-btn.visible,
+.antigravity-scroll-btn.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+#cascade-scroll-bottom-btn:hover,
+.antigravity-scroll-btn:hover {
+    color: #000000;
     background: #fbbf24;
-    border-color: #fbbf24;
-    transform: translateY(-2px) scale(1.1) !important;
-    box-shadow: 0 6px 16px rgba(251, 191, 36, 0.4);
+    border-color: #ffffff;
+    transform: translateY(-4px) scale(1.1) !important;
+    box-shadow: 0 12px 28px rgba(251, 191, 36, 0.5), 
+                0 0 20px rgba(251, 191, 36, 0.3);
 }
 
-#cascade-scroll-bottom-btn:active {
-    transform: scale(0.95) !important;
+#cascade-scroll-bottom-btn:active,
+.antigravity-scroll-btn:active {
+    transform: scale(0.9) !important;
+    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
+}
+
+#cascade-scroll-bottom-btn svg,
+.antigravity-scroll-btn svg {
+    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5));
 }
