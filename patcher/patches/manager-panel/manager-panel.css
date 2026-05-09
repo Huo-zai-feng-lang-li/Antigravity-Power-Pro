@@ -1,50 +1,32 @@
-/* Manager Panel 样式 (Premium Minimalist V2.6.2) */
+/* Manager Panel 样式 (Minimalist v2.6.5) */
 
-/* 全局字体大小控制 */
+/* 仅保留核心功能样式，避免干扰 IDE 布局 */
+
+/* 1. 字体大小控制 (仅针对消息正文) */
 [class*="message-content"],
-[class*="prose"],
-.leading-relaxed.select-text,
-.antigravity-agent-side-panel [role="presentation"],
-.monaco-workbench .view-lines {
+[class*="prose"] {
     font-size: var(--manager-panel-font-size, inherit) !important;
 }
 
-/* 提示词增强按钮样式 - 修正之前被隐藏的问题 */
-.Antigravity-Power-Pro-enhance-btn {
-    position: absolute !important;
-    right: 8px !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
-    z-index: 100 !important;
-    opacity: 0.6;
-    transition: opacity 0.2s, background 0.2s;
-}
-
-.Antigravity-Power-Pro-enhance-btn:hover {
-    opacity: 1;
-}
-
-/* 滚动到底部按钮样式 (Premium Circular Design) */
+/* 2. 滚动到底部按钮 (用户确认：位置已对，仅保留此部分核心样式) */
 #cascade-scroll-bottom-btn {
     position: fixed !important;
-    /* 居中偏右，适配常见的 760px-800px 聊天视窗 */
     left: 50%;
-    transform: translateX(340px) translateY(20px) scale(0.9);
-    bottom: 130px; /* 提高位置，避开输入框 */
+    transform: translateX(360px) translateY(20px) scale(0.9);
+    bottom: 140px; 
     
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     
-    /* 深色磨砂质感 */
-    background: rgba(26, 26, 26, 0.85) !important;
+    background: rgba(30, 30, 30, 0.9) !important;
     backdrop-filter: blur(8px);
-    border: 1px solid rgba(251, 191, 36, 0.4) !important;
+    border: 1px solid rgba(251, 191, 36, 0.5) !important;
     color: #fbbf24 !important;
     
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 0 10px rgba(251, 191, 36, 0.1) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
     cursor: pointer;
-    z-index: 9999;
+    z-index: 10000;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -53,45 +35,31 @@
     pointer-events: none;
 }
 
-#cascade-scroll-bottom-btn:hover {
-    background: #fbbf24 !important;
-    border-color: #fbbf24 !important;
-    color: #000 !important;
-    transform: translateX(340px) translateY(-2px) scale(1.05) !important;
-    box-shadow: 0 12px 28px rgba(251, 191, 36, 0.4) !important;
-}
-
-#cascade-scroll-bottom-btn:active {
-    transform: translateX(340px) scale(0.95) !important;
-}
-
-/* 显示时的动画状态 */
 #cascade-scroll-bottom-btn[style*="opacity: 1"] {
     opacity: 1 !important;
     pointer-events: auto !important;
-    transform: translateX(340px) translateY(0) scale(1) !important;
+    transform: translateX(360px) translateY(0) scale(1) !important;
+}
+
+#cascade-scroll-bottom-btn:hover {
+    background: #fbbf24 !important;
+    color: #000 !important;
+    transform: translateX(360px) translateY(-2px) scale(1.1) !important;
 }
 
 #cascade-scroll-bottom-btn svg {
     width: 18px;
     height: 18px;
-    filter: drop-shadow(0 0 2px rgba(251, 191, 36, 0.3));
 }
 
 /* 适配窄屏 */
-@media (max-width: 850px) {
+@media (max-width: 900px) {
     #cascade-scroll-bottom-btn {
         left: auto;
-        right: 20px;
+        right: 30px;
         transform: translateY(20px) scale(0.9);
     }
     #cascade-scroll-bottom-btn[style*="opacity: 1"] {
         transform: translateY(0) scale(1) !important;
-    }
-    #cascade-scroll-bottom-btn:hover {
-        transform: translateY(-2px) scale(1.05) !important;
-    }
-    #cascade-scroll-bottom-btn:active {
-        transform: scale(0.95) !important;
     }
 }

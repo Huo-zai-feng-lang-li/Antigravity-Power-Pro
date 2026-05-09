@@ -1277,25 +1277,34 @@ export function startInjectionScanner(root = document.body) {
         });
 
         // 注入按钮并标记
-        container.style.position = "relative";
         container.appendChild(btn);
         input.dataset.proEnhanced = "true";
     };
 
-    // 深度查找输入框（支持 Shadow DOM）
+    // 深度查找输入框（支持 Shadow DOM 并扩展选择器）
     const findInputs = (node) => {
+        if (!node) return;
+
+        // 1. 检查节点本身是否是输入框
+        if (node.tagName === 'TEXTAREA' || 
+            (node.hasAttribute && (node.hasAttribute('contenteditable') || node.getAttribute('contenteditable') === 'true'))) {
+            injectToInput(node);
+        }
+
+        // 2. 如果有 Shadow DOM，递归进入
         if (node.shadowRoot) {
             findInputs(node.shadowRoot);
         }
         
+        // 3. 在当前节点下查找
         if (node.querySelectorAll) {
-            const potentialInputs = node.querySelectorAll('textarea, [contenteditable="true"], [contenteditable=""]');
+            const potentialInputs = node.querySelectorAll('textarea, [contenteditable], [contenteditable="true"], [contenteditable=""]');
             potentialInputs.forEach(injectToInput);
         }
 
-        // 递归查找子节点
+        // 4. 递归查找子节点（处理普通 DOM）
         if (node.children) {
-            Array.from(node.children).forEach(findInputs);
+            Array.from(node.children).forEach(child => findInputs(child));
         }
     };
 
