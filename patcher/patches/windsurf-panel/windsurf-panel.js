@@ -28,11 +28,11 @@ const DEFAULT_CONFIG = {
   fontSizeEnabled: false,
   fontSize: 14,
   promptEnhance: {
-    enabled: false,
-    provider: "anthropic",
-    apiBase: "https://api.anthropic.com",
+    enabled: true,
+    provider: "openai",
+    apiBase: "http://127.0.0.1:8045/v1",
     apiKey: "",
-    model: "claude-sonnet-4-5-20250514",
+    model: "gemini-3-flash",
     systemPrompt: "",
   },
 };

@@ -143,29 +143,33 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
-    max-width: 32px;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    max-width: 36px;
     aspect-ratio: 1 / 1;
     flex-shrink: 0;
     align-self: flex-end;
     padding: 0;
     border: 1px solid rgba(251, 191, 36, 0.4);
-    border-radius: 5px;
+    border-radius: 50%;
     background: var(--vscode-editor-background, rgba(30, 30, 30, 0.85));
+    backdrop-filter: blur(4px);
     color: #fbbf24;
     cursor: pointer;
-    transition: opacity 0.2s, transform 0.2s, background 0.15s, color 0.15s,
-        border-color 0.15s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     pointer-events: none;
     opacity: 0;
     box-sizing: border-box;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 0 8px rgba(251, 191, 36, 0.1);
 }
 
 #cascade-scroll-bottom-btn:hover {
-    color: #ef4444;
-    border-color: #ef4444;
+    color: #ffffff;
+    background: #fbbf24;
+    border-color: #fbbf24;
+    transform: translateY(-2px) scale(1.1) !important;
+    box-shadow: 0 6px 16px rgba(251, 191, 36, 0.4);
 }
 
 #cascade-scroll-bottom-btn:active {

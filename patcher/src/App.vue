@@ -119,10 +119,10 @@ const windsurfFeatures = ref({
   promptEnhance: {
     enabled: true,
     provider: "openai",
-    apiBase: "https://api.openai.com/v1",
+    apiBase: "http://127.0.0.1:8045/v1",
     apiKey: "",
-    model: "gpt-4o-mini",
-    systemPrompt: DEFAULT_SYSTEM_PROMPT,
+    model: "gemini-3-flash",
+    systemPrompt: "",
   },
 });
 
