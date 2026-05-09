@@ -51,27 +51,74 @@ const applyFontSize = (userConfig) => {
 };
 
 (async () => {
-  const config = await loadConfig();
-  applyFontSize(config);
-
-  // 重要：在 Trusted Types 环境下，动态 import 可能仍受限
-  // 按照我们之前的逻辑，enhance.js 已经移动到同级目录
-  if (config.promptEnhance?.enabled) {
+    console.log("[Cascade] 补丁加载中...");
+    
+    // 1. 加载样式
     try {
-      const { init, injectStyles } = await import("../shared/enhance.js");
-      init(config.promptEnhance);
-      injectStyles();
-      console.log("[Cascade] 提示词增强模块已加载");
-    } catch (e) {
-      console.error("[Cascade] 提示词加载失败:", e);
+        await loadStyle("cascade-panel.css");
+    } catch (err) {
+        console.warn("[Cascade] 样式加载失败:", err);
     }
-  }
 
-  const { start } = await import("./scan.js");
-  start(config);
+    const config = await loadConfig();
+    applyFontSize(config);
 
-  if (config.scrollToBottom !== false) {
-    const { init } = await import("./scroll-to-bottom.js");
-    init();
-  }
+    // 2. 提示词增强模块
+    if (config.promptEnhance?.enabled) {
+        try {
+            const enhance = await import("../shared/enhance.js");
+            enhance.init(config.promptEnhance);
+            enhance.injectStyles();
+
+            // 监听 DOM 动态注入增强按钮
+            const observer = new MutationObserver(() => {
+                const inputs = document.querySelectorAll('textarea, [contenteditable="true"]');
+                inputs.forEach(input => {
+                    // 如果已经有按钮了，或者这个输入框是我们的 UI 组件，则跳过
+                    if (input.parentElement.querySelector(".Antigravity-Power-Pro-enhance-btn") || 
+                        input.classList.contains("Antigravity-Power-Pro-exclude")) return;
+
+                    const btn = enhance.createEnhanceButton(async () => {
+                        const text = input.value || input.textContent || "";
+                        if (!text.trim()) {
+                            enhance.showToast("请先输入提示词", "error");
+                            return;
+                        }
+
+                        btn.classList.add("loading");
+                        try {
+                            const enhanced = await enhance.enhance(text);
+                            await enhance.setInputValue(input, enhanced);
+                        } catch (error) {
+                            enhance.showToast(error.message, "error");
+                        } finally {
+                            btn.classList.remove("loading");
+                        }
+                    });
+
+                    // 注入到输入框容器中
+                    input.parentElement.style.position = "relative";
+                    input.parentElement.appendChild(btn);
+                });
+            });
+
+            observer.observe(document.body, { childList: true, subtree: true });
+            console.log("[Cascade] 提示词增强监听已启动");
+        } catch (e) {
+            console.error("[Cascade] 提示词加载失败:", e);
+        }
+    }
+
+    // 3. 启动扫描与滚动逻辑
+    try {
+        const { start } = await import("./scan.js");
+        start(config);
+
+        if (config.scrollToBottom !== false) {
+            const { init } = await import("./scroll-to-bottom.js");
+            init();
+        }
+    } catch (e) {
+        console.error("[Cascade] 扫描模块加载失败:", e);
+    }
 })();

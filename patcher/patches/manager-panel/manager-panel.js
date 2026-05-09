@@ -19,7 +19,10 @@ const DEFAULT_CONFIG = {
     fontSize: 14,
     scrollToBottom: true,
     promptEnhance: {
-        enabled: false,    // 已按需禁用
+        enabled: true,
+        apiBase: "http://127.0.0.1:8045/v1",
+        apiKey: "",
+        model: "gemini-3-flash",
     },
 };
 
@@ -58,7 +61,7 @@ const applyFontSize = (userConfig) => {
 };
 
 (async () => {
-    console.log('[Manager Panel] 补丁载入 (极简模式：字体+滚动)...');
+    console.log('[Manager Panel] 补丁载入 (极简模式：字体+滚动+提示词增强)...');
 
     try {
         await loadStyle('manager-panel.css');
@@ -69,11 +72,56 @@ const applyFontSize = (userConfig) => {
     const config = await loadConfig();
     applyFontSize(config);
 
-    // 1. 扫描逻辑 (仅保留基础扫描以支持未来扩展，目前主要通过 CSS 控制字体)
+    // 1. 提示词增强模块 (支持所有输入框)
+    if (config.promptEnhance?.enabled) {
+        try {
+            const enhance = await import('../shared/enhance.js');
+            enhance.init(config.promptEnhance);
+            enhance.injectStyles();
+
+            // 监听所有输入框
+            const observer = new MutationObserver(() => {
+                const inputs = document.querySelectorAll('textarea, [contenteditable="true"]');
+                inputs.forEach(input => {
+                    if (input.parentElement.querySelector(".Antigravity-Power-Pro-enhance-btn") || 
+                        input.classList.contains("Antigravity-Power-Pro-exclude")) return;
+
+                    const btn = enhance.createEnhanceButton(async () => {
+                        const text = input.value || input.textContent || "";
+                        if (!text.trim()) {
+                            enhance.showToast("请先输入提示词", "error");
+                            return;
+                        }
+
+                        btn.classList.add("loading");
+                        try {
+                            const enhanced = await enhance.enhance(text);
+                            await enhance.setInputValue(input, enhanced);
+                        } catch (error) {
+                            enhance.showToast(error.message, "error");
+                        } finally {
+                            btn.classList.remove("loading");
+                        }
+                    });
+
+                    // 注入
+                    input.parentElement.style.position = "relative";
+                    input.parentElement.appendChild(btn);
+                });
+            });
+
+            observer.observe(document.body, { childList: true, subtree: true });
+            console.log('[Manager Panel] 提示词增强已开启');
+        } catch (e) {
+            console.error('[Manager Panel] 提示词模块加载失败:', e);
+        }
+    }
+
+    // 2. 扫描逻辑 (基础扫描)
     const { start } = await import('./scan.js');
     start(config);
 
-    // 2. 启动滚动到底部 (支持 Cascade 和 Manager 窗口)
+    // 3. 启动滚动到底部 (支持 Cascade 和 Manager 窗口)
     if (config.scrollToBottom !== false) {
         try {
             const { init } = await import('./scroll-to-bottom.js');

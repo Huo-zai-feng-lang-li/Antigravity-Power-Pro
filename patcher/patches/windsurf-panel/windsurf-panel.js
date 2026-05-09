@@ -106,45 +106,38 @@ const initPromptEnhance = async (config) => {
       const panel = document.getElementById("windsurf.cascadePanel");
       if (!panel) return;
 
-      const injectButton = () => {
-        const input = panel.querySelector(
-          '[contenteditable][role="textbox"], textarea, [contenteditable="true"]',
-        );
-        if (!input) return;
+      const observer = new MutationObserver(() => {
+        const inputs = panel.querySelectorAll('textarea, [contenteditable="true"]');
+        inputs.forEach(input => {
+          if (input.parentElement.querySelector(".Antigravity-Power-Pro-enhance-btn") || 
+              input.classList.contains("Antigravity-Power-Pro-exclude")) return;
 
-        const container = input.closest(
-          '[class*="vscroll"], [class*="input"], [class*="rounded"]',
-        );
-        const parent = container || input.parentElement;
-        if (!parent || parent.querySelector(".Antigravity-Power-Pro-enhance-btn"))
-          return;
+          const btn = enhance.createEnhanceButton(async () => {
+            const text = input.value || input.textContent || "";
+            if (!text.trim()) {
+                enhance.showToast("请先输入提示词", "error");
+                return;
+            }
 
-        const btn = enhance.createEnhanceButton(async () => {
-          const currentInput = panel.querySelector(
-            '[contenteditable][role="textbox"], textarea, [contenteditable="true"]',
-          );
-          if (!currentInput) {
-            enhance.showErrorModal("找不到输入框");
-            return;
-          }
+            btn.classList.add("loading");
+            try {
+              const enhanced = await enhance.enhance(text);
+              await enhance.setInputValue(input, enhanced);
+            } catch (error) {
+              enhance.showToast(error.message, "error");
+            } finally {
+              btn.classList.remove("loading");
+            }
+          });
 
-          const text = currentInput.value || currentInput.textContent || "";
-          if (!text.trim()) {
-            enhance.showErrorModal("请先输入提示词");
-            return;
-          }
-
-          btn.classList.add("loading");
-          try {
-            const enhanced = await enhance.enhance(text);
-            await enhance.setInputValue(currentInput, enhanced);
-            enhance.showResultModal(enhanced, () => {}, () => {});
-          } catch (error) {
-            enhance.showErrorModal(error.message);
-          } finally {
-            btn.classList.remove("loading");
-          }
+          // 注入
+          input.parentElement.style.position = "relative";
+          input.parentElement.appendChild(btn);
         });
+      });
+
+      observer.observe(panel, { childList: true, subtree: true });
+    };
 
         const inputWrapper = input.parentElement;
         if (inputWrapper) {

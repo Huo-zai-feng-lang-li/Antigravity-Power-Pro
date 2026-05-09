@@ -87,12 +87,14 @@ pub struct ManagerFeatureConfig {
     pub font_size_enabled: bool,
     #[serde(rename = "fontSize")]
     pub font_size: f32,
+    #[serde(rename = "promptEnhance")]
+    pub prompt_enhance: PromptEnhanceConfig,
 }
 
 impl Default for ManagerFeatureConfig {
     fn default() -> Self {
         Self {
-            enabled: false,
+            enabled: true,
             mermaid: false,
             math: false,
             copy_button: true,
@@ -100,6 +102,7 @@ impl Default for ManagerFeatureConfig {
             max_width_ratio: 75.0,
             font_size_enabled: false,
             font_size: 16.0,
+            prompt_enhance: PromptEnhanceConfig::default(),
         }
     }
 }
@@ -472,7 +475,15 @@ fn write_manager_config_file(config_path: &PathBuf, features: &ManagerFeatureCon
         "maxWidthEnabled": features.max_width_enabled,
         "maxWidthRatio": features.max_width_ratio,
         "fontSizeEnabled": features.font_size_enabled,
-        "fontSize": features.font_size
+        "fontSize": features.font_size,
+        "promptEnhance": {
+            "enabled": features.prompt_enhance.enabled,
+            "provider": features.prompt_enhance.provider,
+            "apiBase": features.prompt_enhance.api_base,
+            "apiKey": features.prompt_enhance.api_key,
+            "model": features.prompt_enhance.model,
+            "systemPrompt": features.prompt_enhance.system_prompt
+        }
     });
     
     fs::write(config_path, serde_json::to_string_pretty(&config_content).unwrap())
