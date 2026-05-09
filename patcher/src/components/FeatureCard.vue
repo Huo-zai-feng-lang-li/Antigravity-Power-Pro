@@ -11,38 +11,6 @@
     <div class="feature-list">
       <label class="feature-item" :class="{ 'item-disabled': !model.enabled }">
         <div class="feature-info">
-          <span class="feature-name">Mermaid 流程图渲染</span>
-          <p class="feature-desc">自动渲染 Mermaid 代码块为流程图</p>
-        </div>
-        <input type="checkbox" v-model="model.mermaid" class="checkbox" :disabled="!model.enabled">
-      </label>
-
-      <label class="feature-item" :class="{ 'item-disabled': !model.enabled }">
-        <div class="feature-info">
-          <span class="feature-name">数学公式渲染</span>
-          <p class="feature-desc">使用 KaTeX/MathJax 渲染 LaTeX 公式</p>
-        </div>
-        <input type="checkbox" v-model="model.math" class="checkbox" :disabled="!model.enabled">
-      </label>
-
-      <label class="feature-item" :class="{ 'item-disabled': !model.enabled }">
-        <div class="feature-info">
-          <span class="feature-name">一键复制按钮</span>
-          <p class="feature-desc">在内容区域添加复制按钮</p>
-        </div>
-        <input type="checkbox" v-model="model.copyButton" class="checkbox" :disabled="!model.enabled">
-      </label>
-
-      <label class="feature-item" :class="{ 'item-disabled': !model.enabled }">
-        <div class="feature-info">
-          <span class="feature-name">表格颜色修复</span>
-          <p class="feature-desc">修复深色主题下表格文字不可见问题</p>
-        </div>
-        <input type="checkbox" v-model="model.tableColor" class="checkbox" :disabled="!model.enabled">
-      </label>
-
-      <label class="feature-item" :class="{ 'item-disabled': !model.enabled }">
-        <div class="feature-info">
           <span class="feature-name">滚动到底部按钮</span>
           <p class="feature-desc">在 Cascade 面板添加一键滚动到底部按钮</p>
         </div>

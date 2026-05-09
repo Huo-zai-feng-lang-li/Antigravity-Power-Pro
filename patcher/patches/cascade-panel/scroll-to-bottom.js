@@ -1,19 +1,43 @@
 /**
- * Cascade Panel — 滚动到底部按钮
+ * Cascade Panel — 滚动到底部按钮 (Surgical Fix V2.1 - Shadow DOM Compatible)
  *
- * 监听 #cascade 内的可滚动区域，当用户未处于底部时显示浮动箭头。
- * React 切换对话时会替换滚动容器节点，通过 MutationObserver 自动重挂。
- *
- * 选择器来源：CDP 探测得到的唯一匹配
- *   #cascade .grow.overflow-y-auto  (position: relative, overflow-y: auto)
+ * 逻辑：
+ * 1. 递归穿透 Shadow DOM 寻找主滚动容器。
+ * 2. 挂载到根容器，并通过 scrollHeight 识别目标。
  */
 
 const BTN_ID = "cascade-scroll-bottom-btn";
-const THRESHOLD = 120;
+const THRESHOLD = 150;
 
-/** 查找滚动容器 */
-const findScrollEl = () =>
-  document.querySelector("#cascade .grow.overflow-y-auto");
+/** 查找侧边栏根容器 */
+const findRoot = () => 
+  document.querySelector(".antigravity-agent-side-panel") || document.body;
+
+/** 查找主滚动容器：递归穿透 Shadow DOM，取最大的 scrollHeight */
+const findScrollEl = () => {
+    const scrollables = [];
+    
+    function traverse(root) {
+        if (!root) return;
+        // 查找当前层级的滚动容器
+        const els = root.querySelectorAll(".overflow-y-auto, .overflow-auto");
+        els.forEach(el => {
+            if (el.clientHeight > 50) scrollables.push(el);
+        });
+        
+        // 递归进入影子 DOM
+        const all = root.querySelectorAll("*");
+        all.forEach(el => {
+            if (el.shadowRoot) traverse(el.shadowRoot);
+        });
+    }
+
+    traverse(document);
+    
+    if (scrollables.length === 0) return null;
+    // 按 scrollHeight 降序排
+    return scrollables.sort((a, b) => b.scrollHeight - a.scrollHeight)[0];
+};
 
 /** 创建双箭头 SVG */
 const createArrowSVG = () => {
@@ -21,8 +45,8 @@ const createArrowSVG = () => {
   const svg = document.createElementNS(ns, "svg");
   const attrs = {
     width: "16", height: "16", viewBox: "0 0 24 24",
-    fill: "none", stroke: "currentColor",
-    "stroke-width": "2.5", "stroke-linecap": "round", "stroke-linejoin": "round",
+    fill: "none", stroke: "currentColor", "stroke-width": "3",
+    "stroke-linecap": "round", "stroke-linejoin": "round",
   };
   for (const [k, v] of Object.entries(attrs)) svg.setAttribute(k, v);
 
@@ -35,59 +59,65 @@ const createArrowSVG = () => {
   return svg;
 };
 
-/**
- * 初始化滚动到底部功能
- * @exports
- */
 export const init = () => {
   let trackedEl = null;
-  let resizeObs = null;
 
   const ensureButton = () => {
+    const root = findRoot();
     const el = findScrollEl();
-    if (!el) return;
-    if (el === trackedEl && document.getElementById(BTN_ID)) return;
+    
+    if (!el || !root) return;
 
-    // 清理旧按钮与旧 ResizeObserver
-    document.getElementById(BTN_ID)?.remove();
-    resizeObs?.disconnect();
-    trackedEl = el;
+    let btn = document.getElementById(BTN_ID);
+    if (!btn) {
+      btn = document.createElement("button");
+      btn.id = BTN_ID;
+      btn.appendChild(createArrowSVG());
+      root.appendChild(btn);
+      
+      if (window.getComputedStyle(root).position === "static") {
+        root.style.position = "relative";
+      }
 
-    const btn = document.createElement("button");
-    btn.id = BTN_ID;
-    // btn.title = "滚动到底部";
-    btn.appendChild(createArrowSVG());
-
-    // 滚动容器自身 position: relative，直接 append
-    el.appendChild(btn);
+      btn.addEventListener("click", () => {
+        const target = findScrollEl();
+        if (target) target.scrollTo({ top: target.scrollHeight, behavior: "instant" });
+      });
+    }
 
     const update = () => {
-      const gap = el.scrollHeight - el.scrollTop - el.clientHeight;
-      const visible = gap > THRESHOLD;
-      btn.style.opacity = visible ? "1" : "0";
-      btn.style.pointerEvents = visible ? "auto" : "none";
-      btn.style.transform = visible ? "translateY(0)" : "translateY(8px)";
+      const currentScrollEl = findScrollEl();
+      if (!currentScrollEl || !currentScrollEl.isConnected) {
+        btn.style.opacity = "0";
+        btn.style.pointerEvents = "none";
+        return;
+      }
+      
+      const gap = currentScrollEl.scrollHeight - currentScrollEl.scrollTop - currentScrollEl.clientHeight;
+      const isVisible = currentScrollEl.clientHeight > 0 && gap > THRESHOLD;
+      
+      btn.style.opacity = isVisible ? "1" : "0";
+      btn.style.pointerEvents = isVisible ? "auto" : "none";
+      btn.style.transform = isVisible ? "translateY(0) scale(1)" : "translateY(12px) scale(0.9)";
     };
 
-    btn.addEventListener("click", () => {
-      el.scrollTo({ top: el.scrollHeight, behavior: "instant" });
-    });
-    el.addEventListener("scroll", update, { passive: true });
+    if (el !== trackedEl) {
+        trackedEl?.removeEventListener("scroll", update);
+        el.addEventListener("scroll", update, { passive: true });
+        trackedEl = el;
+    }
 
-    resizeObs = new ResizeObserver(update);
-    resizeObs.observe(el);
     update();
   };
 
   ensureButton();
 
-  // 对话切换时 React 会替换滚动容器，自动重挂
   let timer = null;
-  const cascade = document.getElementById("cascade") || document.body;
-  new MutationObserver(() => {
+  const observer = new MutationObserver(() => {
     clearTimeout(timer);
-    timer = setTimeout(ensureButton, 200);
-  }).observe(cascade, { childList: true, subtree: true });
-
-  console.log("[Cascade] 滚动到底部按钮已启动");
+    timer = setTimeout(ensureButton, 300);
+  });
+  
+  observer.observe(document.body, { childList: true, subtree: true });
+  console.log("[Cascade] 滚动到底部按钮已启动 (Shadow Penetrating Mode)");
 };

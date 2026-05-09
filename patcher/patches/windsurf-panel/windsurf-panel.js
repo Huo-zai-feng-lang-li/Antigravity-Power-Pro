@@ -25,6 +25,8 @@ const SCRIPT_BASE = new URL("./", import.meta.url).href;
 
 const DEFAULT_CONFIG = {
   scrollToBottom: true,
+  fontSizeEnabled: false,
+  fontSize: 14,
   promptEnhance: {
     enabled: false,
     provider: "anthropic",
@@ -241,6 +243,13 @@ const initScrollToBottom = (panel) => {
   }).observe(panel, { childList: true, subtree: true });
 };
 
+const applyFontSize = (userConfig) => {
+  const root = document.documentElement;
+  if (root && userConfig?.fontSizeEnabled) {
+    root.style.setProperty("--cascade-panel-font-size", `${userConfig.fontSize}px`);
+  }
+};
+
 (async () => {
   console.log("[Windsurf Panel] 补丁加载中...");
 
@@ -251,6 +260,8 @@ const initScrollToBottom = (panel) => {
   }
 
   const config = await loadConfig();
+  
+  applyFontSize(config);
 
   const panel = await waitForCascadePanel();
 

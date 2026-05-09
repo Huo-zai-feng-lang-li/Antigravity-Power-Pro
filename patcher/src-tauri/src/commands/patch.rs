@@ -326,11 +326,20 @@ fn backup_cascade_files(extensions_dir: &PathBuf) -> Result<(), String> {
 
 /// 备份 Manager 相关文件
 fn backup_manager_files(workbench_dir: &PathBuf) -> Result<(), String> {
+    // 备份 workbench-jetski-agent.html
     let jetski_agent = workbench_dir.join("workbench-jetski-agent.html");
     let jetski_backup = workbench_dir.join("workbench-jetski-agent.html.bak");
     if jetski_agent.exists() && !jetski_backup.exists() {
         fs::copy(&jetski_agent, &jetski_backup)
             .map_err(|e| format!("备份 workbench-jetski-agent.html 失败: {}", e))?;
+    }
+
+    // 备份 workbench.html
+    let workbench_html = workbench_dir.join("workbench.html");
+    let workbench_backup = workbench_dir.join("workbench.html.bak");
+    if workbench_html.exists() && !workbench_backup.exists() {
+        fs::copy(&workbench_html, &workbench_backup)
+            .map_err(|e| format!("备份 workbench.html 失败: {}", e))?;
     }
     Ok(())
 }
@@ -395,12 +404,20 @@ fn write_manager_patches(workbench_dir: &PathBuf, manager_features: &ManagerFeat
     // 写入 Manager 相关补丁文件
     let patch_files = embedded::get_all_files_runtime()?;
     for (relative_path, content) in patch_files {
-        // 只处理 Manager 相关文件
-        if relative_path != "workbench-jetski-agent.html" && !relative_path.starts_with("manager-panel/") {
+        // 只处理 Manager 相关文件 (Antigravity 用 workbench-antigravity.html 覆盖 workbench.html)
+        if relative_path != "workbench-jetski-agent.html" && 
+           relative_path != "workbench-antigravity.html" &&
+           !relative_path.starts_with("manager-panel/") {
             continue;
         }
         
-        let full_path = workbench_dir.join(&relative_path);
+        let target_name = if relative_path == "workbench-antigravity.html" {
+            "workbench.html"
+        } else {
+            &relative_path
+        };
+
+        let full_path = workbench_dir.join(target_name);
         
         // 确保父目录存在
         if let Some(parent) = full_path.parent() {
@@ -494,6 +511,14 @@ fn restore_manager_files(workbench_dir: &PathBuf) -> Result<(), String> {
             .map_err(|e| format!("恢复 workbench-jetski-agent.html 失败: {}", e))?;
     }
 
+    // 恢复 workbench.html
+    let workbench_html = workbench_dir.join("workbench.html");
+    let workbench_backup = workbench_dir.join("workbench.html.bak");
+    if workbench_backup.exists() {
+        fs::copy(&workbench_backup, &workbench_html)
+            .map_err(|e| format!("恢复 workbench.html 失败: {}", e))?;
+    }
+
     // 删除 Manager 补丁目录
     let manager_dir = workbench_dir.join("manager-panel");
     if manager_dir.exists() {
@@ -521,6 +546,10 @@ fn restore_backup_files(extensions_dir: &PathBuf, workbench_dir: &PathBuf) -> Re
 pub struct WindsurfFeatureConfig {
     #[serde(rename = "scrollToBottom")]
     pub scroll_to_bottom: bool,
+    #[serde(rename = "fontSizeEnabled")]
+    pub font_size_enabled: bool,
+    #[serde(rename = "fontSize")]
+    pub font_size: f32,
     #[serde(rename = "promptEnhance")]
     pub prompt_enhance: PromptEnhanceConfig,
 }
@@ -529,6 +558,8 @@ impl Default for WindsurfFeatureConfig {
     fn default() -> Self {
         Self {
             scroll_to_bottom: true,
+            font_size_enabled: false,
+            font_size: 14.0,
             prompt_enhance: PromptEnhanceConfig::default(),
         }
     }
@@ -689,6 +720,8 @@ fn write_windsurf_patches(workbench_dir: &PathBuf, features: &WindsurfFeatureCon
 fn write_windsurf_config_file(config_path: &PathBuf, features: &WindsurfFeatureConfig) -> Result<(), String> {
     let config_content = serde_json::json!({
         "scrollToBottom": features.scroll_to_bottom,
+        "fontSizeEnabled": features.font_size_enabled,
+        "fontSize": features.font_size,
         "promptEnhance": {
             "enabled": features.prompt_enhance.enabled,
             "provider": features.prompt_enhance.provider,

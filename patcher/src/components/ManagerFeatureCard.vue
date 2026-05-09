@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <section class="card" :class="{ 'is-disabled': !model.enabled }">
     <div class="card-header">
       <h2 class="card-title">Manager 窗口设置</h2>

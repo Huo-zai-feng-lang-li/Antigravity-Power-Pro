@@ -1,0 +1,17 @@
+{
+  "mermaid": true,
+  "math": true,
+  "copyButton": true,
+  "tableColor": true,
+  "fontSizeEnabled": true,
+  "fontSize": 14,
+  "scrollToBottom": true,
+  "placeholder": "Ask Antigravity...",
+  "promptEnhance": {
+    "enabled": true,
+    "apiBase": "https://api.openai.com/v1",
+    "apiKey": "",
+    "model": "gpt-4o-mini",
+    "systemPrompt": ""
+  }
+}

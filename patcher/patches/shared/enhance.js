@@ -247,22 +247,37 @@ function extractConversationHistory() {
  * 查找对话容器元素
  * @returns {Element|null}
  */
+/**
+ * 递归穿透 Shadow DOM 查找元素
+ */
+function querySelectorDeep(selector, root = document) {
+    let found = null;
+    function traverse(node) {
+        if (!node || found) return;
+        found = node.querySelector(selector);
+        if (found) return;
+        
+        const all = node.querySelectorAll("*");
+        all.forEach(child => {
+            if (child.shadowRoot) traverse(child.shadowRoot);
+        });
+    }
+    traverse(root);
+    return found;
+}
+
+/**
+ * 查找对话容器元素
+ * @returns {Element|null}
+ */
 function findConversationContainer() {
   for (const selector of CONVERSATION_SELECTORS) {
     try {
-      const container = document.querySelector(selector);
+      const container = querySelectorDeep(selector);
       if (container && container.children.length > 0) {
-        // 验证这确实是对话容器（包含消息元素）
-        const hasMessages = container.querySelector(
-          '[class*="message"], [data-message-author-role], [class*="prose"]',
-        );
-        if (hasMessages) {
-          return container;
-        }
+        return container;
       }
-    } catch (e) {
-      // 选择器无效，继续尝试下一个
-    }
+    } catch (e) {}
   }
   return null;
 }
@@ -772,13 +787,8 @@ function findActiveInput() {
     return active;
   }
 
-  // 尝试查找 Cascade 的输入框
-  const cascadeInput =
-    document.querySelector('textarea[placeholder*="Ask"]') ||
-    document.querySelector("textarea[data-testid]") ||
-    document.querySelector(".chat-input textarea") ||
-    document.querySelector('[contenteditable="true"]');
-  return cascadeInput;
+  // 尝试查找 Cascade 的输入框 (深度穿透)
+  return querySelectorDeep('textarea[placeholder*="Ask"], textarea[data-testid], .chat-input textarea, [contenteditable="true"]');
 }
 
 /**

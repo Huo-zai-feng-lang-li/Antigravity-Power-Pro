@@ -10,7 +10,7 @@
  */
 
 // 内容扫描的选择器，控制功能覆盖的 DOM 范围
-export const CONTENT_SELECTOR = '.prose, .prose-sm, [data-in-html-content]';
+export const CONTENT_SELECTOR = '.prose, .prose-sm, .markdown-body, .whitespace-pre-wrap, .break-word, [data-testid*="message"], .text-ide-message-block-bot-color, [class*="antigravity-agent-side-panel"]';
 export const BOUND_ATTR = 'data-cascade-copy-bound';
 export const BUTTON_CLASS = 'cascade-copy-button'; // Main content copy button
 export const COPY_BTN_CLASS = 'cascade-copy-btn'; // Generic copy button style

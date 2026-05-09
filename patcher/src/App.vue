@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
@@ -87,19 +87,19 @@ const showConfirm = ref(false);
 // 侧边栏功能开关
 const features = ref({
   enabled: true,
-  mermaid: true,
-  math: true,
-  copyButton: true,
-  tableColor: true,
+  mermaid: false,
+  math: false,
+  copyButton: false,
+  tableColor: false,
   scrollToBottom: true,
-  fontSizeEnabled: true,
-  fontSize: 20,
+  fontSizeEnabled: false,
+  fontSize: 14,
   promptEnhance: {
-    enabled: false,
-    provider: "custom",
-    apiBase: "http://127.0.0.1:8045/v1",
-    apiKey: "sk-c07bc713be304fc1a2f0ad79a25efc8d",
-    model: "gemini-3-flash",
+    enabled: true,
+    provider: "openai",
+    apiBase: "https://api.openai.com/v1",
+    apiKey: "",
+    model: "gpt-4o-mini",
     systemPrompt: DEFAULT_SYSTEM_PROMPT,
   },
 });
@@ -114,12 +114,14 @@ const showWindsurfConfirm = ref(false);
 
 const windsurfFeatures = ref({
   scrollToBottom: true,
+  fontSizeEnabled: false,
+  fontSize: 14,
   promptEnhance: {
-    enabled: false,
-    provider: "custom",
-    apiBase: "http://127.0.0.1:8045/v1",
-    apiKey: "sk-c07bc713be304fc1a2f0ad79a25efc8d",
-    model: "gemini-3-flash",
+    enabled: true,
+    provider: "openai",
+    apiBase: "https://api.openai.com/v1",
+    apiKey: "",
+    model: "gpt-4o-mini",
     systemPrompt: DEFAULT_SYSTEM_PROMPT,
   },
 });
@@ -431,8 +433,6 @@ onMounted(async () => {
 
         <FeatureCard v-model="features" />
 
-        <ManagerFeatureCard v-model="managerFeatures" />
-
         <PromptEnhanceCard v-model="features.promptEnhance" />
 
         <section class="actions">
@@ -474,10 +474,32 @@ onMounted(async () => {
 
         <section v-if="windsurfPath" class="card">
           <h3 class="card-title">Windsurf 功能配置</h3>
-          <label class="toggle-row">
-            <span>滚动到底部按钮</span>
-            <input type="checkbox" v-model="windsurfFeatures.scrollToBottom" />
-          </label>
+          <div class="feature-list">
+            <label class="toggle-row">
+              <span>滚动到底部按钮</span>
+              <input type="checkbox" v-model="windsurfFeatures.scrollToBottom" />
+            </label>
+
+            <label class="toggle-row">
+              <span>侧边栏字体大小</span>
+              <div class="feature-controls">
+                <input
+                  type="checkbox"
+                  v-model="windsurfFeatures.fontSizeEnabled"
+                  class="checkbox"
+                />
+                <input
+                  type="number"
+                  v-model.number="windsurfFeatures.fontSize"
+                  class="font-size-input"
+                  min="10"
+                  max="40"
+                  step="1"
+                  :disabled="!windsurfFeatures.fontSizeEnabled"
+                />
+              </div>
+            </label>
+          </div>
         </section>
 
         <PromptEnhanceCard

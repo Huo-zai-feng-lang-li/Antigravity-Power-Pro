@@ -1,15 +1,24 @@
 /* Base layout reset */
 :root {
-    --cascade-panel-font-size: var(--vscode-font-size, 13px);
+    --cascade-panel-font-size: var(--vscode-font-size, 15px);
+}
+
+/* Ensure message blocks are positioned for copy buttons */
+.text-ide-message-block-bot-color,
+.text-ide-message-block-user-color,
+.prose,
+.prose-sm,
+[data-testid*="message"] {
+    position: relative !important;
 }
 
 html {
-    font-size: var(--cascade-panel-font-size, var(--vscode-font-size, 13px));
+    font-size: var(--cascade-panel-font-size, var(--vscode-font-size, 15px));
 }
 
 body {
     margin: 0;
-    font-size: inherit;
+    font-size: var(--cascade-panel-font-size);
 }
 
 /* Shared copy button styling - matches Good/Bad buttons */
@@ -65,8 +74,8 @@ body {
 /* Content-area copy button (only visible on hover/focus) */
 .cascade-copy-button {
     position: absolute;
-    top: 0;
-    right: 8px;
+    top: 4px;
+    right: 48px;
     opacity: 0;
     z-index: 10;
     background: var(--vscode-editor-background, rgba(30, 30, 30, 0.9));
@@ -126,9 +135,10 @@ body {
 
 /* ── 滚动到底部按钮 ── */
 #cascade-scroll-bottom-btn {
-    position: sticky;
-    bottom: 12px;
-    left: calc(100% - 44px);
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    left: auto;
     z-index: 100;
     display: flex;
     align-items: center;

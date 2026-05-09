@@ -29,6 +29,7 @@ let config = {
   tableColor: true,
   fontSizeEnabled: true,
   fontSize: 20,
+  placeholder: "",
   promptEnhance: {
     enabled: false,
     apiBase: "",
@@ -226,6 +227,7 @@ const scan = (root) => {
  * @returns {Element}
  */
 const getRoot = () =>
+  document.querySelector(".antigravity-agent-side-panel") ||
   document.getElementById("chat") ||
   document.getElementById("react-app") ||
   document.body;
@@ -306,6 +308,9 @@ const scheduleScan = (nodes) => {
  */
 // Cascade/Windsurf 输入框的多种可能选择器
 const INPUT_SELECTORS = [
+  // Cascade 1.107.0
+  '.antigravity-agent-side-panel [role="textbox"]',
+  '.antigravity-agent-side-panel [contenteditable="true"]',
   // Cascade 特定选择器
   '[placeholder*="Ask anything"]',
   '[placeholder*="Ctrl+L"]',
@@ -455,13 +460,15 @@ const initPromptEnhanceButton = async () => {
     ];
 
     let sendButton = null;
-    const inputContainer =
-      input.closest(
-        '[class*="input"], [class*="composer"], [class*="chat"], form',
-      ) || parent;
+    // 查找输入框容器 (用于定位增强按钮)
+    const inputContainer = input.closest('[class*="input"], [class*="composer"], [class*="chat"], .relative.w-full, form');
+    if (!inputContainer) {
+      console.warn("[Cascade] 无法找到输入框容器，尝试直接使用父节点");
+    }
+    const parentContainer = inputContainer || input.parentNode;
 
     for (const selector of sendButtonSelectors) {
-      sendButton = inputContainer.querySelector(selector);
+      sendButton = parentContainer.querySelector(selector);
       if (sendButton) break;
     }
 
@@ -469,15 +476,40 @@ const initPromptEnhanceButton = async () => {
       // 插入到容器最前面，避开发送/评论按钮
       sendButton.parentNode.insertBefore(btn, sendButton.parentNode.firstChild);
     } else {
-      // 备选：查找工具栏或按钮区域
-      const toolbar = inputContainer.querySelector(
-        '[class*="toolbar"], [class*="actions"], [class*="buttons"]',
-      );
-      if (toolbar) {
-        toolbar.insertBefore(btn, toolbar.firstChild);
+      // 1.107.0 强力挂载策略：直接挂载到输入框所在的相对定位容器
+      const inputWrapper = input.closest('.relative.w-full') || parent;
+      if (inputWrapper) {
+        // 使用绝对定位将其放在右下角偏左位置
+        btn.style.position = 'absolute';
+        btn.style.bottom = '8px';
+        btn.style.right = '40px';
+        btn.style.zIndex = '10';
+        inputWrapper.appendChild(btn);
       } else {
         // 最后备选：插入到输入框后面
         input.parentNode.insertBefore(btn, input.nextSibling);
+      }
+    }
+  });
+};
+
+/**
+ * 替换输入框 placeholder
+ * 遍历所有匹配的输入元素，将 placeholder 设为用户自定义文本
+ */
+const applyPlaceholder = () => {
+  if (!config.placeholder) return;
+
+  const root = getRoot();
+  root.querySelectorAll(INPUT_SELECTOR).forEach((el) => {
+    if (el.tagName === "TEXTAREA" || el.tagName === "INPUT") {
+      if (el.placeholder !== config.placeholder) {
+        el.placeholder = config.placeholder;
+      }
+    } else if (el.contentEditable === "true") {
+      if (el.dataset.placeholder !== config.placeholder) {
+        el.dataset.placeholder = config.placeholder;
+        el.setAttribute("aria-placeholder", config.placeholder);
       }
     }
   });
@@ -493,6 +525,9 @@ const init = () => {
   if (config.copyButton) {
     addFeedbackCopyButtons();
   }
+
+  // 应用自定义 placeholder
+  applyPlaceholder();
 
   // 初始化提示词增强按钮
   if (config.promptEnhance?.enabled) {
@@ -515,6 +550,9 @@ const init = () => {
     if (nodesToScan.length > 0) {
       scheduleScan(nodesToScan);
     }
+
+    // 持续保持 placeholder
+    applyPlaceholder();
 
     // 检查是否需要重新注入增强按钮
     if (config.promptEnhance?.enabled) {

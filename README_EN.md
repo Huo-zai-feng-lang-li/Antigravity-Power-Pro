@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro/releases">
-    <img src="https://img.shields.io/badge/Version-v2.5.7-blue.svg" alt="Version">
+    <img src="https://img.shields.io/badge/Version-v2.6.0-blue.svg" alt="Version">
   </a>
   <a href="https://codeium.com/antigravity">
     <img src="https://img.shields.io/badge/Supports_Antigravity-v1.15.8-green.svg" alt="Antigravity">
@@ -38,12 +38,9 @@ Antigravity-Power-Pro enhances the Antigravity Sidebar and Manager window by app
 
 | Feature                       | Description                                                                                       |
 | ----------------------------- | ------------------------------------------------------------------------------------------------- |
-| **Mermaid Rendering**         | Automatically renders flowcharts, sequence diagrams, class diagrams, etc., supporting dark themes |
-| **Math Formula Rendering**    | Supports `$...$` inline formulas and `$$...$$` block formulas                                     |
-| **One-Click Copy**            | Sidebar and Manager provide a Copy button that automatically converts to Markdown                 |
-| **Table Color Fix**           | Fixes invisible table text issues in dark themes                                                  |
-| **Manager Layout Adjustment** | Supports conversation width and font size adjustment                                              |
-| **Floating Copy Button**      | Floating button in the top right corner of content areas, unobtrusive to reading                  |
+| **Prompt Enhancement**        | Connects to custom LLM APIs to optimize your prompts (similar to Augment Code)                    |
+| **Smart Scroll**             | Floating button in the sidebar to quickly locate the latest conversation                          |
+| **Font Adjustment**           | Freely adjust sidebar font size for the most comfortable reading experience                       |
 
 ### Copy Feature Highlights
 
@@ -111,6 +108,7 @@ For manual installation, please refer to [manual-install.md](patcher/patches/man
 
 | Patch Version | Supported Antigravity Version | Date       | Update Content                                                                     |
 | ------------- | ----------------------------- | ---------- | ---------------------------------------------------------------------------------- |
+| v2.6.0        | v1.15.8 / Windsurf            | 2026-03-12 | Minimalist Refactor: Focus UI on 3 core features, removed redundant items          |
 | v2.5.7        | v1.15.8 / Windsurf            | 2026-03-11 | Prompt enhancement logic optimization and path fix                                 |
 | v2.5.6        | v1.15.8 / Windsurf            | 2026-03-11 | Optimize prompt enhancement button style (rounded rectangle)                       |
 | v2.2.0        | v1.14.2                       | 2026-01-21 | Manager Mermaid/Math rendering, width/font size adjustment, thanks to @mikessslxxx |

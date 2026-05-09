@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro/releases">
-    <img src="https://img.shields.io/badge/版本-v2.5.7-blue.svg?style=flat-square" alt="版本">
+    <img src="https://img.shields.io/badge/版本-v2.6.0-blue.svg?style=flat-square" alt="版本">
   </a>
   <a href="https://codeium.com/antigravity">
     <img src="https://img.shields.io/badge/支持_Antigravity-v1.15.8-green.svg?style=flat-square" alt="Antigravity">
@@ -41,12 +41,9 @@
 
 | 功能模块                  | 描述说明                                                    |
 | :------------------------ | :---------------------------------------------------------- |
-| 📊 **Mermaid 渲染**       | 实时渲染流程图、时序图、类图，完美适配深/浅色模式           |
-| 🔢 **数学公式**           | 支持 LaTeX 语法，精准显示 `$行内$` 与 `$$块级$$` 公式       |
-| 📋 **一键 Markdown 复制** | 智能提取 AI 回答，自动转换表格、代码块，过滤思考过程        |
-| 🎨 **UI 视觉优化**        | 修复深色模式下表格文字不可见问题，精细化布局调整            |
-| ⚙️ **Manager 增强**       | 自由调节对话窗口宽度与字体大小，打造最舒适的阅读体验        |
 | 🧠 **提示词增强**         | 对接自定义 LLM API，一键优化你的 Prompt (类似 Augment Code) |
+| ⚓ **智能滚动**           | Cascade 面板浮动按钮，助你快速定位到最新对话                |
+| 📏 **字体调节**           | 自由调节侧边栏字体大小，打造最舒适的阅读体验                |
 
 ### 🌊 Windsurf 专属支持
 
@@ -94,6 +91,7 @@
 
 | 补丁版本   | 支持 IDE 版本      | 发布日期   | 重大更新内容                                           |
 | :--------- | :----------------- | :--------- | :----------------------------------------------------- |
+| **v2.6.0** | v1.15.8 / Windsurf | 2026-03-12 | **极简主义重构**：UI 聚焦三大核心功能，移除冗余项      |
 | **v2.5.7** | v1.15.8 / Windsurf | 2026-03-11 | 提示词增强逻辑优化与路径修复                          |
 | **v2.5.6** | v1.15.8 / Windsurf | 2026-03-11 | 优化提示词增强按钮样式（改为圆角矩形），提升视觉吸引力 |
 | **v2.5.5** | v1.15.8 / Windsurf | 2026-03-11 | 提示词增强模块复用优化，修复滚动按钮，去除冗余项       |

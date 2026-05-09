@@ -1,32 +1,28 @@
 /**
- * Manager Panel 补丁入口
- * 完全独立于 cascade-panel
+ * Manager Panel 补丁入口 (Unified Workbench Entry)
+ * 适配新版 IDE (Cascade 整合进 Workbench 模式)
  * 
- * 功能：
- * - 数学公式渲染 (KaTeX)
- * - Mermaid 图表渲染
- * - 复制按钮
- * - 字体大小调整
- * - 对话区域最大宽度
+ * 功能 (极简模式)：
+ * - 只有 字体大小调整 和 滚动到底部按钮
  */
 
-// 获取当前脚本的基础路径
 const SCRIPT_BASE = new URL('./', import.meta.url).href;
 
 const DEFAULT_CONFIG = {
-    mermaid: false,
-    math: false,
-    copyButton: true,
-    tableColor: false,
+    mermaid: false,        // 已按需禁用
+    math: false,           // 已按需禁用
+    copyButton: false,     // 已按需禁用
+    tableColor: false,     // 已按需禁用
     maxWidthEnabled: false,
     maxWidthRatio: 75,
-    fontSizeEnabled: false,
-    fontSize: 16,
+    fontSizeEnabled: true,
+    fontSize: 14,
+    scrollToBottom: true,
+    promptEnhance: {
+        enabled: false,    // 已按需禁用
+    },
 };
 
-/**
- * 动态加载 CSS
- */
 const loadStyle = (href) => {
     return new Promise((resolve, reject) => {
         const fullHref = new URL(href, SCRIPT_BASE).href;
@@ -43,93 +39,49 @@ const loadStyle = (href) => {
     });
 };
 
-/**
- * 加载配置
- */
 const loadConfig = async () => {
     try {
         const configUrl = new URL('config.json', SCRIPT_BASE).href;
         const res = await fetch(configUrl, { cache: 'no-store' });
-        if (!res.ok) {
-            throw new Error(`Config load failed: ${res.status}`);
-        }
+        if (!res.ok) throw new Error();
         const data = await res.json();
-        if (!data || typeof data !== 'object' || Array.isArray(data)) {
-            return DEFAULT_CONFIG;
-        }
         return { ...DEFAULT_CONFIG, ...data };
     } catch {
         return DEFAULT_CONFIG;
     }
 };
 
-/**
- * 应用字体大小
- */
 const applyFontSize = (userConfig) => {
     const root = document.documentElement;
-    if (!root) return;
-
-    if (!userConfig?.fontSizeEnabled) {
-        root.style.removeProperty('--manager-panel-font-size');
-        return;
-    }
-
-    const size = Number(userConfig.fontSize);
-    if (!Number.isFinite(size) || size <= 0) {
-        root.style.removeProperty('--manager-panel-font-size');
-        return;
-    }
-
-    root.style.setProperty('--manager-panel-font-size', `${size}px`);
+    if (!root || !userConfig?.fontSizeEnabled) return;
+    root.style.setProperty('--manager-panel-font-size', `${userConfig.fontSize}px`);
 };
 
-/**
- * 应用对话区域最大宽度
- */
-const applyMaxWidth = (userConfig) => {
-    const root = document.documentElement;
-    if (!root) return;
-
-    if (!userConfig?.maxWidthEnabled) {
-        root.removeAttribute('data-manager-panel-max-width');
-        root.style.removeProperty('--manager-panel-max-width-ratio');
-        return;
-    }
-
-    const ratio = Number(userConfig.maxWidthRatio);
-    if (!Number.isFinite(ratio) || ratio <= 0) {
-        root.removeAttribute('data-manager-panel-max-width');
-        root.style.removeProperty('--manager-panel-max-width-ratio');
-        return;
-    }
-
-    const clamped = Math.min(100, Math.max(30, ratio));
-    root.setAttribute('data-manager-panel-max-width', '1');
-    root.style.setProperty('--manager-panel-max-width-ratio', String(clamped));
-};
-
-/**
- * 入口
- */
 (async () => {
-    console.log('[Manager Panel] 补丁加载中...');
+    console.log('[Manager Panel] 补丁载入 (极简模式：字体+滚动)...');
 
-    // 加载样式
     try {
         await loadStyle('manager-panel.css');
     } catch (err) {
-        console.warn('[Manager Panel] 样式加载失败:', err);
+        console.warn('[Manager Panel] 样式未加载');
     }
 
-    // 加载配置
     const config = await loadConfig();
     applyFontSize(config);
-    applyMaxWidth(config);
 
-    // 启动扫描
+    // 1. 扫描逻辑 (仅保留基础扫描以支持未来扩展，目前主要通过 CSS 控制字体)
     const { start } = await import('./scan.js');
     start(config);
 
-    console.log('[Manager Panel] 补丁已启动', config);
+    // 2. 启动滚动到底部 (支持 Cascade 和 Manager 窗口)
+    if (config.scrollToBottom !== false) {
+        try {
+            const { init } = await import('./scroll-to-bottom.js');
+            init();
+        } catch (e) {
+            console.warn('[Manager Panel] 滚动模块加载失败');
+        }
+    }
+
+    console.log('[Manager Panel] 极简补丁已就绪');
 })();

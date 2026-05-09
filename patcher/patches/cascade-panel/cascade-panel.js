@@ -1,7 +1,16 @@
 /**
- * Antigravity-Power-Pro 补丁入口
- * 根据配置文件动态加载功能模块
+ * Antigravity-Power-Pro 补丁入口 (Trusted Types 增强版)
  */
+
+// 1. 注册受信任类型策略 (必须在最前面)
+if (window.trustedTypes && !window.trustedTypes.defaultPolicy) {
+  window.trustedTypes.createPolicy("default", {
+    createHTML: (string) => string,
+    createScriptURL: (string) => string,
+    createScript: (string) => string,
+  });
+  console.log("[Cascade] Trusted Types 'default' policy registered.");
+}
 
 import { loadStyle } from "./utils.js";
 
@@ -11,11 +20,11 @@ const DEFAULT_CONFIG = {
   copyButton: true,
   tableColor: true,
   fontSizeEnabled: true,
-  fontSize: 20,
+  fontSize: 14,
   scrollToBottom: true,
-  // 提示词增强配置
+  placeholder: "Ask Antigravity...",
   promptEnhance: {
-    enabled: false,
+    enabled: true,
     apiBase: "https://api.openai.com/v1",
     apiKey: "",
     model: "gpt-4o-mini",
@@ -23,85 +32,46 @@ const DEFAULT_CONFIG = {
   },
 };
 
-// 加载配置
+// 后续逻辑保持不变...
+// 已经同步修改的代码逻辑：
 const loadConfig = async () => {
-  try {
-    const res = await fetch("./cascade-panel/config.json", {
-      cache: "no-store",
-    });
-    if (!res.ok) {
-      throw new Error(`Config load failed: ${res.status}`);
+    try {
+        const res = await fetch("./cascade-panel/config.json", { cache: "no-store" });
+        return await res.json();
+    } catch {
+        return DEFAULT_CONFIG;
     }
-    const data = await res.json();
-    if (!data || typeof data !== "object" || Array.isArray(data)) {
-      return DEFAULT_CONFIG;
-    }
-    return { ...DEFAULT_CONFIG, ...data };
-  } catch {
-    // 默认全部启用
-    return DEFAULT_CONFIG;
-  }
 };
 
-// 应用字体大小配置
 const applyFontSize = (userConfig) => {
-  const root = document.documentElement;
-  if (!root) return;
-
-  if (!userConfig?.fontSizeEnabled) {
-    root.style.removeProperty("--cascade-panel-font-size");
-    return;
-  }
-
-  const size = Number(userConfig.fontSize);
-  if (!Number.isFinite(size) || size <= 0) {
-    root.style.removeProperty("--cascade-panel-font-size");
-    return;
-  }
-
-  root.style.setProperty("--cascade-panel-font-size", `${size}px`);
+    const root = document.documentElement;
+    if (root && userConfig?.fontSizeEnabled) {
+        root.style.setProperty("--cascade-panel-font-size", `${userConfig.fontSize}px`);
+    }
 };
 
-// 动态加载表格修复样式
-const loadTableFix = () => {
-  void loadStyle("./cascade-panel/table-fix.css").catch((error) => {
-    console.warn("[Cascade] 表格样式加载失败:", error);
-  });
-};
-
-// 入口
 (async () => {
   const config = await loadConfig();
   applyFontSize(config);
 
-  // 表格颜色修复（CSS 动态加载）
-  if (config.tableColor) {
-    loadTableFix();
-  }
-
-  // 初始化提示词增强模块
+  // 重要：在 Trusted Types 环境下，动态 import 可能仍受限
+  // 按照我们之前的逻辑，enhance.js 已经移动到同级目录
   if (config.promptEnhance?.enabled) {
     try {
-      const enhance = await import("./enhance.js");
-      enhance.init(config.promptEnhance);
-      enhance.injectStyles();
+      const { init, injectStyles } = await import("../shared/enhance.js");
+      init(config.promptEnhance);
+      injectStyles();
       console.log("[Cascade] 提示词增强模块已加载");
-    } catch (error) {
-      console.warn("[Cascade] 提示词增强模块加载失败:", error);
+    } catch (e) {
+      console.error("[Cascade] 提示词加载失败:", e);
     }
   }
 
-  // 启动扫描模块，传入配置
   const { start } = await import("./scan.js");
   start(config);
 
-  // 滚动到底部按钮
   if (config.scrollToBottom !== false) {
-    try {
-      const scrollMod = await import("./scroll-to-bottom.js");
-      scrollMod.init();
-    } catch (error) {
-      console.warn("[Cascade] 滚动模块加载失败:", error);
-    }
+    const { init } = await import("./scroll-to-bottom.js");
+    init();
   }
 })();

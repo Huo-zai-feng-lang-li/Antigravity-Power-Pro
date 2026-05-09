@@ -1,0 +1,166 @@
+/**
+ * Cascade & Manager Window — 滚动到底部按钮 (Unified V2.3)
+ *
+ * 逻辑：
+ * 1. 递归穿透 Shadow DOM 寻找主滚动容器。
+ * 2. 识别 Cascade 侧边栏和 Manager 主窗口两种场景。
+ */
+
+const BTN_ID = "cascade-scroll-bottom-btn";
+const THRESHOLD = 100;
+
+/** 查找合适的挂载根节点 */
+const findRoot = () => {
+  // 1. 优先 Cascade 侧边栏
+  const cascade = document.querySelector(".antigravity-agent-side-panel");
+  if (cascade) return cascade;
+  
+  // 2. 其次是 Agent Manager 的主体容器
+  const manager = document.querySelector(".monaco-workbench") || document.body;
+  return manager;
+};
+
+/** 查找主滚动容器：增加隔离与排除逻辑 */
+const findScrollEl = (root) => {
+    if (!root) return null;
+    
+    // 优先寻找特定的聊天/Agent 专用滚动类名
+    const prioritySelectors = [
+        ".cascade-scrollbar",
+        ".chat-container",
+        ".monaco-list-rows",
+        ".agent-view-container",
+        ".monaco-scrollable-element"
+    ];
+
+    let candidates = [];
+
+    function traverse(searchRoot) {
+        if (!searchRoot) return;
+        
+        prioritySelectors.forEach(s => {
+            const els = searchRoot.querySelectorAll(s);
+            els.forEach(el => {
+                // 排除逻辑：绝对不能是编辑器内部或者搜索结果列表等
+                if (el.closest(".monaco-editor") || el.closest(".search-view")) return;
+                
+                if (el.scrollHeight > el.clientHeight + 20) {
+                    candidates.push({ el, priority: 20 + el.scrollHeight });
+                }
+            });
+        });
+
+        // 如果没找到优先级容器，再尝试扫描通用容器，但仅限于 scope 内部
+        const all = searchRoot.querySelectorAll("*");
+        all.forEach(el => {
+            if (el.closest(".monaco-editor")) return; // 再次硬排除编辑器
+            
+            if (el.scrollHeight > el.clientHeight + 20) {
+                const style = window.getComputedStyle(el);
+                if (style.overflowY === "auto" || style.overflowY === "scroll") {
+                    candidates.push({ el, priority: 5 + el.scrollHeight / 1000 });
+                }
+            }
+            if (el.shadowRoot) traverse(el.shadowRoot);
+        });
+    }
+
+    // 关键：从挂载点（root）开始向下找，而不是从 document 找
+    traverse(root);
+    
+    // 如果在该 root 下没找到，再回退到 document 但限定在 Agent 容器内
+    if (candidates.length === 0 && root === document.body) {
+        const agentManager = document.querySelector(".antigravity-manager-container") || 
+                           document.querySelector(".jetski-agent-container");
+        if (agentManager) traverse(agentManager);
+    }
+    
+    if (candidates.length === 0) return null;
+    return candidates.sort((a, b) => b.priority - a.priority)[0].el;
+};
+
+const createArrowSVG = () => {
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  const attrs = {
+    width: "16", height: "16", viewBox: "0 0 24 24",
+    fill: "none", stroke: "currentColor", "stroke-width": "3",
+    "stroke-linecap": "round", "stroke-linejoin": "round",
+  };
+  for (const [k, v] of Object.entries(attrs)) svg.setAttribute(k, v);
+
+  const pts = ["7 13 12 18 17 13", "7 6 12 11 17 6"];
+  for (const p of pts) {
+    const poly = document.createElementNS(ns, "polyline");
+    poly.setAttribute("points", p);
+    svg.appendChild(poly);
+  }
+  return svg;
+};
+
+export const init = () => {
+  let trackedEl = null;
+
+  const ensureButton = () => {
+    const root = findRoot();
+    const el = findScrollEl(root); // 传入 root，限制探测范围
+    
+    if (!el || !root) return;
+
+    let btn = document.getElementById(BTN_ID);
+    if (!btn) {
+      btn = document.createElement("button");
+      btn.id = BTN_ID;
+      btn.appendChild(createArrowSVG());
+      root.appendChild(btn);
+      
+      if (window.getComputedStyle(root).position === "static") {
+        root.style.position = "relative";
+      }
+
+      btn.addEventListener("click", () => {
+        const currentRoot = findRoot();
+        const target = findScrollEl(currentRoot); // 点击时也带 Context
+        if (target) {
+            target.scrollTo({ top: target.scrollHeight, behavior: "smooth" });
+        }
+      });
+    }
+
+    const update = () => {
+      const currentRoot = findRoot();
+      const currentScrollEl = findScrollEl(currentRoot);
+      if (!currentScrollEl || !currentScrollEl.isConnected) {
+        btn.style.opacity = "0";
+        btn.style.pointerEvents = "none";
+        return;
+      }
+      
+      const gap = currentScrollEl.scrollHeight - currentScrollEl.scrollTop - currentScrollEl.clientHeight;
+      const isVisible = currentScrollEl.clientHeight > 0 && gap > THRESHOLD;
+      
+      btn.style.opacity = isVisible ? "1" : "0";
+      btn.style.pointerEvents = isVisible ? "auto" : "none";
+      btn.style.transform = isVisible ? "translateY(0) scale(1)" : "translateY(12px) scale(0.9)";
+    };
+
+    if (el !== trackedEl) {
+        trackedEl?.removeEventListener("scroll", update);
+        el.addEventListener("scroll", update, { passive: true });
+        trackedEl = el;
+    }
+
+    update();
+  };
+
+  ensureButton();
+
+  // 增加扫描频率，确保动态内容加载后能及时挂载
+  const observer = new MutationObserver(ensureButton);
+  observer.observe(document.body, { childList: true, subtree: true });
+  
+  // 窗口大小改变也重新检测
+  window.addEventListener("resize", ensureButton);
+  
+  console.log("[Manager] 滚动按钮已初始化 (全窗口支持)");
+};
