@@ -120,7 +120,7 @@ const windsurfFeatures = ref({
     enabled: true,
     provider: "openai",
     apiBase: "http://127.0.0.1:8045/v1",
-    apiKey: "",
+    apiKey: "none",
     model: "gemini-3-flash",
     systemPrompt: "",
   },
@@ -133,23 +133,15 @@ const WINDSURF_PATCH_FILES = {
 };
 
 // Manager 功能开关（独立配置，默认禁用）
-const managerFeatures = ref<ManagerFeatureConfig>({
-  enabled: true,
+const managerFeatures = ref({
+  enabled: false,
   mermaid: false,
   math: false,
   copyButton: true,
   maxWidthEnabled: false,
   maxWidthRatio: 75,
   fontSizeEnabled: false,
-  fontSize: 14,
-  promptEnhance: {
-    enabled: true,
-    provider: "openai",
-    apiBase: "http://127.0.0.1:8045/v1",
-    apiKey: "",
-    model: "gemini-3-flash",
-    systemPrompt: "",
-  },
+  fontSize: 16,
 });
 
 // ============================================

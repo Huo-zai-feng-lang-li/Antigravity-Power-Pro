@@ -32,9 +32,9 @@ let config = {
   placeholder: "",
   promptEnhance: {
     enabled: false,
-    apiBase: "",
-    apiKey: "",
-    model: "",
+    apiBase: "http://127.0.0.1:8045/v1",
+    apiKey: "none",
+    model: "gemini-3-flash",
     systemPrompt: "",
   },
 };
@@ -372,9 +372,22 @@ const initPromptEnhanceButton = async () => {
 
   if (!enhanceModule.isEnabled()) return;
 
-  // 查找输入框区域
+  // 查找所有输入框区域 (包括全局范围)
   const root = getRoot();
-  const inputAreas = root.querySelectorAll(INPUT_SELECTOR);
+  // 使用多重策略查找输入框：
+  // 1. 直接选择器
+  let inputAreas = Array.from(document.querySelectorAll(INPUT_SELECTOR));
+  // 2. 深度穿透查找
+  if (inputAreas.length === 0) {
+    const deepInput = querySelectorDeep(INPUT_SELECTOR);
+    if (deepInput) inputAreas = [deepInput];
+  }
+  
+  // 3. 增强：如果仍然很少，尝试模糊匹配所有 contenteditable
+  if (inputAreas.length < 2) {
+    const allEditable = document.querySelectorAll('[contenteditable="true"]');
+    inputAreas = [...new Set([...inputAreas, ...allEditable])];
+  }
 
   inputAreas.forEach((input) => {
     // 检查是否已添加按钮

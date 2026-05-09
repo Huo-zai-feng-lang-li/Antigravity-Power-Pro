@@ -51,41 +51,27 @@ const applyFontSize = (userConfig) => {
 };
 
 (async () => {
-    console.log("[Cascade] 补丁加载中...");
-    
-    // 1. 加载样式
+  const config = await loadConfig();
+  applyFontSize(config);
+
+  // 重要：在 Trusted Types 环境下，动态 import 可能仍受限
+  // 按照我们之前的逻辑，enhance.js 已经移动到同级目录
+  if (config.promptEnhance?.enabled) {
     try {
-        await loadStyle("cascade-panel.css");
-    } catch (err) {
-        console.warn("[Cascade] 样式加载失败:", err);
-    }
-
-    const config = await loadConfig();
-    applyFontSize(config);
-
-    // 2. 提示词增强模块
-    if (config.promptEnhance?.enabled) {
-        try {
-            const enhance = await import("../shared/enhance.js");
-            enhance.init(config.promptEnhance);
-            enhance.injectStyles();
-            enhance.startInjectionScanner();
-            console.log("[Cascade] 提示词增强监听已启动");
-        } catch (e) {
-            console.error("[Cascade] 提示词加载失败:", e);
-        }
-    }
-
-    // 3. 启动扫描与滚动逻辑
-    try {
-        const { start } = await import("./scan.js");
-        start(config);
-
-        if (config.scrollToBottom !== false) {
-            const { init } = await import("./scroll-to-bottom.js");
-            init();
-        }
+      const { init, injectStyles } = await import("../shared/enhance.js");
+      init(config.promptEnhance);
+      injectStyles();
+      console.log("[Cascade] 提示词增强模块已加载");
     } catch (e) {
-        console.error("[Cascade] 扫描模块加载失败:", e);
+      console.error("[Cascade] 提示词加载失败:", e);
     }
+  }
+
+  const { start } = await import("./scan.js");
+  start(config);
+
+  if (config.scrollToBottom !== false) {
+    const { init } = await import("./scroll-to-bottom.js");
+    init();
+  }
 })();

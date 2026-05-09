@@ -31,7 +31,7 @@ const DEFAULT_CONFIG = {
     enabled: true,
     provider: "openai",
     apiBase: "http://127.0.0.1:8045/v1",
-    apiKey: "",
+    apiKey: "none",
     model: "gemini-3-flash",
     systemPrompt: "",
   },
@@ -98,7 +98,7 @@ const waitForCascadePanel = (timeout = 15000) => {
  */
 const initPromptEnhance = async (config) => {
   try {
-    const enhance = await import("../shared/enhance.js");
+    const enhance = await import("./enhance.js");
     enhance.init(config.promptEnhance);
     enhance.injectStyles();
 
@@ -106,9 +106,45 @@ const initPromptEnhance = async (config) => {
       const panel = document.getElementById("windsurf.cascadePanel");
       if (!panel) return;
 
-      enhance.startInjectionScanner(panel);
-      console.log("[Windsurf] 提示词增强监听已在面板上启动");
-    };
+      const injectButton = () => {
+        const input = panel.querySelector(
+          '[contenteditable][role="textbox"], textarea, [contenteditable="true"]',
+        );
+        if (!input) return;
+
+        const container = input.closest(
+          '[class*="vscroll"], [class*="input"], [class*="rounded"]',
+        );
+        const parent = container || input.parentElement;
+        if (!parent || parent.querySelector(".Antigravity-Power-Pro-enhance-btn"))
+          return;
+
+        const btn = enhance.createEnhanceButton(async () => {
+          const currentInput = panel.querySelector(
+            '[contenteditable][role="textbox"], textarea, [contenteditable="true"]',
+          );
+          if (!currentInput) {
+            enhance.showErrorModal("找不到输入框");
+            return;
+          }
+
+          const text = currentInput.value || currentInput.textContent || "";
+          if (!text.trim()) {
+            enhance.showErrorModal("请先输入提示词");
+            return;
+          }
+
+          btn.classList.add("loading");
+          try {
+            const enhanced = await enhance.enhance(text);
+            await enhance.setInputValue(currentInput, enhanced);
+            enhance.showResultModal(enhanced, () => {}, () => {});
+          } catch (error) {
+            enhance.showErrorModal(error.message);
+          } finally {
+            btn.classList.remove("loading");
+          }
+        });
 
         const inputWrapper = input.parentElement;
         if (inputWrapper) {

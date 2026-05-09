@@ -6,7 +6,6 @@ IDE_PATH = r"D:\Antigravity"
 APP_ROOT = os.path.join(IDE_PATH, "resources", "app")
 WORKBENCH_DIR = os.path.join(APP_ROOT, "out", "vs", "code", "electron-browser", "workbench")
 CONFIG_PATH = os.path.join(WORKBENCH_DIR, "cascade-panel", "config.json")
-MANAGER_CONFIG_PATH = os.path.join(WORKBENCH_DIR, "manager-panel", "config.json")
 PROD_JSON_PATH = os.path.join(APP_ROOT, "product.json")
 
 def update_config():
@@ -22,33 +21,15 @@ def update_config():
             "enabled": True,
             "provider": "openai",
             "apiBase": "http://127.0.0.1:8045/v1",
-            "apiKey": "",
+            "apiKey": "none",
             "model": "gemini-3-flash",
             "systemPrompt": ""
         },
         "placeholder": "Ask Antigravity..."
     }
-
-    # Manager Config (Similar structure but include specific fields if needed)
-    manager_config = {
-        "mermaid": False,
-        "math": False,
-        "copyButton": True,
-        "maxWidthEnabled": False,
-        "maxWidthRatio": 75,
-        "fontSizeEnabled": False,
-        "fontSize": 14,
-        "promptEnhance": config["promptEnhance"]
-    }
-
     with open(CONFIG_PATH, 'w', encoding='utf-8') as f:
         json.dump(config, f, indent=2)
     print(f"Updated {CONFIG_PATH}")
-
-    if os.path.exists(os.path.dirname(MANAGER_CONFIG_PATH)):
-        with open(MANAGER_CONFIG_PATH, 'w', encoding='utf-8') as f:
-            json.dump(manager_config, f, indent=2)
-        print(f"Updated {MANAGER_CONFIG_PATH}")
 
 def clear_checksums():
     if not os.path.exists(PROD_JSON_PATH):
