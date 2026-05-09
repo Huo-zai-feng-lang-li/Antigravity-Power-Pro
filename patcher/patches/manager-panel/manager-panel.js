@@ -78,39 +78,7 @@ const applyFontSize = (userConfig) => {
             const enhance = await import('../shared/enhance.js');
             enhance.init(config.promptEnhance);
             enhance.injectStyles();
-
-            // 监听所有输入框
-            const observer = new MutationObserver(() => {
-                const inputs = document.querySelectorAll('textarea, [contenteditable="true"]');
-                inputs.forEach(input => {
-                    if (input.parentElement.querySelector(".Antigravity-Power-Pro-enhance-btn") || 
-                        input.classList.contains("Antigravity-Power-Pro-exclude")) return;
-
-                    const btn = enhance.createEnhanceButton(async () => {
-                        const text = input.value || input.textContent || "";
-                        if (!text.trim()) {
-                            enhance.showToast("请先输入提示词", "error");
-                            return;
-                        }
-
-                        btn.classList.add("loading");
-                        try {
-                            const enhanced = await enhance.enhance(text);
-                            await enhance.setInputValue(input, enhanced);
-                        } catch (error) {
-                            enhance.showToast(error.message, "error");
-                        } finally {
-                            btn.classList.remove("loading");
-                        }
-                    });
-
-                    // 注入
-                    input.parentElement.style.position = "relative";
-                    input.parentElement.appendChild(btn);
-                });
-            });
-
-            observer.observe(document.body, { childList: true, subtree: true });
+            enhance.startInjectionScanner();
             console.log('[Manager Panel] 提示词增强已开启');
         } catch (e) {
             console.error('[Manager Panel] 提示词模块加载失败:', e);

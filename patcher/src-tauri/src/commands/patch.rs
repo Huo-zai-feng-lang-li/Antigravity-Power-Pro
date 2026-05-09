@@ -23,11 +23,11 @@ pub struct PromptEnhanceConfig {
 impl Default for PromptEnhanceConfig {
     fn default() -> Self {
         Self {
-            enabled: false,
-            provider: "anthropic".to_string(),
-            api_base: "https://api.anthropic.com".to_string(),
+            enabled: true,
+            provider: "openai".to_string(),
+            api_base: "http://127.0.0.1:8045/v1".to_string(),
             api_key: String::new(),
-            model: "claude-sonnet-4-20250514".to_string(),
+            model: "gemini-3-flash".to_string(),
             system_prompt: String::new(),
         }
     }
@@ -364,8 +364,10 @@ fn write_cascade_patches(extensions_dir: &PathBuf, features: &FeatureConfig) -> 
     // 写入侧边栏相关补丁文件
     let patch_files = embedded::get_all_files_runtime()?;
     for (relative_path, content) in patch_files {
-        // 只处理侧边栏相关文件
-        if relative_path != "cascade-panel.html" && !relative_path.starts_with("cascade-panel/") {
+        // 处理侧边栏相关文件和共享模块
+        if relative_path != "cascade-panel.html" && 
+           !relative_path.starts_with("cascade-panel/") &&
+           !relative_path.starts_with("shared/") {
             continue;
         }
         
@@ -407,10 +409,11 @@ fn write_manager_patches(workbench_dir: &PathBuf, manager_features: &ManagerFeat
     // 写入 Manager 相关补丁文件
     let patch_files = embedded::get_all_files_runtime()?;
     for (relative_path, content) in patch_files {
-        // 只处理 Manager 相关文件 (Antigravity 用 workbench-antigravity.html 覆盖 workbench.html)
+        // 处理 Manager 相关文件和共享模块
         if relative_path != "workbench-jetski-agent.html" && 
            relative_path != "workbench-antigravity.html" &&
-           !relative_path.starts_with("manager-panel/") {
+           !relative_path.starts_with("manager-panel/") &&
+           !relative_path.starts_with("shared/") {
             continue;
         }
         
@@ -699,7 +702,9 @@ fn write_windsurf_patches(workbench_dir: &PathBuf, features: &WindsurfFeatureCon
 
     let patch_files = embedded::get_all_files_runtime()?;
     for (relative_path, content) in patch_files {
-        if relative_path != "workbench-windsurf.html" && !relative_path.starts_with("windsurf-panel/") {
+        if relative_path != "workbench-windsurf.html" && 
+           !relative_path.starts_with("windsurf-panel/") &&
+           !relative_path.starts_with("shared/") {
             continue;
         }
 

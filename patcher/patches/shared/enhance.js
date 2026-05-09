@@ -1168,29 +1168,172 @@ export function showErrorModal(message) {
 }
 
 /**
+ * 让输入框生效（针对 Monaco 和 React）
+ * @param {HTMLElement} input 
+ */
+function triggerInputEvents(input) {
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  input.dispatchEvent(new Event('change', { bubbles: true }));
+  
+  // 针对 Monaco Editor 的特殊处理
+  const keyboardEvent = new KeyboardEvent('keydown', {
+    key: ' ',
+    code: 'Space',
+    bubbles: true
+  });
+  input.dispatchEvent(keyboardEvent);
+  
+  // 模拟输入完成
+  const inputEvent = new InputEvent('input', {
+    bubbles: true,
+    cancelable: true,
+    inputType: 'insertText'
+  });
+  input.dispatchEvent(inputEvent);
+}
+
+/**
+ * 可靠地设置输入框的值（保留换行和格式，针对 Windsurf/Antigravity 优化）
+ * @param {HTMLElement} input
+ * @param {string} value
+ * @returns {Promise<boolean>} 是否设置成功
+ */
+export async function setInputValue(input, value) {
+  console.log("[PromptEnhance] 尝试回显内容到:", input);
+
+  input.focus();
+  await sleep(50);
+
+  // 方法1: 对于 contenteditable
+  if (input.contentEditable === "true" || input.getAttribute('contenteditable') === 'true') {
+    // 清空现有内容
+    input.innerHTML = "";
+    
+    // 分行处理，保持格式
+    const lines = value.split('\n');
+    lines.forEach((line, index) => {
+        const div = document.createElement('div');
+        if (line.trim() === '') {
+            div.appendChild(document.createElement('br'));
+        } else {
+            div.textContent = line;
+        }
+        input.appendChild(div);
+    });
+
+    triggerInputEvents(input);
+    return true;
+  }
+
+  // 方法2: 对于 textarea/input
+  const nativeSetter = Object.getOwnPropertyDescriptor(
+    input instanceof HTMLTextAreaElement ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype,
+    "value"
+  )?.set;
+
+  if (nativeSetter) {
+    nativeSetter.call(input, value);
+  } else {
+    input.value = value;
+  }
+
+  triggerInputEvents(input);
+  return true;
+}
+
+/**
+ * 启动全量扫描与注入逻辑 (处理 Shadow DOM)
+ * @param {HTMLElement} root - 开始扫描的根节点
+ */
+export function startInjectionScanner(root = document.body) {
+    const injectToInput = (input) => {
+        // 跳过已注入或排除的元素
+        if (input.dataset.proEnhanced === "true" || 
+            input.classList.contains("Antigravity-Power-Pro-exclude") ||
+            input.closest('.Antigravity-Power-Pro-exclude')) return;
+
+        // 寻找合适的容器（通常是输入框的父级或祖父级）
+        const container = input.parentElement;
+        if (!container || container.querySelector(".Antigravity-Power-Pro-enhance-btn")) return;
+
+        const btn = createEnhanceButton(async () => {
+            const text = input.value || input.textContent || "";
+            if (!text.trim()) {
+                showToast("请先输入提示词", "error");
+                return;
+            }
+
+            btn.classList.add("loading");
+            try {
+                const refreshedInput = input; // 保持引用
+                const enhanced = await enhance(text);
+                await setInputValue(refreshedInput, enhanced);
+                showToast("✓ 提示词已优化", "success", 1500);
+            } catch (error) {
+                showToast(error.message, "error");
+            } finally {
+                btn.classList.remove("loading");
+            }
+        });
+
+        // 注入按钮并标记
+        container.style.position = "relative";
+        container.appendChild(btn);
+        input.dataset.proEnhanced = "true";
+    };
+
+    // 深度查找输入框（支持 Shadow DOM）
+    const findInputs = (node) => {
+        if (node.shadowRoot) {
+            findInputs(node.shadowRoot);
+        }
+        
+        if (node.querySelectorAll) {
+            const potentialInputs = node.querySelectorAll('textarea, [contenteditable="true"], [contenteditable=""]');
+            potentialInputs.forEach(injectToInput);
+        }
+
+        // 递归查找子节点
+        if (node.children) {
+            Array.from(node.children).forEach(findInputs);
+        }
+    };
+
+    // 初始扫描
+    findInputs(root);
+
+    // 动态监听
+    const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            mutation.addedNodes.forEach(node => {
+                if (node.nodeType === 1) findInputs(node);
+            });
+        }
+    });
+
+    observer.observe(root, { childList: true, subtree: true });
+    return observer;
+}
+
+/**
  * 显示结果（向后兼容，直接应用）
  * @param {string} enhancedPrompt - 增强后的提示词
  * @param {Function} onApply - 应用回调
  * @param {Function} onCancel - 取消回调
  */
 export function showResultModal(enhancedPrompt, onApply, onCancel) {
-  // 直接应用，不再显示弹窗
-  if (onApply) {
-    onApply(enhancedPrompt);
-  }
-  showToast("✓ 提示词已优化", "success", 1500);
+  if (onApply) onApply(enhancedPrompt);
 }
 
 /**
  * 获取配置
- * @returns {Object}
  */
 export function getConfig() {
   return { ...config };
 }
 
 /**
- * 手动触发增强（供外部调用）
+ * 手动触发增强
  */
 export function triggerEnhance() {
   performEnhance();

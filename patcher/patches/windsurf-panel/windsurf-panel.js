@@ -98,7 +98,7 @@ const waitForCascadePanel = (timeout = 15000) => {
  */
 const initPromptEnhance = async (config) => {
   try {
-    const enhance = await import("./enhance.js");
+    const enhance = await import("../shared/enhance.js");
     enhance.init(config.promptEnhance);
     enhance.injectStyles();
 
@@ -106,37 +106,8 @@ const initPromptEnhance = async (config) => {
       const panel = document.getElementById("windsurf.cascadePanel");
       if (!panel) return;
 
-      const observer = new MutationObserver(() => {
-        const inputs = panel.querySelectorAll('textarea, [contenteditable="true"]');
-        inputs.forEach(input => {
-          if (input.parentElement.querySelector(".Antigravity-Power-Pro-enhance-btn") || 
-              input.classList.contains("Antigravity-Power-Pro-exclude")) return;
-
-          const btn = enhance.createEnhanceButton(async () => {
-            const text = input.value || input.textContent || "";
-            if (!text.trim()) {
-                enhance.showToast("请先输入提示词", "error");
-                return;
-            }
-
-            btn.classList.add("loading");
-            try {
-              const enhanced = await enhance.enhance(text);
-              await enhance.setInputValue(input, enhanced);
-            } catch (error) {
-              enhance.showToast(error.message, "error");
-            } finally {
-              btn.classList.remove("loading");
-            }
-          });
-
-          // 注入
-          input.parentElement.style.position = "relative";
-          input.parentElement.appendChild(btn);
-        });
-      });
-
-      observer.observe(panel, { childList: true, subtree: true });
+      enhance.startInjectionScanner(panel);
+      console.log("[Windsurf] 提示词增强监听已在面板上启动");
     };
 
         const inputWrapper = input.parentElement;

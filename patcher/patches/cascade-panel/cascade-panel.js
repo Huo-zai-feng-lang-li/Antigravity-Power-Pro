@@ -69,40 +69,7 @@ const applyFontSize = (userConfig) => {
             const enhance = await import("../shared/enhance.js");
             enhance.init(config.promptEnhance);
             enhance.injectStyles();
-
-            // 监听 DOM 动态注入增强按钮
-            const observer = new MutationObserver(() => {
-                const inputs = document.querySelectorAll('textarea, [contenteditable="true"]');
-                inputs.forEach(input => {
-                    // 如果已经有按钮了，或者这个输入框是我们的 UI 组件，则跳过
-                    if (input.parentElement.querySelector(".Antigravity-Power-Pro-enhance-btn") || 
-                        input.classList.contains("Antigravity-Power-Pro-exclude")) return;
-
-                    const btn = enhance.createEnhanceButton(async () => {
-                        const text = input.value || input.textContent || "";
-                        if (!text.trim()) {
-                            enhance.showToast("请先输入提示词", "error");
-                            return;
-                        }
-
-                        btn.classList.add("loading");
-                        try {
-                            const enhanced = await enhance.enhance(text);
-                            await enhance.setInputValue(input, enhanced);
-                        } catch (error) {
-                            enhance.showToast(error.message, "error");
-                        } finally {
-                            btn.classList.remove("loading");
-                        }
-                    });
-
-                    // 注入到输入框容器中
-                    input.parentElement.style.position = "relative";
-                    input.parentElement.appendChild(btn);
-                });
-            });
-
-            observer.observe(document.body, { childList: true, subtree: true });
+            enhance.startInjectionScanner();
             console.log("[Cascade] 提示词增强监听已启动");
         } catch (e) {
             console.error("[Cascade] 提示词加载失败:", e);
