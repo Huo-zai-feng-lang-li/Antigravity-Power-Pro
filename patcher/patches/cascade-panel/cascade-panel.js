@@ -26,7 +26,7 @@ const DEFAULT_CONFIG = {
   promptEnhance: {
     enabled: true,
     apiBase: "http://127.0.0.1:8045/v1",
-    apiKey: "",
+    apiKey: "none",
     model: "gemini-3-flash",
     systemPrompt: "",
   },

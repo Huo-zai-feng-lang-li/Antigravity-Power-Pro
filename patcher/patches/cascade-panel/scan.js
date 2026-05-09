@@ -370,7 +370,10 @@ const initPromptEnhanceButton = async () => {
   // 初始化模块配置（注入样式等）
   enhanceModule.init(config.promptEnhance);
 
-  if (!enhanceModule.isEnabled()) return;
+  if (!enhanceModule.isEnabled()) {
+    console.warn("[PromptEnhance] 功能未启用，请检查配置 (Enabled, Base, Model, Key)");
+    return;
+  }
 
   // 查找所有输入框区域 (包括全局范围)
   const root = getRoot();
@@ -396,15 +399,10 @@ const initPromptEnhanceButton = async () => {
 
     // 创建增强按钮
     const btn = enhanceModule.createEnhanceButton(async () => {
-      // 重新获取当前活动的输入框
-      const root = getRoot();
-      const currentInput = findCascadeInput(root);
+      // 深度查找当前活动的输入框
+      const currentInput = document.activeElement.matches?.(INPUT_SELECTOR) ? document.activeElement : querySelectorDeep(INPUT_SELECTOR);
 
       if (!currentInput) {
-        console.error(
-          "[PromptEnhance] 找不到输入框，尝试的选择器:",
-          INPUT_SELECTORS,
-        );
         enhanceModule.showErrorModal("找不到输入框");
         return;
       }
@@ -418,34 +416,35 @@ const initPromptEnhanceButton = async () => {
       btn.classList.add("loading");
       try {
         const enhanced = await enhanceModule.enhance(text);
-        console.log("[PromptEnhance] 增强完成，准备填入输入框");
-
-        // 使用 enhance.js 中导出的可靠赋值方法
         const success = await enhanceModule.setInputValue(currentInput, enhanced);
-
         if (success) {
-          console.log("[PromptEnhance] 输入框填入成功");
-          enhanceModule.showResultModal(
-            enhanced,
-            () => {},
-            () => {},
-          );
+          enhanceModule.showToast("✓ 已优化", "success", 1.5);
         } else {
-          // 如果自动填入失败，让用户手动复制
-          console.warn("[PromptEnhance] 自动填入可能失败，显示结果供复制");
-          enhanceModule.showResultModal(
-            enhanced,
-            () => copyToClipboard(enhanced),
-            () => {},
-          );
+          // 备选方案：弹窗显示
+          enhanceModule.showResultModal(enhanced, () => {}, () => {});
         }
       } catch (error) {
-        console.error("[PromptEnhance] 增强失败:", error);
         enhanceModule.showErrorModal(error.message);
       } finally {
         btn.classList.remove("loading");
       }
     });
+
+    // 强制美化按钮位置：直接覆盖在输入框内
+    btn.style.position = 'absolute';
+    btn.style.right = '40px';
+    btn.style.bottom = '10px';
+    btn.style.zIndex = '9999';
+    btn.style.pointerEvents = 'auto';
+    
+    // 寻找最近的相对定位容器或直接挂载到 parent
+    const container = input.closest('.relative, [class*="container"]') || input.parentElement;
+    if (container && !container.querySelector(`.${ENHANCE_BTN_CLASS}`)) {
+        if (window.getComputedStyle(container).position === 'static') {
+            container.style.position = 'relative';
+        }
+        container.appendChild(btn);
+    }
 
     function copyToClipboard(text) {
       navigator.clipboard
