@@ -5,7 +5,9 @@ import json
 
 # 配置路径
 IDE_PATH = r"D:\Antigravity"
-PROJECT_PATCHES = r"c:\Users\Administrator\Desktop\超级文件\AI-IDE\AI\Antigravity-Power-Pro\patcher\patches"
+# 自动获取脚本所在目录，确保移动位置不报错
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+PROJECT_PATCHES = os.path.join(PROJECT_ROOT, "patcher", "patches")
 APP_ROOT = os.path.join(IDE_PATH, "resources", "app")
 WORKBENCH_DIR = os.path.join(APP_ROOT, "out", "vs", "code", "electron-browser", "workbench")
 
@@ -21,38 +23,38 @@ def inject_html(file_path, js_path, css_path=None):
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
 
-    # 1. 注入 Trusted Types 绕过 (必须在任何脚本之前)
-    tt_bypass = """
+    # 1. 注入 Trusted Types 绕过
+    tt_marker = "[Antigravity-Power-Pro] Trusted Types Bypass"
+    tt_bypass = f"""
     <script>
-    if (window.trustedTypes && !window.trustedTypes.defaultPolicy) {
-        try {
-            window.trustedTypes.createPolicy("default", {
+    /* {tt_marker} */
+    if (window.trustedTypes && !window.trustedTypes.defaultPolicy) {{
+        try {{
+            window.trustedTypes.createPolicy("default", {{
                 createHTML: (s) => s,
                 createScript: (s) => s,
                 createScriptURL: (s) => s,
-            });
-            console.log("[Antigravity-Power-Pro] Trusted Types Bypass Active");
-        } catch (e) {}
-    }
+            }});
+        }} catch (e) {{}}
+    }}
     </script>
     """
-    if "Antigravity-Power-Pro" not in content:
+    if tt_marker not in content:
         content = content.replace("<head>", "<head>" + tt_bypass)
 
-        # 2. 注入 CSS
-        if css_path:
-            css_tag = f'<link rel="stylesheet" href="{css_path}">'
-            content = content.replace("</head>", css_tag + "</head>")
+    # 2. 注入 CSS
+    if css_path and css_path not in content:
+        css_tag = f'<link rel="stylesheet" href="{css_path}">'
+        content = content.replace("</head>", css_tag + "</head>")
 
-        # 3. 注入 JS
+    # 3. 注入 JS
+    if js_path and js_path not in content:
         js_tag = f'<script src="{js_path}" type="module"></script>'
-        content = content.replace("</html>", js_tag + "</html>")
+        content = content.replace("</body>", js_tag + "</body>")
 
-        with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(content)
-        print(f"Successfully injected: {file_path}")
-    else:
-        print(f"Already injected: {file_path}")
+    with open(file_path, 'w', encoding='utf-8') as f:
+        f.write(content)
+    print(f"Injected/Updated: {file_path}")
 
 def main():
     print("Starting Surgical Injection...")
@@ -82,8 +84,18 @@ def main():
     # 2. Manager 窗口注入增强逻辑
     inject_html(
         os.path.join(WORKBENCH_DIR, "workbench-jetski-agent.html"),
-        "./manager-panel/manager-panel.js"
+        "./manager-panel/manager-panel.js",
+        "./manager-panel/manager-panel.css"
     )
+
+    # 3. 官方 Extension 侧边栏 HTML 注入 (核心)
+    target_cascade_html = os.path.join(APP_ROOT, "extensions/antigravity/cascade-panel.html")
+    if os.path.exists(target_cascade_html):
+        inject_html(
+            target_cascade_html,
+            "../../out/vs/code/electron-browser/workbench/cascade-panel/cascade-panel.js",
+            "../../out/vs/code/electron-browser/workbench/cascade-panel/cascade-panel.css"
+        )
 
     # C. 清除 Checksums
     prod_json = os.path.join(APP_ROOT, "product.json")
@@ -97,10 +109,40 @@ def main():
             print("Checksums cleared.")
 
     # D. 创建配置文件
-    with open(os.path.join(target_cascade_dir, "config.json"), 'w') as f:
-        json.dump({"enabled": True, "mermaid": True, "math": True, "copyButton": True}, f)
+    config = {
+        "mermaid": True,
+        "math": True,
+        "copyButton": False,
+        "tableColor": False,
+        "fontSizeEnabled": False,
+        "fontSize": 14,
+        "scrollToBottom": True,
+        "promptEnhance": {
+            "enabled": True,
+            "provider": "openai",
+            "apiBase": "http://127.0.0.1:8045/v1",
+            "apiKey": "",
+            "model": "gemini-3-flash",
+            "systemPrompt": ""
+        }
+    }
+    with open(os.path.join(target_cascade_dir, "config.json"), 'w', encoding='utf-8') as f:
+        json.dump(config, f, indent=2)
+    
+    with open(os.path.join(target_manager_dir, "config.json"), 'w', encoding='utf-8') as f:
+        json.dump(config, f, indent=2)
 
-    print("Injection Completed. Please restart Antigravity.")
+    # E. Windsurf 支持 (如果存在)
+    target_windsurf_dir = os.path.join(WORKBENCH_DIR, "windsurf-panel")
+    source_windsurf_dir = os.path.join(PROJECT_PATCHES, "windsurf-panel")
+    if os.path.exists(source_windsurf_dir):
+        if os.path.exists(target_windsurf_dir): shutil.rmtree(target_windsurf_dir)
+        shutil.copytree(source_windsurf_dir, target_windsurf_dir)
+        with open(os.path.join(target_windsurf_dir, "config.json"), 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=2)
+        print("Windsurf resources injected.")
+
+    print("Injection Completed. Please restart your IDE.")
 
 if __name__ == "__main__":
     main()

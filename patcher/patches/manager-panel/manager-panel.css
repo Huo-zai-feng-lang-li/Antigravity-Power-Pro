@@ -1,102 +1,65 @@
-/* Manager Panel 样式 (极简版 V2.6 - GitHub X AI Cool Style) */
-
-/* 全局字体大小控制 */
-[class*="message-content"],
-[class*="prose"],
-.leading-relaxed.select-text,
-.antigravity-agent-side-panel [role="presentation"],
-.monaco-workbench .view-lines {
-    font-size: var(--manager-panel-font-size, inherit) !important;
+#window-container {
+    position: relative;
 }
 
-/* 隐藏已禁用的功能元素 */
-.Antigravity-Power-Pro-enhance-btn,
-.manager-copy-btn,
-.manager-copy-button,
-.manager-feedback-copy {
-    display: none !important;
+/* 移除 Sparkle 按钮隐藏，已经在 manager-panel.js 中开启 */
+#sparkle-button {
+    /* display: none !important; */
+    right: 36px !important;
+    bottom: 24px !important;
 }
 
-/* 滚动到底部按钮样式 (VIP 至尊金风格) */
+/* 滚动到底部按钮样式 (归一化至尊版) */
 #cascade-scroll-bottom-btn {
   position: absolute;
-  right: 24px;
-  bottom: 28px;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  left: 50% !important;
+  right: auto;
+  bottom: 115px;
+  transform: translateX(calc(-50% + 50px));
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   
-  /* 豪华黑金背景 */
-  background: linear-gradient(145deg, #1a1a1a, #0a0a0a) !important;
-  border: 1px solid #d4af37 !important; /* 金属金 */
-  color: #fcf6ba !important; /* 浅金 */
+  /* 豪华质感：深色背景 + 亮黄边框 */
+  background: rgba(30, 30, 30, 0.85) !important;
+  border: 2px solid rgba(251, 191, 36, 0.6) !important;
+  color: #fbbf24 !important;
   
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(212, 175, 55, 0.2) !important;
+  backdrop-filter: blur(8px);
   cursor: pointer;
+  outline: none !important;
   z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  transform: translateY(12px) scale(0.9);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateX(-50%) translateY(10px) scale(0.9);
   pointer-events: none;
-  overflow: hidden;
+  box-sizing: border-box;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
-/* 侧边栏内位置微调 */
-.antigravity-agent-side-panel #cascade-scroll-bottom-btn {
-    bottom: 110px;
-    right: 20px;
-}
-
-/* 炫酷动画：黄金流光边框效果 (Hover 时触发) */
-#cascade-scroll-bottom-btn::before {
-    content: "";
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    /* 金属金流光 */
-    background: conic-gradient(transparent, #bf953f, transparent, #fcf6ba, transparent);
-    animation: rotate-border 3s linear infinite;
-    opacity: 0;
-    transition: opacity 0.3s;
-    pointer-events: none;
-    z-index: -1;
-}
-
-@keyframes rotate-border {
-    100% { transform: rotate(360deg); }
+#cascade-scroll-bottom-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(calc(-50% + 50px)) translateY(0) scale(1);
 }
 
 #cascade-scroll-bottom-btn:hover {
-  background: #1a1a1a !important;
-  border-color: #fcf6ba !important;
-  color: #fff !important;
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 10px 25px rgba(212, 175, 55, 0.4) !important;
-}
-
-/* 炫酷模式：Hover 时开启流光 */
-#cascade-scroll-bottom-btn:hover::before {
-    opacity: 1;
-}
-
-#cascade-scroll-bottom-btn:active {
-  transform: scale(0.92);
-}
-
-#cascade-scroll-bottom-btn[style*="opacity: 1"] {
-  opacity: 1 !important;
-  pointer-events: auto !important;
-  transform: translateY(0) scale(1) !important;
+  color: #ffffff !important;
+  background: #fbbf24 !important;
+  border-color: #fbbf24 !important;
+  transform: translateX(calc(-50% + 50px)) translateY(-2px) scale(1.1) !important;
+  box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
 }
 
 #cascade-scroll-bottom-btn svg {
-    width: 18px;
-    height: 18px;
-    z-index: 1;
-    filter: drop-shadow(0 0 3px rgba(212, 175, 55, 0.6));
+  width: 20px;
+  height: 20px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+#cascade-scroll-bottom-btn:active {
+  transform: scale(0.95);
 }

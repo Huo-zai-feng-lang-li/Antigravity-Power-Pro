@@ -400,3 +400,19 @@ export const showCopySuccess = (btn) => {
         setCopyState(btn, false);
     }, 1500);
 };
+/**
+ * 递归穿透 Shadow DOM 查找所有匹配元素
+ */
+export function querySelectorAllDeep(selector, root = document) {
+    const list = [];
+    function traverse(node) {
+        if (!node) return;
+        node.querySelectorAll(selector).forEach((el) => list.push(el));
+        const all = node.querySelectorAll("*");
+        all.forEach((child) => {
+            if (child.shadowRoot) traverse(child.shadowRoot);
+        });
+    }
+    traverse(root);
+    return list;
+}

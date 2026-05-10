@@ -15,9 +15,12 @@ const findRoot = () => {
   const cascade = document.querySelector(".antigravity-agent-side-panel");
   if (cascade) return cascade;
   
-  // 2. 其次是 Agent Manager 的主体容器
-  const manager = document.querySelector(".monaco-workbench") || document.body;
-  return manager;
+  // 2. 针对 Manager 窗口，寻找聊天主体容器（避开侧边栏偏差）
+  const managerContainer = document.querySelector(".jetski-agent-container") || 
+                           document.querySelector(".antigravity-manager-container") ||
+                           document.querySelector(".monaco-workbench") || 
+                           document.body;
+  return managerContainer;
 };
 
 /** 查找主滚动容器：增加隔离与排除逻辑 */
@@ -118,6 +121,13 @@ export const init = () => {
         root.style.position = "relative";
       }
 
+      // 针对 Manager 窗口强制运行时对齐修正
+      const isSidebar = !!document.querySelector(".antigravity-agent-side-panel");
+      if (!isSidebar) {
+        btn.style.setProperty("left", "calc(50% + 50px)", "important");
+        btn.style.setProperty("right", "auto", "important");
+      }
+
       btn.addEventListener("click", () => {
         const currentRoot = findRoot();
         const target = findScrollEl(currentRoot); // 点击时也带 Context
@@ -139,9 +149,13 @@ export const init = () => {
       const gap = currentScrollEl.scrollHeight - currentScrollEl.scrollTop - currentScrollEl.clientHeight;
       const isVisible = currentScrollEl.clientHeight > 0 && gap > THRESHOLD;
       
+      const isSidebar = !!document.querySelector(".antigravity-agent-side-panel");
+      // 为 Manager 窗口提供 50% 轴线 + 50px 右移的绝对锁定
+      const baseTransform = isSidebar ? "" : "translateX(calc(-50% + 50px)) ";
+      
       btn.style.opacity = isVisible ? "1" : "0";
       btn.style.pointerEvents = isVisible ? "auto" : "none";
-      btn.style.transform = isVisible ? "translateY(0) scale(1)" : "translateY(12px) scale(0.9)";
+      btn.style.transform = isVisible ? `${baseTransform}translateY(0) scale(1)` : `${baseTransform}translateY(12px) scale(0.9)`;
     };
 
     if (el !== trackedEl) {

@@ -21,7 +21,7 @@ def update_config():
             "enabled": True,
             "provider": "openai",
             "apiBase": "http://127.0.0.1:8045/v1",
-            "apiKey": "none",
+            "apiKey": "",
             "model": "gemini-3-flash",
             "systemPrompt": ""
         },

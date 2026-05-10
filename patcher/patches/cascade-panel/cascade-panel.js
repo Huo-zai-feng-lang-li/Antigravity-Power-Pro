@@ -26,7 +26,7 @@ const DEFAULT_CONFIG = {
   promptEnhance: {
     enabled: true,
     apiBase: "http://127.0.0.1:8045/v1",
-    apiKey: "none",
+    apiKey: "",
     model: "gemini-3-flash",
     systemPrompt: "",
   },
@@ -36,7 +36,8 @@ const DEFAULT_CONFIG = {
 // 已经同步修改的代码逻辑：
 const loadConfig = async () => {
     try {
-        const res = await fetch("./cascade-panel/config.json", { cache: "no-store" });
+        const configUrl = new URL("./config.json", import.meta.url).href;
+        const res = await fetch(configUrl, { cache: "no-store" });
         return await res.json();
     } catch {
         return DEFAULT_CONFIG;

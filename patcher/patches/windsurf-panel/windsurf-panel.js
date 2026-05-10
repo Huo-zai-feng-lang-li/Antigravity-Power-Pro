@@ -31,7 +31,7 @@ const DEFAULT_CONFIG = {
     enabled: true,
     provider: "openai",
     apiBase: "http://127.0.0.1:8045/v1",
-    apiKey: "none",
+    apiKey: "",
     model: "gemini-3-flash",
     systemPrompt: "",
   },
@@ -98,7 +98,7 @@ const waitForCascadePanel = (timeout = 15000) => {
  */
 const initPromptEnhance = async (config) => {
   try {
-    const enhance = await import("./enhance.js");
+    const enhance = await import("../shared/enhance.js");
     enhance.init(config.promptEnhance);
     enhance.injectStyles();
 

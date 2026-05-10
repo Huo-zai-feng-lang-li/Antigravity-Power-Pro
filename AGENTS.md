@@ -72,3 +72,11 @@
 - 写入 `patcher/patches/` 或清理 `tests/` 在沙箱下可能 `Access denied`, 需要使用提权命令执行写入/删除.
 - PowerShell `ConvertTo-Json | Set-Content` 会写入 UTF-8 BOM, 导致 serde_json 解析失败. Rust 代码已添加 `trim_start_matches('\u{feff}')` 处理.
 - Windsurf 卸载时需恢复 `product.json.bak`, 否则仍会显示 "安装损坏".
+
+## v2.6.2+ 设计规范 (视觉归一化)
+
+- **设计语言**: 统一使用 "Obsidian Gold" (黑金玻璃拟态) 风格.
+- **几何形状**: 功能按键 (如滚动到底部) 统一使用 **圆形 (Circular)**, 投影需包含金色发光效果 (`rgba(251, 191, 36, 0.4)`).
+- **多入口同步**: 修改侧边栏 (`cascade-panel.css`) 时, 必须同步更新 Manager 窗口 (`manager-panel.css`) 的视觉表现.
+- **Shadow DOM 穿透**: 注入 UI 到 IDE 暗层时, 必须使用 `querySelectorAllDeep` 逻辑, 否则在复杂的 Shadow DOM 容器 (如侧边栏输入框) 中会失效.
+- **防样式污染**: 必须添加 `outline: none !important` 消除 IDE 默认的蓝色聚焦边框.

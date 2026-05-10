@@ -23,11 +23,11 @@ pub struct PromptEnhanceConfig {
 impl Default for PromptEnhanceConfig {
     fn default() -> Self {
         Self {
-            enabled: false,
-            provider: "anthropic".to_string(),
-            api_base: "https://api.anthropic.com".to_string(),
+            enabled: true,
+            provider: "openai".to_string(),
+            api_base: "http://127.0.0.1:8045/v1".to_string(),
             api_key: String::new(),
-            model: "claude-sonnet-4-20250514".to_string(),
+            model: "gemini-3-flash".to_string(),
             system_prompt: String::new(),
         }
     }
@@ -60,10 +60,10 @@ impl Default for FeatureConfig {
             enabled: true,
             mermaid: true,
             math: true,
-            copy_button: true,
-            table_color: true,
-            font_size_enabled: true,
-            font_size: 20.0,
+            copy_button: false,
+            table_color: false,
+            font_size_enabled: false,
+            font_size: 14.0,
             prompt_enhance: PromptEnhanceConfig::default(),
         }
     }
@@ -92,9 +92,9 @@ pub struct ManagerFeatureConfig {
 impl Default for ManagerFeatureConfig {
     fn default() -> Self {
         Self {
-            enabled: false,
-            mermaid: false,
-            math: false,
+            enabled: true,
+            mermaid: true,
+            math: true,
             copy_button: true,
             max_width_enabled: false,
             max_width_ratio: 75.0,

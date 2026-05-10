@@ -32,9 +32,9 @@ let config = {
   placeholder: "",
   promptEnhance: {
     enabled: false,
-    apiBase: "http://127.0.0.1:8045/v1",
-    apiKey: "none",
-    model: "gemini-3-flash",
+    apiBase: "",
+    apiKey: "",
+    model: "",
     systemPrompt: "",
   },
 };
@@ -320,10 +320,8 @@ const INPUT_SELECTORS = [
   '[class*="chat-input"]',
   '[class*="message-input"]',
   '[class*="prompt-input"]',
-  // 通用选择器
-  "textarea",
+  // 通用选择器 (加严)
   '[contenteditable="true"]',
-  'input[type="text"]',
 ];
 const INPUT_SELECTOR = INPUT_SELECTORS.join(", ");
 const ENHANCE_BTN_CLASS = "Antigravity-Power-Pro-enhance-btn";
@@ -334,33 +332,31 @@ let enhanceModule = null;
  * @param {Element} root
  * @returns {Element|null}
  */
-function findCascadeInput(root) {
-  // 优先使用 Cascade 特定选择器
-  for (const selector of INPUT_SELECTORS) {
-    const el = root.querySelector(selector);
-    if (
-      el &&
-      (el.tagName === "TEXTAREA" ||
-        el.contentEditable === "true" ||
-        el.tagName === "INPUT")
-    ) {
-      console.log(
-        "[PromptEnhance] 找到输入框:",
-        selector,
-        el.tagName,
-        el.className,
-      );
-      return el;
-    }
+function findCascadeInput() {
+  const inputs = querySelectorAllDeep(INPUT_SELECTOR);
+  return inputs.length > 0 ? inputs[0] : null;
+}
+
+/** 递归穿透 Shadow DOM 查找所有匹配元素 */
+function querySelectorAllDeep(selector, root = document) {
+  const list = [];
+  function traverse(node) {
+    if (!node) return;
+    node.querySelectorAll(selector).forEach((el) => list.push(el));
+    const all = node.querySelectorAll("*");
+    all.forEach((child) => {
+      if (child.shadowRoot) traverse(child.shadowRoot);
+    });
   }
-  return null;
+  traverse(root);
+  return list;
 }
 
 const initPromptEnhanceButton = async () => {
   // 延迟加载增强模块
   if (!enhanceModule) {
     try {
-      enhanceModule = await import("./enhance.js");
+      enhanceModule = await import("../shared/enhance.js");
     } catch (error) {
       console.warn("[Cascade] 无法加载增强模块:", error);
       return;
@@ -370,27 +366,26 @@ const initPromptEnhanceButton = async () => {
   // 初始化模块配置（注入样式等）
   enhanceModule.init(config.promptEnhance);
 
-  if (!enhanceModule.isEnabled()) {
-    console.warn("[PromptEnhance] 功能未启用，请检查配置 (Enabled, Base, Model, Key)");
-    return;
-  }
+  if (!enhanceModule.isEnabled()) return;
 
-  // 查找所有输入框区域 (包括全局范围)
-  const root = getRoot();
-  // 使用多重策略查找输入框：
-  // 1. 直接选择器
-  let inputAreas = Array.from(document.querySelectorAll(INPUT_SELECTOR));
-  // 2. 深度穿透查找
-  if (inputAreas.length === 0) {
-    const deepInput = querySelectorDeep(INPUT_SELECTOR);
-    if (deepInput) inputAreas = [deepInput];
-  }
-  
-  // 3. 增强：如果仍然很少，尝试模糊匹配所有 contenteditable
-  if (inputAreas.length < 2) {
-    const allEditable = document.querySelectorAll('[contenteditable="true"]');
-    inputAreas = [...new Set([...inputAreas, ...allEditable])];
-  }
+  // 查找输入框区域 (支持 Shadow DOM 穿透)
+  let inputAreas = querySelectorAllDeep(INPUT_SELECTOR);
+
+  // 过滤掉不相关的输入框（如终端、搜索框等）
+  inputAreas = inputAreas.filter(input => {
+    // 排除终端中的输入框 (xterm, terminal)
+    if (input.closest('.terminal-container') || 
+        input.closest('.xterm-helper-textarea') ||
+        input.className.includes('xterm') ||
+        input.getAttribute('aria-label')?.includes('Terminal')) {
+      return false;
+    }
+    // 排除 VS Code 侧边搜索栏等
+    if (input.closest('.search-view') || input.closest('.replace-view')) {
+      return false;
+    }
+    return true;
+  });
 
   inputAreas.forEach((input) => {
     // 检查是否已添加按钮
@@ -399,52 +394,62 @@ const initPromptEnhanceButton = async () => {
 
     // 创建增强按钮
     const btn = enhanceModule.createEnhanceButton(async () => {
-      // 深度查找当前活动的输入框
-      const currentInput = document.activeElement.matches?.(INPUT_SELECTOR) ? document.activeElement : querySelectorDeep(INPUT_SELECTOR);
+      // 重新获取当前活动的输入框
+      const root = getRoot();
+      const currentInput = findCascadeInput(root);
 
       if (!currentInput) {
+        console.error(
+          "[PromptEnhance] 找不到输入框，尝试的选择器:",
+          INPUT_SELECTORS,
+        );
         enhanceModule.showErrorModal("找不到输入框");
+        return;
+      }
+
+      const conf = enhanceModule.getConfig();
+      if (!conf.apiKey) {
+        enhanceModule.showErrorModal("请先在 Antigravity-Power-Pro 中配置 apiKey 并设置模型");
         return;
       }
 
       const text = currentInput.value || currentInput.textContent || "";
       if (!text.trim()) {
-        enhanceModule.showErrorModal("请先输入提示词");
+        enhanceModule.showErrorModal("请先输入需要增强的提示词");
         return;
       }
 
       btn.classList.add("loading");
       try {
         const enhanced = await enhanceModule.enhance(text);
+        console.log("[PromptEnhance] 增强完成，准备填入输入框");
+
+        // 使用 enhance.js 中导出的可靠赋值方法
         const success = await enhanceModule.setInputValue(currentInput, enhanced);
+
         if (success) {
-          enhanceModule.showToast("✓ 已优化", "success", 1.5);
+          console.log("[PromptEnhance] 输入框填入成功");
+          enhanceModule.showResultModal(
+            enhanced,
+            () => {},
+            () => {},
+          );
         } else {
-          // 备选方案：弹窗显示
-          enhanceModule.showResultModal(enhanced, () => {}, () => {});
+          // 如果自动填入失败，让用户手动复制
+          console.warn("[PromptEnhance] 自动填入可能失败，显示结果供复制");
+          enhanceModule.showResultModal(
+            enhanced,
+            () => copyToClipboard(enhanced),
+            () => {},
+          );
         }
       } catch (error) {
+        console.error("[PromptEnhance] 增强失败:", error);
         enhanceModule.showErrorModal(error.message);
       } finally {
         btn.classList.remove("loading");
       }
     });
-
-    // 强制美化按钮位置：直接覆盖在输入框内
-    btn.style.position = 'absolute';
-    btn.style.right = '40px';
-    btn.style.bottom = '10px';
-    btn.style.zIndex = '9999';
-    btn.style.pointerEvents = 'auto';
-    
-    // 寻找最近的相对定位容器或直接挂载到 parent
-    const container = input.closest('.relative, [class*="container"]') || input.parentElement;
-    if (container && !container.querySelector(`.${ENHANCE_BTN_CLASS}`)) {
-        if (window.getComputedStyle(container).position === 'static') {
-            container.style.position = 'relative';
-        }
-        container.appendChild(btn);
-    }
 
     function copyToClipboard(text) {
       navigator.clipboard
@@ -458,49 +463,56 @@ const initPromptEnhanceButton = async () => {
     }
 
     // 插入按钮到发送按钮旁边
-    // 查找发送按钮的多种可能选择器
-    const sendButtonSelectors = [
-      'button[type="submit"]',
+    // 查找发送按钮/麦克风按钮的多种可能选择器
+    const actionButtonSelectors = [
       'button[aria-label*="send" i]',
       'button[aria-label*="发送" i]',
+      'button[aria-label*="Mic" i]',
       'button[title*="send" i]',
-      'button[title*="发送" i]',
+      'button[title*="Mic" i]',
+      'button[type="submit"]',
       '[class*="send-button"]',
-      '[class*="submit-button"]',
       '[data-testid*="send"]',
-      '[data-testid*="submit"]',
     ];
 
-    let sendButton = null;
-    // 查找输入框容器 (用于定位增强按钮)
-    const inputContainer = input.closest('[class*="input"], [class*="composer"], [class*="chat"], .relative.w-full, form');
-    if (!inputContainer) {
-      console.warn("[Cascade] 无法找到输入框容器，尝试直接使用父节点");
-    }
-    const parentContainer = inputContainer || input.parentNode;
-
-    for (const selector of sendButtonSelectors) {
-      sendButton = parentContainer.querySelector(selector);
-      if (sendButton) break;
-    }
-
-    if (sendButton && sendButton.parentNode) {
-      // 插入到容器最前面，避开发送/评论按钮
-      sendButton.parentNode.insertBefore(btn, sendButton.parentNode.firstChild);
-    } else {
-      // 1.107.0 强力挂载策略：直接挂载到输入框所在的相对定位容器
-      const inputWrapper = input.closest('.relative.w-full') || parent;
-      if (inputWrapper) {
-        // 使用绝对定位将其放在右下角偏左位置
-        btn.style.position = 'absolute';
-        btn.style.bottom = '8px';
-        btn.style.right = '40px';
-        btn.style.zIndex = '10';
-        inputWrapper.appendChild(btn);
-      } else {
-        // 最后备选：插入到输入框后面
-        input.parentNode.insertBefore(btn, input.nextSibling);
+    // 1. 优先尝试寻找原生的操作按钮组 (Mic, Send 等) 并在其内部插入
+    const findActionButton = () => {
+      for (const selector of actionButtonSelectors) {
+        // 在整个 input 容器内寻找
+        const el = input.closest('.relative.w-full')?.querySelector(selector) || 
+                   parent.querySelector(selector);
+        if (el && el.isConnected) return el;
       }
+      return null;
+    };
+
+    const actionButton = findActionButton();
+
+    if (actionButton && actionButton.parentElement) {
+      console.log("[PromptEnhance] 找到原生按钮，尝试在其同级插入");
+      actionButton.parentElement.insertBefore(btn, actionButton);
+      
+      // 流式布局样式
+      btn.style.position = 'relative';
+      btn.style.marginRight = '8px';
+      btn.style.right = 'auto';
+      btn.style.bottom = 'auto';
+      btn.style.zIndex = 'auto';
+      btn.style.marginTop = '0';
+    } else {
+      // 2. 如果找不到原生按钮，挂载到最接近的相对定位容器
+      const container = input.closest('#antigravity.agentSidePanelInputBox') || 
+                        input.closest('.relative.w-full') || 
+                        parent;
+      
+      console.log("[PromptEnhance] 无法找到原生按钮组，使用备选挂载方案:", container);
+      
+      container.style.position = 'relative';
+      btn.style.position = 'absolute';
+      btn.style.bottom = actionButton ? '12px' : '8px'; // 稍微错开
+      btn.style.right = '80px';
+      btn.style.zIndex = '99';
+      container.appendChild(btn);
     }
   });
 };
@@ -587,6 +599,7 @@ const init = () => {
 export const start = (userConfig = {}) => {
   // 合并用户配置
   config = { ...config, ...userConfig };
+  console.log("[Cascade] 启动扫描，配置:", config);
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);

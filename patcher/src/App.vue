@@ -5,7 +5,6 @@ import { open } from "@tauri-apps/plugin-dialog";
 import TitleBar from "./components/TitleBar.vue";
 import PathCard from "./components/PathCard.vue";
 import FeatureCard from "./components/FeatureCard.vue";
-import ManagerFeatureCard from "./components/ManagerFeatureCard.vue";
 import PromptEnhanceCard from "./components/PromptEnhanceCard.vue";
 import AboutModal from "./components/AboutModal.vue";
 import ConfirmModal from "./components/ConfirmModal.vue";
@@ -87,8 +86,8 @@ const showConfirm = ref(false);
 // 侧边栏功能开关
 const features = ref({
   enabled: true,
-  mermaid: false,
-  math: false,
+  mermaid: true,
+  math: true,
   copyButton: false,
   tableColor: false,
   scrollToBottom: true,
@@ -120,7 +119,7 @@ const windsurfFeatures = ref({
     enabled: true,
     provider: "openai",
     apiBase: "http://127.0.0.1:8045/v1",
-    apiKey: "none",
+    apiKey: "",
     model: "gemini-3-flash",
     systemPrompt: "",
   },

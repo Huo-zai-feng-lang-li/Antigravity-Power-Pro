@@ -19,7 +19,7 @@ const DEFAULT_CONFIG = {
     fontSize: 14,
     scrollToBottom: true,
     promptEnhance: {
-        enabled: false,    // 已按需禁用
+        enabled: true,
     },
 };
 
