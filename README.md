@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro/releases">
-    <img src="https://img.shields.io/badge/版本-v2.6.5-blue.svg?style=flat-square" alt="版本">
+    <img src="https://img.shields.io/badge/version-v2.6.6-gold?style=flat-square" alt="版本">
   </a>
   <a href="https://codeium.com/antigravity">
     <img src="https://img.shields.io/badge/支持_Antigravity-v1.15.8-green.svg?style=flat-square" alt="Antigravity">

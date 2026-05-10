@@ -12,10 +12,10 @@
 /* 滚动到底部按钮样式 (归一化至尊版) */
 #cascade-scroll-bottom-btn {
   position: absolute;
-  left: 50% !important;
-  right: auto;
-  bottom: 115px;
-  transform: translateX(calc(-50% + 50px));
+  left: calc(50% + 50px) !important;
+  right: auto !important;
+  bottom: 65px;
+  transform: translateX(-50%);
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -43,14 +43,14 @@
 #cascade-scroll-bottom-btn.visible {
   opacity: 1;
   pointer-events: auto;
-  transform: translateX(calc(-50% + 50px)) translateY(0) scale(1);
+  transform: translateX(-50%) translateY(0) scale(1);
 }
 
 #cascade-scroll-bottom-btn:hover {
   color: #ffffff !important;
   background: #fbbf24 !important;
   border-color: #fbbf24 !important;
-  transform: translateX(calc(-50% + 50px)) translateY(-2px) scale(1.1) !important;
+  transform: translateX(-50%) translateY(-2px) scale(1.1) !important;
   box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
 }
 
