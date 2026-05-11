@@ -13,7 +13,7 @@ import ManagerFeatureCard from "./components/ManagerFeatureCard.vue";
 import { getVersion } from "@tauri-apps/api/app";
 
 // 常量
-const APP_VERSION = ref("2.6.6");
+const APP_VERSION = ref("2.6.7");
 const GITHUB_URL = "https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro";
 
 const DEFAULT_SYSTEM_PROMPT = `你是一个智能提示词优化器，专门帮助用户生成更有效的 AI 对话提示词。
@@ -132,16 +132,20 @@ const WINDSURF_PATCH_FILES = {
   deprecated: [] as string[],
 };
 
-// Manager 功能开关（独立配置，默认禁用）
+// Manager 功能开关 (归一化至尊版)
 const managerFeatures = ref({
-  enabled: false,
-  mermaid: false,
-  math: false,
-  copyButton: true,
-  maxWidthEnabled: false,
-  maxWidthRatio: 75,
+  enabled: true,
+  scrollToBottom: true,
   fontSizeEnabled: false,
   fontSize: 16,
+  promptEnhance: {
+    enabled: true,
+    provider: "openai",
+    apiBase: "https://api.openai.com/v1",
+    apiKey: "",
+    model: "gpt-4o-mini",
+    systemPrompt: DEFAULT_SYSTEM_PROMPT,
+  },
 });
 
 // ============================================
@@ -290,21 +294,17 @@ async function checkPatchStatus(path: string) {
       }
 
       // 读取 Manager 配置
-      const managerConfig = await invoke<{
-        mermaid: boolean;
-        math: boolean;
-        copyButton: boolean;
-        maxWidthEnabled?: boolean;
-        maxWidthRatio?: number;
-        fontSizeEnabled?: boolean;
-        fontSize?: number;
-      } | null>("read_manager_patch_config", { path });
-      if (managerConfig) {
-        managerFeatures.value = {
-          ...managerFeatures.value,
-          ...managerConfig,
-          enabled: true,
+      const mConfig = await invoke<any>("read_manager_patch_config", { path });
+      if (mConfig) {
+        const mergedManager = { 
+          ...managerFeatures.value, 
+          ...mConfig,
+          enabled: true 
         };
+        if (mConfig.promptEnhance) {
+          mergedManager.promptEnhance = { ...managerFeatures.value.promptEnhance, ...mConfig.promptEnhance };
+        }
+        managerFeatures.value = mergedManager;
       }
     }
   } catch (e) {
@@ -321,6 +321,7 @@ async function browsePath() {
     });
     if (selected) {
       antigravityPath.value = selected as string;
+      await checkPatchStatus(selected as string);
     }
   } catch (e) {
     console.error("选择目录失败:", e);
@@ -338,6 +339,9 @@ async function confirmInstall() {
   showConfirm.value = false;
   if (!antigravityPath.value) return;
   try {
+    // 自动同步提示词配置到 Manager
+    managerFeatures.value.promptEnhance = { ...features.value.promptEnhance };
+
     await invoke("install_patch", {
       path: antigravityPath.value,
       features: features.value,
@@ -347,7 +351,7 @@ async function confirmInstall() {
     showToast("✓ 补丁安装成功");
   } catch (e) {
     console.error("安装失败:", e);
-    showToast("✗ 安装失败");
+    showToast("✗ 安装失败: " + e);
   }
 }
 
@@ -380,6 +384,9 @@ function showToast(message: string) {
 async function updateConfigOnly() {
   if (!antigravityPath.value) return;
   try {
+    // 自动同步提示词配置到 Manager
+    managerFeatures.value.promptEnhance = { ...features.value.promptEnhance };
+
     await invoke("update_config", {
       path: antigravityPath.value,
       features: features.value,

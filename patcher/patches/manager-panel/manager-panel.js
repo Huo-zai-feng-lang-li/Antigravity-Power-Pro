@@ -9,15 +9,9 @@
 const SCRIPT_BASE = new URL('./', import.meta.url).href;
 
 const DEFAULT_CONFIG = {
-    mermaid: false,        // 已按需禁用
-    math: false,           // 已按需禁用
-    copyButton: false,     // 已按需禁用
-    tableColor: false,     // 已按需禁用
-    maxWidthEnabled: false,
-    maxWidthRatio: 75,
-    fontSizeEnabled: true,
-    fontSize: 14,
     scrollToBottom: true,
+    fontSizeEnabled: false,
+    fontSize: 16,
     promptEnhance: {
         enabled: true,
     },
@@ -83,5 +77,17 @@ const applyFontSize = (userConfig) => {
         }
     }
 
-    console.log('[Manager Panel] 极简补丁已就绪');
+    // 3. 提示词增强逻辑
+    if (config.promptEnhance?.enabled) {
+        try {
+            const { init: initEnhance, injectStyles } = await import('../shared/enhance.js');
+            initEnhance(config.promptEnhance);
+            injectStyles();
+            console.log('[Manager Panel] 提示词增强模块已加载');
+        } catch (e) {
+            console.error('[Manager Panel] 提示词加载失败:', e);
+        }
+    }
+
+    console.log('[Manager Panel] 补丁已就绪 (字体+滚动+提示词)');
 })();

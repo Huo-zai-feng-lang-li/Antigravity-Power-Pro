@@ -119,7 +119,7 @@
           class="textarea-input"
           placeholder="你是一个提示词优化专家，帮助用户优化他们的提示词，使其更加清晰、具体、有效..."
           :disabled="!model.enabled"
-          rows="3"
+          rows="6"
         ></textarea>
       </div>
 
@@ -513,7 +513,7 @@ async function testConnection() {
   font-size: 12px;
   color: var(--ag-text);
   resize: vertical;
-  min-height: 60px;
+  min-height: 120px;
   font-family: inherit;
 }
 

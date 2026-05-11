@@ -45,6 +45,8 @@ pub struct FeatureConfig {
     pub copy_button: bool,
     #[serde(rename = "tableColor")]
     pub table_color: bool,
+    #[serde(rename = "scrollToBottom")]
+    pub scroll_to_bottom: bool,
     #[serde(rename = "fontSizeEnabled")]
     pub font_size_enabled: bool,
     #[serde(rename = "fontSize")]
@@ -62,6 +64,7 @@ impl Default for FeatureConfig {
             math: true,
             copy_button: false,
             table_color: false,
+            scroll_to_bottom: true,
             font_size_enabled: false,
             font_size: 14.0,
             prompt_enhance: PromptEnhanceConfig::default(),
@@ -75,31 +78,25 @@ impl Default for FeatureConfig {
 pub struct ManagerFeatureConfig {
     /// 是否启用 Manager 补丁 (禁用时还原所有 Manager 相关文件)
     pub enabled: bool,
-    pub mermaid: bool,
-    pub math: bool,
-    #[serde(rename = "copyButton")]
-    pub copy_button: bool,
-    #[serde(rename = "maxWidthEnabled")]
-    pub max_width_enabled: bool,
-    #[serde(rename = "maxWidthRatio")]
-    pub max_width_ratio: f32,
+    #[serde(rename = "scrollToBottom")]
+    pub scroll_to_bottom: bool,
     #[serde(rename = "fontSizeEnabled")]
     pub font_size_enabled: bool,
     #[serde(rename = "fontSize")]
     pub font_size: f32,
+    /// 提示词增强配置
+    #[serde(rename = "promptEnhance")]
+    pub prompt_enhance: PromptEnhanceConfig,
 }
 
 impl Default for ManagerFeatureConfig {
     fn default() -> Self {
         Self {
             enabled: true,
-            mermaid: true,
-            math: true,
-            copy_button: true,
-            max_width_enabled: false,
-            max_width_ratio: 75.0,
+            scroll_to_bottom: true,
             font_size_enabled: false,
             font_size: 16.0,
+            prompt_enhance: PromptEnhanceConfig::default(),
         }
     }
 }
@@ -438,13 +435,14 @@ fn write_manager_patches(workbench_dir: &PathBuf, manager_features: &ManagerFeat
     Ok(())
 }
 
-/// 写入侧边栏配置文件
+/// 侧边栏配置文件生成
 fn write_config_file(config_path: &PathBuf, features: &FeatureConfig) -> Result<(), String> {
     let config_content = serde_json::json!({
         "mermaid": features.mermaid,
         "math": features.math,
         "copyButton": features.copy_button,
         "tableColor": features.table_color,
+        "scrollToBottom": features.scroll_to_bottom,
         "fontSizeEnabled": features.font_size_enabled,
         "fontSize": features.font_size,
         "promptEnhance": {
@@ -458,25 +456,29 @@ fn write_config_file(config_path: &PathBuf, features: &FeatureConfig) -> Result<
     });
     
     fs::write(config_path, serde_json::to_string_pretty(&config_content).unwrap())
-        .map_err(|e| format!("写入配置文件失败: {}", e))?;
+        .map_err(|e| format!("写入侧边栏配置失败: {}", e))?;
     
     Ok(())
 }
 
-/// 写入 Manager 配置文件
+/// Manager 配置文件生成
 fn write_manager_config_file(config_path: &PathBuf, features: &ManagerFeatureConfig) -> Result<(), String> {
     let config_content = serde_json::json!({
-        "mermaid": features.mermaid,
-        "math": features.math,
-        "copyButton": features.copy_button,
-        "maxWidthEnabled": features.max_width_enabled,
-        "maxWidthRatio": features.max_width_ratio,
+        "scrollToBottom": features.scroll_to_bottom,
         "fontSizeEnabled": features.font_size_enabled,
-        "fontSize": features.font_size
+        "fontSize": features.font_size,
+        "promptEnhance": {
+            "enabled": features.prompt_enhance.enabled,
+            "provider": features.prompt_enhance.provider,
+            "apiBase": features.prompt_enhance.api_base,
+            "apiKey": features.prompt_enhance.api_key,
+            "model": features.prompt_enhance.model,
+            "systemPrompt": features.prompt_enhance.system_prompt
+        }
     });
     
     fs::write(config_path, serde_json::to_string_pretty(&config_content).unwrap())
-        .map_err(|e| format!("写入 Manager 配置文件失败: {}", e))?;
+        .map_err(|e| format!("写入 Manager 配置失败: {}", e))?;
     
     Ok(())
 }
