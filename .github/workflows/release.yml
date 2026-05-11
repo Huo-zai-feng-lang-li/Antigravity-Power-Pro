@@ -41,21 +41,8 @@ jobs:
         run: pnpm install
 
       - name: Pre-build validation
-        shell: pwsh
         run: |
-          echo "Checking for UTF-8 BOM..."
-          $filesWithBom = Get-ChildItem -Path . -Recurse -File -Exclude "node_modules", ".git", "target" | ForEach-Object {
-              $bytes = Get-Content $_.FullName -AsByte -TotalCount 3
-              if ($bytes -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
-                  $_.FullName
-              }
-          }
-          if ($filesWithBom) {
-              Write-Error "UTF-8 BOM detected in the following files:`n$($filesWithBom -join '`n')"
-              exit 1
-          }
-          echo "No BOM found."
-          
+          python -c "import os, sys; bom = b'\xef\xbb\xbf'; found = []; [([found.append(os.path.join(r, f)) if open(os.path.join(r, f), 'rb').read(3) == bom else None for f in fs]) for r, ds, fs in os.walk('.') if not any(x in r for x in ('.git', 'node_modules', 'target'))]; (print('BOM found in:', found), sys.exit(1)) if found else print('No BOM found.')"
           echo "Validating Cargo.toml metadata..."
           cd patcher/src-tauri
           cargo metadata --format-version 1 --no-deps > $null
