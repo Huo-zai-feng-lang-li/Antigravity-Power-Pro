@@ -93,20 +93,38 @@ const scan = () => {
             // 插入到操作区的最后面，使其在所有按钮的最右边
             actionBtn.parentElement.appendChild(btn);
             btn.style.setProperty('position', 'relative', 'important');
-            btn.style.setProperty('margin', '0 0 0 8px', 'important'); // 左边距，与前一个按钮拉开
+            btn.style.setProperty('margin', '0 0 0 8px', 'important'); 
             btn.style.setProperty('flex-shrink', '0', 'important');
             btn.style.setProperty('left', 'auto', 'important');
             btn.style.setProperty('right', 'auto', 'important');
         } else {
-            // 备选方案：绝对定位在输入框区域的右下角（更靠右）
-            const container = input.closest('.relative') || input.parentElement || root;
+            // 增强版容器查找逻辑：穿透 Shadow DOM 边界向上查找
+            const findContainer = (el) => {
+                let curr = el;
+                while (curr) {
+                    // 1. 优先查找具有布局能力的容器
+                    if (curr.classList && (curr.classList.contains('relative') || curr.classList.contains('flex'))) {
+                        return curr;
+                    }
+                    // 2. 向上移动：如果是 Shadow Root 转换到 Host
+                    const next = curr.parentElement || (curr.parentNode instanceof ShadowRoot ? curr.parentNode.host : null);
+                    if (!next || next === root) break;
+                    curr = next;
+                }
+                return el.parentElement || root;
+            };
+
+            const container = findContainer(input);
             console.warn("[Manager-Prompt] 未找到原生按钮，使用容器挂载:", container);
-            container.style.setProperty('position', 'relative', 'important');
+            
+            if (window.getComputedStyle(container).position === 'static') {
+                container.style.setProperty('position', 'relative', 'important');
+            }
+
             btn.style.setProperty('position', 'absolute', 'important');
-            btn.style.setProperty('right', '8px', 'important');
-            btn.style.setProperty('left', 'auto', 'important');
+            btn.style.setProperty('right', '12px', 'important');
             btn.style.setProperty('bottom', '8px', 'important');
-            btn.style.setProperty('z-index', '9999', 'important');
+            btn.style.setProperty('z-index', '999', 'important');
             container.appendChild(btn);
         }
     });

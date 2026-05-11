@@ -1,6 +1,4 @@
-#window-container {
-    position: relative;
-}
+/* 移除可能导致 IDE 全局布局乱套的容器定位 */
 
 /* 移除 Sparkle 按钮隐藏，已经在 manager-panel.js 中开启 */
 #sparkle-button {
@@ -12,7 +10,7 @@
 /* 滚动到底部按钮样式 (归一化至尊版) */
 #cascade-scroll-bottom-btn {
   position: absolute;
-  left: calc(50% + 50px) !important;
+  left: calc(50% + 120px) !important;
   right: auto !important;
   bottom: 65px;
   transform: translateX(-50%);
@@ -50,7 +48,7 @@
   color: #ffffff !important;
   background: #fbbf24 !important;
   border-color: #fbbf24 !important;
-  transform: translateX(-50%) translateY(-2px) scale(1.1) !important;
+  transform: translateX(-50%) translateY(0) scale(1.1) !important;
   box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
 }
 

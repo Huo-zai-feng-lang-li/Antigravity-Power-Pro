@@ -6,6 +6,15 @@
  * - 只有 字体大小调整 和 滚动到底部按钮
  */
 
+// 1. 注册受信任类型策略 (必须在最前面)
+if (window.trustedTypes && !window.trustedTypes.defaultPolicy) {
+  window.trustedTypes.createPolicy("default", {
+    createHTML: (string) => string,
+    createScriptURL: (string) => string,
+    createScript: (string) => string,
+  });
+}
+
 const SCRIPT_BASE = new URL('./', import.meta.url).href;
 
 const DEFAULT_CONFIG = {

@@ -24,7 +24,7 @@ impl Default for PromptEnhanceConfig {
     fn default() -> Self {
         Self {
             enabled: true,
-            provider: "openai".to_string(),
+            provider: "custom".to_string(),
             api_base: "http://127.0.0.1:8045/v1".to_string(),
             api_key: String::new(),
             model: "gemini-3-flash".to_string(),
@@ -359,7 +359,9 @@ fn write_cascade_patches(extensions_dir: &PathBuf, features: &FeatureConfig) -> 
     let patch_files = embedded::get_all_files_runtime()?;
     for (relative_path, content) in patch_files {
         // 只处理侧边栏相关文件
-        if relative_path != "cascade-panel.html" && !relative_path.starts_with("cascade-panel/") {
+        if relative_path != "cascade-panel.html" && 
+           !relative_path.starts_with("cascade-panel/") &&
+           !relative_path.starts_with("shared/") {
             continue;
         }
         
@@ -404,7 +406,8 @@ fn write_manager_patches(workbench_dir: &PathBuf, manager_features: &ManagerFeat
         // 只处理 Manager 相关文件 (Antigravity 用 workbench-antigravity.html 覆盖 workbench.html)
         if relative_path != "workbench-jetski-agent.html" && 
            relative_path != "workbench-antigravity.html" &&
-           !relative_path.starts_with("manager-panel/") {
+           !relative_path.starts_with("manager-panel/") &&
+           !relative_path.starts_with("shared/") {
             continue;
         }
         

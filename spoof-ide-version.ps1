@@ -1,4 +1,4 @@
-﻿# 欺骗服务端版本号 - 安装旧版IDE后执行此脚本
+# 欺骗服务端版本号 - 安装旧版IDE后执行此脚本
 $base           = "C:\Users\Administrator\AppData\Local\Programs\Antigravity\resources\app"
 $pkgPath        = "$base\package.json"
 $productPath    = "$base\product.json"

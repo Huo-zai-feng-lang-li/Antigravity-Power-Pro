@@ -1,17 +1,21 @@
 <!doctype html>
-<html lang="en">
-
+<html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Cascade Panel</title>
-    <link rel="stylesheet" href="./cascade-panel/cascade-panel.css">
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self' vscode-resource: vscode-file:;
+        script-src 'self' 'unsafe-eval' blob:;
+        style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+        connect-src *;
+        img-src * data: blob:;
+        font-src * data:;
+        require-trusted-types-for 'script';
+        trusted-types default;
+    ">
+    <link rel="stylesheet" href="./cascade-panel/cascade-panel.css" />
 </head>
-
-<body>
+<body style="margin: 0">
     <div id="react-app" class="react-app-container"></div>
-
     <script type="module" src="./cascade-panel/cascade-panel.js"></script>
 </body>
-
 </html>

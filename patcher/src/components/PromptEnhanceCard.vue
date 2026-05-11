@@ -250,7 +250,7 @@ const PROVIDERS: Record<string, ProviderInfo> = {
 
 const model = defineModel<PromptEnhanceConfig>({ required: true });
 
-const selectedProvider = ref(model.value.provider || "anthropic");
+const selectedProvider = ref(model.value.provider || "custom");
 const showApiKey = ref(false);
 const isTesting = ref(false);
 const testResult = ref<{ success: boolean; message: string } | null>(null);
