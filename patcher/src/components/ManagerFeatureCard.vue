@@ -11,45 +11,10 @@
     <div class="feature-list">
       <label class="feature-item" :class="{ 'item-disabled': !model.enabled }">
         <div class="feature-info">
-          <span class="feature-name">Mermaid 流程图渲染</span>
-          <p class="feature-desc">渲染 Mermaid 语法的流程图、时序图等</p>
+          <span class="feature-name">滚动到底部按钮</span>
+          <p class="feature-desc">在对话区域右下角添加快速回底按钮</p>
         </div>
-        <input type="checkbox" v-model="model.mermaid" class="checkbox" :disabled="!model.enabled">
-      </label>
-
-      <label class="feature-item" :class="{ 'item-disabled': !model.enabled }">
-        <div class="feature-info">
-          <span class="feature-name">数学公式渲染</span>
-          <p class="feature-desc">渲染 LaTeX 数学公式 (KaTeX)</p>
-        </div>
-        <input type="checkbox" v-model="model.math" class="checkbox" :disabled="!model.enabled">
-      </label>
-
-      <label class="feature-item" :class="{ 'item-disabled': !model.enabled }">
-        <div class="feature-info">
-          <span class="feature-name">一键复制按钮</span>
-          <p class="feature-desc">在消息区域添加复制按钮</p>
-        </div>
-        <input type="checkbox" v-model="model.copyButton" class="checkbox" :disabled="!model.enabled">
-      </label>
-
-      <label class="feature-item" :class="{ 'item-disabled': !model.enabled }">
-        <div class="feature-info">
-          <span class="feature-name">对话区域最大宽度</span>
-          <p class="feature-desc">设置消息区域最大宽度占比 (%)</p>
-        </div>
-        <div class="feature-controls">
-          <input type="checkbox" v-model="model.maxWidthEnabled" class="checkbox" :disabled="!model.enabled">
-          <input
-            type="number"
-            v-model.number="model.maxWidthRatio"
-            class="font-size-input"
-            min="30"
-            max="100"
-            step="1"
-            :disabled="!model.enabled || !model.maxWidthEnabled"
-          >
-        </div>
+        <input type="checkbox" v-model="model.scrollToBottom" class="checkbox" :disabled="!model.enabled">
       </label>
 
       <label class="feature-item" :class="{ 'item-disabled': !model.enabled }">
@@ -77,11 +42,7 @@
 <script setup lang="ts">
 export interface ManagerFeatureFlags {
   enabled: boolean;
-  mermaid: boolean;
-  math: boolean;
-  copyButton: boolean;
-  maxWidthEnabled: boolean;
-  maxWidthRatio: number;
+  scrollToBottom: boolean;
   fontSizeEnabled: boolean;
   fontSize: number;
 }

@@ -19,7 +19,7 @@ const DEFAULT_CONFIG = {
   math: true,
   copyButton: true,
   tableColor: true,
-  fontSizeEnabled: true,
+  fontSizeEnabled: false,
   fontSize: 14,
   scrollToBottom: true,
   placeholder: "Ask Antigravity...",

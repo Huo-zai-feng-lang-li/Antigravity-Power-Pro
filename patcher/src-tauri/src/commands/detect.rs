@@ -42,13 +42,13 @@ fn is_valid_antigravity_path(path: &PathBuf) -> bool {
 // Windows 实现
 #[cfg(target_os = "windows")]
 fn detect_windows() -> Option<String> {
-    // 方式 1: 尝试从注册表读取
-    if let Some(path) = try_registry() {
+    // 方式 1: 遍历所有可能盘符的常见路径
+    if let Some(path) = try_common_paths_windows() {
         return Some(path);
     }
 
-    // 方式 2: 扫描常见路径
-    if let Some(path) = try_common_paths_windows() {
+    // 方式 2: 尝试从注册表读取 (增强型遍历)
+    if let Some(path) = try_registry() {
         return Some(path);
     }
 
@@ -60,34 +60,33 @@ fn try_registry() -> Option<String> {
     use winreg::enums::*;
     use winreg::RegKey;
 
-    // 尝试 HKEY_LOCAL_MACHINE
-    let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
-    
-    // Antigravity 可能的注册表路径
-    let paths = [
-        r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Antigravity",
-        r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Antigravity",
+    let roots = [HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER];
+    let uninstall_paths = [
+        r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+        r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
     ];
 
-    for reg_path in paths {
-        if let Ok(key) = hklm.open_subkey(reg_path) {
-            if let Ok(install_location) = key.get_value::<String, _>("InstallLocation") {
-                let path = PathBuf::from(&install_location);
-                if is_valid_antigravity_path(&path) {
-                    return Some(install_location);
-                }
-            }
-        }
-    }
-
-    // 尝试 HKEY_CURRENT_USER
-    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-    for reg_path in paths {
-        if let Ok(key) = hkcu.open_subkey(reg_path) {
-            if let Ok(install_location) = key.get_value::<String, _>("InstallLocation") {
-                let path = PathBuf::from(&install_location);
-                if is_valid_antigravity_path(&path) {
-                    return Some(install_location);
+    for root in roots {
+        let hkey = RegKey::predef(root);
+        for uninstall_path in uninstall_paths {
+            if let Ok(key) = hkey.open_subkey(uninstall_path) {
+                // 递归查找所有子键，模糊匹配 DisplayName
+                for name in key.enum_keys().filter_map(|k| k.ok()) {
+                    if let Ok(sub_key) = key.open_subkey(&name) {
+                        if let Ok(display_name) = sub_key.get_value::<String, _>("DisplayName") {
+                            let lower = display_name.to_lowercase();
+                            if lower.contains("antigravity") {
+                                if let Ok(install_location) = sub_key.get_value::<String, _>("InstallLocation") {
+                                    if !install_location.is_empty() {
+                                        let path = PathBuf::from(&install_location);
+                                        if is_valid_antigravity_path(&path) {
+                                            return Some(install_location);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -98,20 +97,24 @@ fn try_registry() -> Option<String> {
 
 #[cfg(target_os = "windows")]
 fn try_common_paths_windows() -> Option<String> {
-    let literal_paths = [
-        r"C:\Program Files\Antigravity",
-        r"D:\Program Files\Antigravity", 
-        r"E:\Program Files\Antigravity",
-    ];
+    // 1. 尝试常见的安装盘符 (C-G)
+    for drive_letter in b'C'..=b'G' {
+        let drive = format!("{}:\\", drive_letter as char);
+        let candidates = [
+            format!("{}Antigravity", drive),
+            format!("{}Program Files\\Antigravity", drive),
+            format!("{}Program Files (x86)\\Antigravity", drive),
+        ];
 
-    for path_str in literal_paths {
-        let path = PathBuf::from(path_str);
-        if is_valid_antigravity_path(&path) {
-            return Some(path_str.to_string());
+        for path_str in candidates {
+            let path = PathBuf::from(&path_str);
+            if is_valid_antigravity_path(&path) {
+                return Some(path_str);
+            }
         }
     }
 
-    // 检查用户本地目录
+    // 2. 检查用户本地目录 (AppData)
     if let Some(local_data) = dirs::data_local_dir() {
         let user_path = local_data.join("Programs").join("Antigravity");
         if is_valid_antigravity_path(&user_path) {
