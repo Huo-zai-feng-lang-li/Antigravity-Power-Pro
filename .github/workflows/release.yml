@@ -40,6 +40,27 @@ jobs:
         working-directory: patcher
         run: pnpm install
 
+      - name: Pre-build validation
+        shell: pwsh
+        run: |
+          echo "Checking for UTF-8 BOM..."
+          $filesWithBom = Get-ChildItem -Path . -Recurse -File -Exclude "node_modules", ".git", "target" | ForEach-Object {
+              $bytes = Get-Content $_.FullName -AsByte -TotalCount 3
+              if ($bytes -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
+                  $_.FullName
+              }
+          }
+          if ($filesWithBom) {
+              Write-Error "UTF-8 BOM detected in the following files:`n$($filesWithBom -join '`n')"
+              exit 1
+          }
+          echo "No BOM found."
+          
+          echo "Validating Cargo.toml metadata..."
+          cd patcher/src-tauri
+          cargo metadata --format-version 1 --no-deps > $null
+          echo "Cargo metadata is valid."
+
       - name: Build and upload
         uses: tauri-apps/tauri-action@v0
         env:
