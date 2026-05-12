@@ -388,9 +388,9 @@ const initPromptEnhanceButton = async () => {
   });
 
   inputAreas.forEach((input) => {
-    // 检查是否已添加按钮
-    const parent = input.parentElement;
-    if (!parent || parent.querySelector(`.${ENHANCE_BTN_CLASS}`)) return;
+    // Shadow DOM 穿透: parentElement 可能为 null
+    const parent = input.parentElement || input.parentNode?.host || input.parentNode;
+    if (!parent || parent.querySelector?.(`.${ENHANCE_BTN_CLASS}`)) return;
 
     // 创建增强按钮
     const btn = enhanceModule.createEnhanceButton(async () => {

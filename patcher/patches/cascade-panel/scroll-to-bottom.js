@@ -88,17 +88,13 @@ export const init = () => {
     const update = () => {
       const currentScrollEl = findScrollEl();
       if (!currentScrollEl || !currentScrollEl.isConnected) {
-        btn.style.opacity = "0";
-        btn.style.pointerEvents = "none";
+        btn.classList.remove("visible");
         return;
       }
       
       const gap = currentScrollEl.scrollHeight - currentScrollEl.scrollTop - currentScrollEl.clientHeight;
-      const isVisible = currentScrollEl.clientHeight > 0 && gap > THRESHOLD;
-      
-      btn.style.opacity = isVisible ? "1" : "0";
-      btn.style.pointerEvents = isVisible ? "auto" : "none";
-      btn.style.transform = isVisible ? "translateY(0) scale(1)" : "translateY(12px) scale(0.9)";
+      const shouldShow = currentScrollEl.clientHeight > 0 && gap > THRESHOLD;
+      btn.classList.toggle("visible", shouldShow);
     };
 
     if (el !== trackedEl) {

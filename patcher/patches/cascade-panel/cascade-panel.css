@@ -184,5 +184,5 @@ body {
 }
 
 #cascade-scroll-bottom-btn:active {
-    transform: scale(0.95) !important;
+    transform: translateY(0) scale(0.95) !important;
 }

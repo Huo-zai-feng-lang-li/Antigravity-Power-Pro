@@ -25,9 +25,9 @@ impl Default for PromptEnhanceConfig {
         Self {
             enabled: true,
             provider: "custom".to_string(),
-            api_base: "http://127.0.0.1:8045/v1".to_string(),
+            api_base: "https://api.freemodel.dev/v1".to_string(),
             api_key: String::new(),
-            model: "gemini-3-flash".to_string(),
+            model: "gpt-5.4-mini".to_string(),
             system_prompt: String::new(),
         }
     }

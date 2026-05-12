@@ -134,20 +134,13 @@ export const init = () => {
       const currentRoot = findRoot();
       const currentScrollEl = findScrollEl(currentRoot);
       if (!currentScrollEl || !currentScrollEl.isConnected) {
-        btn.style.opacity = "0";
-        btn.style.pointerEvents = "none";
+        btn.classList.remove("visible");
         return;
       }
       
       const gap = currentScrollEl.scrollHeight - currentScrollEl.scrollTop - currentScrollEl.clientHeight;
-      const isVisible = currentScrollEl.clientHeight > 0 && gap > THRESHOLD;
-      
-      const isSidebar = !!document.querySelector(".antigravity-agent-side-panel");
-      const baseTransform = isSidebar ? "" : "translateX(-50%) ";
-      
-      btn.style.opacity = isVisible ? "1" : "0";
-      btn.style.pointerEvents = isVisible ? "auto" : "none";
-      btn.style.transform = isVisible ? `${baseTransform}translateY(0) scale(1)` : `${baseTransform}translateY(12px) scale(0.9)`;
+      const shouldShow = currentScrollEl.clientHeight > 0 && gap > THRESHOLD;
+      btn.classList.toggle("visible", shouldShow);
     };
 
     if (el !== trackedEl) {
