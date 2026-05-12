@@ -86,17 +86,7 @@ const applyFontSize = (userConfig) => {
         }
     }
 
-    // 3. 提示词增强逻辑
-    if (config.promptEnhance?.enabled) {
-        try {
-            const { init: initEnhance, injectStyles } = await import('../shared/enhance.js');
-            initEnhance(config.promptEnhance);
-            injectStyles();
-            console.log('[Manager Panel] 提示词增强模块已加载');
-        } catch (e) {
-            console.error('[Manager Panel] 提示词加载失败:', e);
-        }
-    }
+
 
     console.log('[Manager Panel] 补丁已就绪 (字体+滚动+提示词)');
 })();
