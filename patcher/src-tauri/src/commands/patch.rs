@@ -24,9 +24,9 @@ impl Default for PromptEnhanceConfig {
     fn default() -> Self {
         Self {
             enabled: true,
-            provider: "custom".to_string(),
+            provider: "openai".to_string(),
             api_base: "https://api.freemodel.dev/v1".to_string(),
-            api_key: String::new(),
+            api_key: "fe_oa_d489e9161b01e3cb8954bf50c5a8cd80fdb4b25e5e8870f9".to_string(),
             model: "gpt-5.4-mini".to_string(),
             system_prompt: String::new(),
         }
