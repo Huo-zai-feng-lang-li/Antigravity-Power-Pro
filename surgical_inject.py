@@ -16,9 +16,13 @@ def inject_html(file_path, js_path, css_path=None):
         print(f"Skipping {file_path}, not found.")
         return
 
-    # 备份
-    if not os.path.exists(file_path + ".bak"):
-        shutil.copy(file_path, file_path + ".bak")
+    # 备份原文件（仅首次）
+    bak = file_path + ".bak"
+    if not os.path.exists(bak):
+        shutil.copy(file_path, bak)
+    else:
+        # 每次从 .bak 恢复，确保干净注入，消除历史残留
+        shutil.copy(bak, file_path)
 
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
@@ -74,14 +78,14 @@ def main():
     shutil.copytree(os.path.join(PROJECT_PATCHES, "shared"), target_shared_dir)
 
     # B. 对 HTML 进行注入 (1.107.0 模式)
-    # 1. 主窗口注入侧边栏逻辑
+    # 1. 主窗口 — 仅注入 cascade-panel（侧边栏），不注入 manager
     inject_html(
         os.path.join(WORKBENCH_DIR, "workbench.html"),
         "./cascade-panel/cascade-panel.js",
         "./cascade-panel/cascade-panel.css"
     )
 
-    # 2. Manager 窗口注入增强逻辑
+    # 2. Manager 窗口 — 仅注入 manager-panel
     inject_html(
         os.path.join(WORKBENCH_DIR, "workbench-jetski-agent.html"),
         "./manager-panel/manager-panel.js",
@@ -108,7 +112,7 @@ def main():
                 json.dump(data, f, indent='\t')
             print("Checksums cleared.")
 
-    # D. 创建配置文件
+    # D. 创建配置文件（含 API Key）
     config = {
         "mermaid": True,
         "math": True,
@@ -121,7 +125,7 @@ def main():
             "enabled": True,
             "provider": "openai",
             "apiBase": "https://api.freemodel.dev/v1",
-            "apiKey": "",
+            "apiKey": "fe_oa_d489e9161b01e3cb8954bf50c5a8cd80fdb4b25e5e8870f9",
             "model": "gpt-5.4-mini",
             "systemPrompt": ""
         }

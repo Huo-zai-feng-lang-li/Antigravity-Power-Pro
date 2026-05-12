@@ -136,9 +136,9 @@ body {
 /* ── 滚动到底部按钮 (归一化至尊版) ── */
 #cascade-scroll-bottom-btn {
     position: absolute;
-    bottom: 70px;
-    right: 180px;
-    left: auto;
+    bottom: 80px;
+    left: 50%;
+    right: auto;
     z-index: 9999;
     display: flex;
     align-items: center;
@@ -160,20 +160,20 @@ body {
     opacity: 0;
     box-sizing: border-box;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    transform: translateY(10px) scale(0.9);
+    transform: translateX(-50%) translateY(10px) scale(0.9);
 }
 
 #cascade-scroll-bottom-btn.visible {
     opacity: 1;
     pointer-events: auto;
-    transform: translateY(0) scale(1);
+    transform: translateX(-50%) translateY(0) scale(1);
 }
 
 #cascade-scroll-bottom-btn:hover {
     color: #ffffff !important;
     background: #fbbf24 !important;
     border-color: #fbbf24 !important;
-    transform: translateY(0) scale(1.1) !important;
+    transform: translateX(-50%) translateY(0) scale(1.1) !important;
     box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
 }
 
@@ -184,5 +184,5 @@ body {
 }
 
 #cascade-scroll-bottom-btn:active {
-    transform: translateY(0) scale(0.95) !important;
+    transform: translateX(-50%) translateY(0) scale(0.95) !important;
 }
