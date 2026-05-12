@@ -137,9 +137,9 @@ pub fn install_patch(
 
     // 根据 enabled 状态处理侧边栏补丁
     if features.enabled {
-        // 备份并安装侧边栏补丁
+        // 备份并安装侧边栏补丁（extensions + workbench.html 双路径）
         backup_cascade_files(&extensions_dir)?;
-        write_cascade_patches(&extensions_dir, &features)?;
+        write_cascade_patches(&extensions_dir, &workbench_dir, &features)?;
     } else {
         // 禁用时还原侧边栏文件
         restore_cascade_files(&extensions_dir)?;
@@ -341,47 +341,114 @@ fn backup_manager_files(workbench_dir: &PathBuf) -> Result<(), String> {
     Ok(())
 }
 
-/// 写入侧边栏补丁文件
-fn write_cascade_patches(extensions_dir: &PathBuf, features: &FeatureConfig) -> Result<(), String> {
+/// 将 HTML 文件注入 CSS + JS（带 .bak 恢复，幂等）
+fn inject_html_file(html_path: &PathBuf, js_path: &str, css_path: Option<&str>) -> Result<(), String> {
+    // 首次备份；已有 .bak 则先恢复，确保每次从干净原始文件注入
+    let bak_path = PathBuf::from(format!("{}.bak", html_path.to_string_lossy()));
+    if !bak_path.exists() {
+        fs::copy(html_path, &bak_path)
+            .map_err(|e| format!("备份 HTML 失败: {}", e))?;
+    } else {
+        fs::copy(&bak_path, html_path)
+            .map_err(|e| format!("从 .bak 恢复 HTML 失败: {}", e))?;
+    }
+
+    let marker = "[Antigravity-Power-Pro] Trusted Types Bypass";
+    let tt_bypass = format!(
+        "<script>\n    /* {} */\n    if (window.trustedTypes && !window.trustedTypes.defaultPolicy) {{\n        try {{\n            window.trustedTypes.createPolicy(\"default\", {{\n                createHTML: (s) => s,\n                createScript: (s) => s,\n                createScriptURL: (s) => s,\n            }});\n        }} catch (e) {{}}\n    }}\n    </script>",
+        marker
+    );
+
+    let content = fs::read_to_string(html_path)
+        .map_err(|e| format!("读取 HTML 失败: {}", e))?;
+    let mut result = content;
+
+    if !result.contains(marker) {
+        result = result.replacen("<head>", &format!("<head>{}", tt_bypass), 1);
+    }
+    if let Some(css) = css_path {
+        let css_tag = format!("<link rel=\"stylesheet\" href=\"{}\">", css);
+        if !result.contains(&css_tag) {
+            result = result.replacen("</head>", &format!("{}</head>", css_tag), 1);
+        }
+    }
+    let js_tag = format!("<script src=\"{}\" type=\"module\"></script>", js_path);
+    if !result.contains(&js_tag) {
+        result = result.replacen("</body>", &format!("{}</body>", js_tag), 1);
+    }
+
+    fs::write(html_path, result)
+        .map_err(|e| format!("写入 HTML 失败: {}", e))?;
+    Ok(())
+}
+
+/// 写入侧边栏补丁文件（extensions 目录 + workbench 目录双路径注入）
+fn write_cascade_patches(extensions_dir: &PathBuf, workbench_dir: &PathBuf, features: &FeatureConfig) -> Result<(), String> {
     let cascade_panel_dir = extensions_dir.join("cascade-panel");
-    
-    // 先删除旧目录, 确保文件结构干净
+    let wb_cascade_dir = workbench_dir.join("cascade-panel");
+    let wb_shared_dir = workbench_dir.join("shared");
+
+    // 清理旧目录
     if cascade_panel_dir.exists() {
         fs::remove_dir_all(&cascade_panel_dir)
             .map_err(|e| format!("删除旧 cascade-panel 目录失败: {}", e))?;
     }
-    
-    // 创建目录
+    if wb_cascade_dir.exists() {
+        fs::remove_dir_all(&wb_cascade_dir)
+            .map_err(|e| format!("删除 workbench cascade-panel 目录失败: {}", e))?;
+    }
+    if wb_shared_dir.exists() {
+        fs::remove_dir_all(&wb_shared_dir)
+            .map_err(|e| format!("删除 workbench shared 目录失败: {}", e))?;
+    }
+
     fs::create_dir_all(&cascade_panel_dir)
         .map_err(|e| format!("创建 cascade-panel 目录失败: {}", e))?;
-    
-    // 写入侧边栏相关补丁文件
+    fs::create_dir_all(&wb_cascade_dir)
+        .map_err(|e| format!("创建 workbench cascade-panel 目录失败: {}", e))?;
+    fs::create_dir_all(&wb_shared_dir)
+        .map_err(|e| format!("创建 workbench shared 目录失败: {}", e))?;
+
+    // 写入补丁文件到两个目录
     let patch_files = embedded::get_all_files_runtime()?;
     for (relative_path, content) in patch_files {
-        // 只处理侧边栏相关文件
-        if relative_path != "cascade-panel.html" && 
-           !relative_path.starts_with("cascade-panel/") &&
-           !relative_path.starts_with("shared/") {
+        let is_cascade = relative_path == "cascade-panel.html"
+            || relative_path.starts_with("cascade-panel/")
+            || relative_path.starts_with("shared/");
+        if !is_cascade {
             continue;
         }
-        
-        let full_path = extensions_dir.join(&relative_path);
-        
-        // 确保父目录存在
-        if let Some(parent) = full_path.parent() {
-            if !parent.exists() {
-                fs::create_dir_all(parent)
-                    .map_err(|e| format!("创建目录失败: {}", e))?;
-            }
+
+        // 写到 extensions 目录
+        let ext_path = extensions_dir.join(&relative_path);
+        if let Some(p) = ext_path.parent() { fs::create_dir_all(p).ok(); }
+        fs::write(&ext_path, &content)
+            .map_err(|e| format!("写入 extensions 失败 {:?}: {}", ext_path, e))?;
+
+        // cascade-panel/ 和 shared/ 同步写到 workbench 目录
+        if relative_path.starts_with("cascade-panel/") || relative_path.starts_with("shared/") {
+            let wb_path = workbench_dir.join(&relative_path);
+            if let Some(p) = wb_path.parent() { fs::create_dir_all(p).ok(); }
+            fs::write(&wb_path, &content)
+                .map_err(|e| format!("写入 workbench 失败 {:?}: {}", wb_path, e))?;
         }
-        
-        fs::write(&full_path, content)
-            .map_err(|e| format!("写入文件失败 {:?}: {}", full_path, e))?;
     }
-    
-    // 生成侧边栏配置文件
+
+    // 生成配置文件（两处）
     let cascade_config_path = cascade_panel_dir.join("config.json");
     write_config_file(&cascade_config_path, features)?;
+    let wb_cascade_config = wb_cascade_dir.join("config.json");
+    write_config_file(&wb_cascade_config, features)?;
+
+    // 注入 workbench.html（主窗口）
+    let workbench_html = workbench_dir.join("workbench.html");
+    if workbench_html.exists() {
+        inject_html_file(
+            &workbench_html,
+            "./cascade-panel/cascade-panel.js",
+            Some("./cascade-panel/cascade-panel.css"),
+        )?;
+    }
 
     Ok(())
 }
