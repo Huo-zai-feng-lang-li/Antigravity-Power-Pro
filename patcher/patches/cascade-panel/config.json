@@ -6,5 +6,12 @@
   "fontSizeEnabled": true,
   "fontSize": 20,
   "scrollToBottom": true,
-  "placeholder": "🤖Hello、我已就绪，火力即刻全爆💩📢📣"
+  "placeholder": "🤖Hello、我已就绪，火力即刻全爆💩📢📣",
+  "promptEnhance": {
+    "enabled": true,
+    "apiBase": "https://api.freemodel.dev/v1",
+    "apiKey": "",
+    "model": "gpt-5.4-mini",
+    "systemPrompt": ""
+  }
 }

@@ -120,9 +120,9 @@ def main():
         "promptEnhance": {
             "enabled": True,
             "provider": "openai",
-            "apiBase": "http://127.0.0.1:8045/v1",
+            "apiBase": "https://api.freemodel.dev/v1",
             "apiKey": "",
-            "model": "gemini-3-flash",
+            "model": "gpt-5.4-mini",
             "systemPrompt": ""
         }
     }

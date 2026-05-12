@@ -25,9 +25,9 @@ const DEFAULT_CONFIG = {
   placeholder: "Ask Antigravity...",
   promptEnhance: {
     enabled: true,
-    apiBase: "http://127.0.0.1:8045/v1",
+    apiBase: "https://api.freemodel.dev/v1",
     apiKey: "",
-    model: "gemini-3-flash",
+    model: "gpt-5.4-mini",
     systemPrompt: "",
   },
 };
@@ -38,7 +38,13 @@ const loadConfig = async () => {
     try {
         const configUrl = new URL("./config.json", import.meta.url).href;
         const res = await fetch(configUrl, { cache: "no-store" });
-        return await res.json();
+        const data = await res.json();
+        // 深合并：确保 promptEnhance 子字段不丢失
+        return {
+            ...DEFAULT_CONFIG,
+            ...data,
+            promptEnhance: { ...DEFAULT_CONFIG.promptEnhance, ...(data.promptEnhance || {}) },
+        };
     } catch {
         return DEFAULT_CONFIG;
     }
@@ -55,19 +61,7 @@ const applyFontSize = (userConfig) => {
   const config = await loadConfig();
   applyFontSize(config);
 
-  // 重要：在 Trusted Types 环境下，动态 import 可能仍受限
-  // 按照我们之前的逻辑，enhance.js 已经移动到同级目录
-  if (config.promptEnhance?.enabled) {
-    try {
-      const { init, injectStyles } = await import("../shared/enhance.js");
-      init(config.promptEnhance);
-      injectStyles();
-      console.log("[Cascade] 提示词增强模块已加载");
-    } catch (e) {
-      console.error("[Cascade] 提示词加载失败:", e);
-    }
-  }
-
+  // scan.js 内部会加载 enhance 模块，这里不重复初始化
   const { start } = await import("./scan.js");
   start(config);
 
