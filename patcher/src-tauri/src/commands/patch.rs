@@ -425,12 +425,24 @@ fn write_cascade_patches(extensions_dir: &PathBuf, workbench_dir: &PathBuf, feat
         fs::write(&ext_path, &content)
             .map_err(|e| format!("写入 extensions 失败 {:?}: {}", ext_path, e))?;
 
-        // cascade-panel/ 和 shared/ 同步写到 workbench 目录
-        if relative_path.starts_with("cascade-panel/") || relative_path.starts_with("shared/") {
+        // cascade-panel/ 同步写到 workbench 目录
+        if relative_path.starts_with("cascade-panel/") {
             let wb_path = workbench_dir.join(&relative_path);
             if let Some(p) = wb_path.parent() { fs::create_dir_all(p).ok(); }
             fs::write(&wb_path, &content)
                 .map_err(|e| format!("写入 workbench 失败 {:?}: {}", wb_path, e))?;
+
+            // build.rs 将 shared/X 嵌入为 cascade-panel/X,
+            // 但 scan.js import 路径是 ../shared/X, 需要同步写到 shared/ 目录
+            let filename = &relative_path["cascade-panel/".len()..];
+            let shared_path = workbench_dir.join("shared").join(filename);
+            if let Some(p) = shared_path.parent() { fs::create_dir_all(p).ok(); }
+            fs::write(&shared_path, &content).ok();
+        }
+        if relative_path.starts_with("shared/") {
+            let wb_path = workbench_dir.join(&relative_path);
+            if let Some(p) = wb_path.parent() { fs::create_dir_all(p).ok(); }
+            fs::write(&wb_path, &content).ok();
         }
     }
 

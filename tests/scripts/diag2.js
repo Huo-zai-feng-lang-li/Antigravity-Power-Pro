@@ -1,51 +1,52 @@
 const { connectCDP } = require("./cdp-utils.js");
-const fs = require("fs");
 (async () => {
     const b = await connectCDP();
-    const out = [];
     for (const c of b.contexts()) {
         for (const p of c.pages()) {
             const t = await p.title().catch(() => "");
-            if (t.indexOf("Antigravity-Power") === -1) continue;
-            out.push("=== " + t + " ===");
+            if (!t.includes("Antigravity-Power-Pro")) continue;
+            console.log("=== " + t + " ===");
+            // Check console errors via CDP
+            const client = await p.context().newCDPSession(p);
+            await client.send('Runtime.enable');
+            // Evaluate and check errors
             const r = await p.evaluate(() => {
                 const o = {};
-                const s = document.getElementById("cascade-scroll-bottom-btn");
-                if (s) { const cs = getComputedStyle(s); o.scroll = { bottom: cs.bottom, left: cs.left }; }
-                const e = document.querySelectorAll(".Antigravity-Power-Pro-enhance-btn");
-                o.enhanceCount = e.length;
-                o.btns = [];
-                e.forEach((b, i) => {
-                    const r = b.getBoundingClientRect();
-                    const pp = b.parentElement;
-                    const pr = pp.getBoundingClientRect();
-                    o.btns.push({ i, bx: r.x|0, by: r.y|0, bw: r.width|0, bh: r.height|0, pCls: pp.className?.substring(0,60), px: pr.x|0, py: pr.y|0, pw: pr.width|0, ph: pr.height|0 });
-                });
-                const panel = document.querySelector(".antigravity-agent-side-panel");
-                o.panelExists = !!panel;
+                // Check if scan.js config loaded
+                o.configTest = null;
+                try {
+                    const url = new URL("./config.json", "vscode-file://vscode-app/d:/Antigravity/resources/app/out/vs/code/electron-browser/workbench/cascade-panel/cascade-panel.js").href;
+                    o.configURL = url;
+                } catch(e) { o.configURLError = e.message; }
+                // Check scan.js errors
+                o.allScriptErrors = [];
+                // Check enhance module
+                o.enhanceModuleCheck = typeof window.__enhanceModule;
+                // Try to manually find input and check why button wasn't created
+                const panel = document.querySelector('.antigravity-agent-side-panel');
                 if (panel) {
                     const inp = panel.querySelector('[role="textbox"][contenteditable="true"]') || panel.querySelector('[contenteditable="true"]');
-                    o.panelHasInput = !!inp;
+                    o.inputFound = !!inp;
                     if (inp) {
-                        const ir = inp.getBoundingClientRect();
-                        o.input = { x: ir.x|0, y: ir.y|0, w: ir.width|0, h: ir.height|0 };
-                        o.inputHasEnhanceBtn = !!inp.parentElement.querySelector(".Antigravity-Power-Pro-enhance-btn");
-                    }
-                } else {
-                    // check if input exists in document at all
-                    const allInp = document.querySelector('[role="textbox"][contenteditable="true"]');
-                    o.docHasInput = !!allInp;
-                    if (allInp) {
-                        o.docInputParent = allInp.parentElement?.className?.substring(0,60);
+                        o.inputParent = inp.parentElement?.className?.substring(0,60);
+                        o.parentHasBtn = !!inp.parentElement?.querySelector('.Antigravity-Power-Pro-enhance-btn');
                     }
                 }
-                o.enhanceCssInjected = !!document.querySelector('style[data-id="antigravity-enhance-css"]');
+                // Check if config was actually loaded by scan.js
+                o.scrollBtnExists = !!document.getElementById('cascade-scroll-bottom-btn');
                 return o;
             });
-            out.push(JSON.stringify(r, null, 2));
+            console.log(JSON.stringify(r, null, 2));
+            
+            // Now check JS console for errors
+            const logs = await p.evaluate(() => {
+                // Try to fetch config and see if it works
+                return fetch(new URL("./config.json", import.meta?.url || document.currentScript?.src || location.href).href)
+                    .then(r => ({ status: r.status, ok: r.ok }))
+                    .catch(e => ({ error: e.message }));
+            }).catch(e => ({ evalError: e.message }));
+            console.log("Config fetch test:", JSON.stringify(logs, null, 2));
         }
     }
     await b.close();
-    fs.writeFileSync("/tmp/cdp_diag.json", out.join("\n"));
-    console.log("DONE: /tmp/cdp_diag.json");
 })();
