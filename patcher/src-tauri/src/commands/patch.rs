@@ -137,7 +137,7 @@ pub fn install_patch(
 
     // 根据 enabled 状态处理侧边栏补丁
     if features.enabled {
-        // 备份并安装侧边栏补丁（extensions + workbench.html 双路径）
+        // 备份并安装侧边栏补丁（extensions + workbench 双路径写入文件）
         backup_cascade_files(&extensions_dir)?;
         write_cascade_patches(&extensions_dir, &workbench_dir, &features)?;
     } else {
@@ -160,6 +160,14 @@ pub fn install_patch(
     } else {
         // 禁用时还原 Manager 文件
         restore_manager_files(&workbench_dir)?;
+    }
+
+    // 最后注入 cascade 到 workbench.html（必须在 manager 覆盖之后）
+    if features.enabled {
+        let workbench_html = workbench_dir.join("workbench.html");
+        if workbench_html.exists() {
+            inject_cascade_into_html(&workbench_html)?;
+        }
     }
 
     Ok(())
@@ -341,39 +349,31 @@ fn backup_manager_files(workbench_dir: &PathBuf) -> Result<(), String> {
     Ok(())
 }
 
-/// 将 HTML 文件注入 CSS + JS（带 .bak 恢复，幂等）
-fn inject_html_file(html_path: &PathBuf, js_path: &str, css_path: Option<&str>) -> Result<(), String> {
-    // 首次备份；已有 .bak 则先恢复，确保每次从干净原始文件注入
-    let bak_path = PathBuf::from(format!("{}.bak", html_path.to_string_lossy()));
-    if !bak_path.exists() {
-        fs::copy(html_path, &bak_path)
-            .map_err(|e| format!("备份 HTML 失败: {}", e))?;
-    } else {
-        fs::copy(&bak_path, html_path)
-            .map_err(|e| format!("从 .bak 恢复 HTML 失败: {}", e))?;
-    }
-
-    let marker = "[Antigravity-Power-Pro] Trusted Types Bypass";
-    let tt_bypass = format!(
-        "<script>\n    /* {} */\n    if (window.trustedTypes && !window.trustedTypes.defaultPolicy) {{\n        try {{\n            window.trustedTypes.createPolicy(\"default\", {{\n                createHTML: (s) => s,\n                createScript: (s) => s,\n                createScriptURL: (s) => s,\n            }});\n        }} catch (e) {{}}\n    }}\n    </script>",
-        marker
-    );
-
+/// 将 cascade CSS + JS 注入到 HTML 文件（幂等，不处理 .bak）
+fn inject_cascade_into_html(html_path: &PathBuf) -> Result<(), String> {
     let content = fs::read_to_string(html_path)
         .map_err(|e| format!("读取 HTML 失败: {}", e))?;
     let mut result = content;
 
+    // TrustedTypes bypass
+    let marker = "[Antigravity-Power-Pro] Cascade Inject";
     if !result.contains(marker) {
+        let tt_bypass = format!(
+            "<script>\n/* {} */\nif(window.trustedTypes&&!window.trustedTypes.defaultPolicy){{try{{window.trustedTypes.createPolicy(\"default\",{{createHTML:s=>s,createScript:s=>s,createScriptURL:s=>s}})}}catch(e){{}}}}\n</script>",
+            marker
+        );
         result = result.replacen("<head>", &format!("<head>{}", tt_bypass), 1);
     }
-    if let Some(css) = css_path {
-        let css_tag = format!("<link rel=\"stylesheet\" href=\"{}\">", css);
-        if !result.contains(&css_tag) {
-            result = result.replacen("</head>", &format!("{}</head>", css_tag), 1);
-        }
+
+    // CSS
+    let css_tag = "<link rel=\"stylesheet\" href=\"./cascade-panel/cascade-panel.css\">";
+    if !result.contains(css_tag) {
+        result = result.replacen("</head>", &format!("{}</head>", css_tag), 1);
     }
-    let js_tag = format!("<script src=\"{}\" type=\"module\"></script>", js_path);
-    if !result.contains(&js_tag) {
+
+    // JS
+    let js_tag = "<script src=\"./cascade-panel/cascade-panel.js\" type=\"module\"></script>";
+    if !result.contains(js_tag) {
         result = result.replacen("</body>", &format!("{}</body>", js_tag), 1);
     }
 
@@ -440,16 +440,7 @@ fn write_cascade_patches(extensions_dir: &PathBuf, workbench_dir: &PathBuf, feat
     let wb_cascade_config = wb_cascade_dir.join("config.json");
     write_config_file(&wb_cascade_config, features)?;
 
-    // 注入 workbench.html（主窗口）
-    let workbench_html = workbench_dir.join("workbench.html");
-    if workbench_html.exists() {
-        inject_html_file(
-            &workbench_html,
-            "./cascade-panel/cascade-panel.js",
-            Some("./cascade-panel/cascade-panel.css"),
-        )?;
-    }
-
+    // 注意: workbench.html 注入已移到 install_patch 末尾执行（在 manager 覆盖之后）
     Ok(())
 }
 
