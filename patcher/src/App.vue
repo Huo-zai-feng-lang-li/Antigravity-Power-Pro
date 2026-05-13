@@ -13,8 +13,10 @@ import ManagerFeatureCard from "./components/ManagerFeatureCard.vue";
 import { getVersion } from "@tauri-apps/api/app";
 
 // 常量
-const APP_VERSION = ref("2.6.23");
+const APP_VERSION = ref("2.6.24");
 const GITHUB_URL = "https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro";
+// 每次更新 DEFAULT_SYSTEM_PROMPT 时递增此版本号，旧版 config 会自动重置
+const SYSTEM_PROMPT_VERSION = 2;
 
 const DEFAULT_SYSTEM_PROMPT = `你是一个智能提示词优化器，专门帮助用户生成更有效的 AI 对话提示词。
 
@@ -89,6 +91,7 @@ const features = ref({
     apiKey: "fe_oa_d489e9161b01e3cb8954bf50c5a8cd80fdb4b25e5e8870f9",
     model: "gpt-5.4-mini",
     systemPrompt: DEFAULT_SYSTEM_PROMPT,
+    systemPromptVersion: SYSTEM_PROMPT_VERSION,
   },
 });
 
@@ -111,6 +114,7 @@ const windsurfFeatures = ref({
     apiKey: "fe_oa_d489e9161b01e3cb8954bf50c5a8cd80fdb4b25e5e8870f9",
     model: "gpt-5.4-mini",
     systemPrompt: "",
+    systemPromptVersion: SYSTEM_PROMPT_VERSION,
   },
 });
 
@@ -133,6 +137,7 @@ const managerFeatures = ref({
     apiKey: "fe_oa_d489e9161b01e3cb8954bf50c5a8cd80fdb4b25e5e8870f9",
     model: "gpt-5.4-mini",
     systemPrompt: DEFAULT_SYSTEM_PROMPT,
+    systemPromptVersion: SYSTEM_PROMPT_VERSION,
   },
 });
 
@@ -163,15 +168,13 @@ function mergePromptEnhance(
   }
   // provider: 直接取磁盘值
   if (disk.provider) merged.provider = disk.provider as string;
-  // systemPrompt: 仅当用户真正自定义过时才取磁盘值
-  // 旧版默认 prompt 使用了 Markdown 格式(## / **)，新版为纯文本，需过滤
-  if (disk.systemPrompt) {
-    const sp = disk.systemPrompt as string;
-    const isLegacyDefault = /^##\s/m.test(sp) || /\*\*[^*]+\*\*/m.test(sp);
-    if (!isLegacyDefault && sp !== DEFAULT_SYSTEM_PROMPT) {
-      merged.systemPrompt = sp;
-    }
+  // systemPrompt: 通过版本号判断是否需要重置
+  // 磁盘版本 < 当前版本 → 说明 prompt 未经用户自定义或已过期，重置为新版默认值
+  const diskVersion = (disk.systemPromptVersion as number) || 0;
+  if (diskVersion >= SYSTEM_PROMPT_VERSION && disk.systemPrompt) {
+    merged.systemPrompt = disk.systemPrompt as string;
   }
+  merged.systemPromptVersion = SYSTEM_PROMPT_VERSION;
   return merged;
 }
 
@@ -246,6 +249,7 @@ async function confirmWindsurfInstall() {
         apiKey: "fe_oa_d489e9161b01e3cb8954bf50c5a8cd80fdb4b25e5e8870f9",
         model: "gpt-5.4-mini",
         systemPrompt: DEFAULT_SYSTEM_PROMPT,
+        systemPromptVersion: SYSTEM_PROMPT_VERSION,
       },
       { ...windsurfFeatures.value.promptEnhance },
     );
@@ -391,6 +395,7 @@ async function confirmInstall() {
         apiKey: "fe_oa_d489e9161b01e3cb8954bf50c5a8cd80fdb4b25e5e8870f9",
         model: "gpt-5.4-mini",
         systemPrompt: DEFAULT_SYSTEM_PROMPT,
+        systemPromptVersion: SYSTEM_PROMPT_VERSION,
       },
       { ...features.value.promptEnhance },
     );

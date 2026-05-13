@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro/releases">
-    <img src="https://img.shields.io/badge/version-v2.6.23-gold?style=flat-square" alt="版本">
+    <img src="https://img.shields.io/badge/version-v2.6.24-gold?style=flat-square" alt="版本">
 
   </a>
   <a href="https://codeium.com/antigravity">
@@ -93,6 +93,7 @@
 
 | 补丁版本    | 支持 IDE 版本      | 发布日期   | 重大更新内容                                                                                         |
 | :---------- | :----------------- | :--------- | :--------------------------------------------------------------------------------------------------- |
+| **v2.6.24** | v1.23.2 / Windsurf | 2026-05-13 | **根治**: Manager/Cascade CSS ID 冲突导致滚动按钮偏右, systemPrompt 版本号迁移机制 |
 | **v2.6.23** | v1.23.2 / Windsurf | 2026-05-13 | **修复**: 滚动按钮居中(!important 优先级), prompt 输入检测(innerText), 安装器旧版 systemPrompt 合并 |
 | **v2.6.22** | v1.23.2 / Windsurf | 2026-05-13 | **核心修复**: 彻底修复 enhance.js 文件损坏问题, 恢复语法完整性, 优化 AI 输出格式为纯文本 |
 | **v2.6.20** | v1.23.2 / Windsurf | 2026-05-13 | **全链路修复**: 安装前自动清除遗留配置, 上下文采集 CDP 实测精准选择器, 滚动按钮强制居中 |
