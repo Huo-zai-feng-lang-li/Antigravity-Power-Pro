@@ -386,7 +386,10 @@ const initPromptEnhanceButton = async () => {
 
   // 创建增强按钮
   const btn = enhanceModule.createEnhanceButton(async () => {
-    const currentInput = findCascadeInput();
+    // 与注入逻辑保持一致: 限定在侧边栏面板内精确查找输入框
+    const currentPanel = document.querySelector('.antigravity-agent-side-panel') || document;
+    const currentInput = currentPanel.querySelector('[role="textbox"][contenteditable="true"]') ||
+                         currentPanel.querySelector('[contenteditable="true"]');
 
     if (!currentInput) {
       enhanceModule.showErrorModal("找不到输入框");
@@ -399,8 +402,10 @@ const initPromptEnhanceButton = async () => {
       return;
     }
 
-    const text = currentInput.innerText || currentInput.value || currentInput.textContent || "";
-    if (!text.trim()) {
+    // innerText 优先, textContent 兜底 (contenteditable 的 innerText 可能含零宽字符)
+    const raw = currentInput.innerText || currentInput.textContent || currentInput.value || "";
+    const text = raw.replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
+    if (!text) {
       enhanceModule.showErrorModal("请先输入需要增强的提示词");
       return;
     }

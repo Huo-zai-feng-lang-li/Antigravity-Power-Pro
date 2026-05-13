@@ -4,6 +4,18 @@
 
 ---
 
+## v2.6.25 (2026-05-13)
+
+### Bug 修复
+
+| Bug | 根因 | 修复文件 | 关键细节 |
+|-----|------|----------|----------|
+| 输入框有值但提示词按钮仍报"请先输入" | 点击处理器用宽泛的 `querySelectorAllDeep(INPUT_SELECTOR)` 可能匹配到非用户输入的空 contenteditable 元素; 且未清理零宽字符 | `cascade-panel/scan.js` + `manager-panel/scan.js` | 改为与注入逻辑一致的精确 querySelector, 并 strip 零宽字符 (`\u200B-\u200D`, `\uFEFF`) |
+| 侧边栏出现两个滚动按钮 | `manager-panel/scroll-to-bottom.js` 的 `findRoot()` 优先匹配 `.antigravity-agent-side-panel`, 在 Manager 窗口中把按钮挂到了侧边栏容器, 与 cascade-panel 自己的按钮重叠 | `manager-panel/scroll-to-bottom.js` | 移除 `.antigravity-agent-side-panel` 匹配, Manager 滚动按钮仅挂载到 Manager 专用容器 |
+| 滚动按钮位置微调 | 用户反馈居中按钮需下移 10px | `cascade-panel/cascade-panel.css` | `bottom: 80px` -> `70px` |
+
+---
+
 ## v2.6.24 (2026-05-13)
 
 ### Bug 修复

@@ -60,8 +60,9 @@ const scan = () => {
                     return;
                 }
 
-                const text = input.value || input.textContent || "";
-                if (!text.trim()) {
+                const raw = input.innerText || input.textContent || input.value || "";
+                const text = raw.replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
+                if (!text) {
                     enhanceModule.showErrorModal("请先输入需要增强的提示词");
                     return;
                 }

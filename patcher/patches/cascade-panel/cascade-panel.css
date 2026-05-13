@@ -136,7 +136,7 @@ body {
 /* 滚动到底部按钮 (归一化至尊版) */
 #cascade-scroll-bottom-btn {
     position: absolute !important;
-    bottom: 80px !important;
+    bottom: 70px !important;
     left: 50% !important;
     right: auto !important;
     z-index: 9999 !important;
