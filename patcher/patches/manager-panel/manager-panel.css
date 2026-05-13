@@ -41,7 +41,7 @@
 #cascade-scroll-bottom-btn.visible {
   opacity: 1;
   pointer-events: auto;
-  transform: translateX(-50%) translateY(0) scale(1);
+  transform: translateX(-50%) translateY(0) scale(1) !important;
 }
 
 #cascade-scroll-bottom-btn:hover {

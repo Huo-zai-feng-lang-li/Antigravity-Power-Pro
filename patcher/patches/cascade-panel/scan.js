@@ -399,7 +399,7 @@ const initPromptEnhanceButton = async () => {
       return;
     }
 
-    const text = currentInput.value || currentInput.textContent || "";
+    const text = currentInput.innerText || currentInput.value || currentInput.textContent || "";
     if (!text.trim()) {
       enhanceModule.showErrorModal("请先输入需要增强的提示词");
       return;

@@ -163,8 +163,10 @@ function mergePromptEnhance(
   }
   // provider: 直接取磁盘值
   if (disk.provider) merged.provider = disk.provider as string;
-  // systemPrompt: 非空时取磁盘值
-  if (disk.systemPrompt) merged.systemPrompt = disk.systemPrompt as string;
+  // systemPrompt: 仅当用户真正自定义过时才取磁盘值（与默认值相同视为未自定义）
+  if (disk.systemPrompt && (disk.systemPrompt as string) !== DEFAULT_SYSTEM_PROMPT) {
+    merged.systemPrompt = disk.systemPrompt as string;
+  }
   return merged;
 }
 
