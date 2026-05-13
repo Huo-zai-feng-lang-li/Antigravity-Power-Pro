@@ -163,9 +163,14 @@ function mergePromptEnhance(
   }
   // provider: 直接取磁盘值
   if (disk.provider) merged.provider = disk.provider as string;
-  // systemPrompt: 仅当用户真正自定义过时才取磁盘值（与默认值相同视为未自定义）
-  if (disk.systemPrompt && (disk.systemPrompt as string) !== DEFAULT_SYSTEM_PROMPT) {
-    merged.systemPrompt = disk.systemPrompt as string;
+  // systemPrompt: 仅当用户真正自定义过时才取磁盘值
+  // 旧版默认 prompt 使用了 Markdown 格式(## / **)，新版为纯文本，需过滤
+  if (disk.systemPrompt) {
+    const sp = disk.systemPrompt as string;
+    const isLegacyDefault = /^##\s/m.test(sp) || /\*\*[^*]+\*\*/m.test(sp);
+    if (!isLegacyDefault && sp !== DEFAULT_SYSTEM_PROMPT) {
+      merged.systemPrompt = sp;
+    }
   }
   return merged;
 }

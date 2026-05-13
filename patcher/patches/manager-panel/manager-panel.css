@@ -8,7 +8,7 @@
 }
 
 /* 滚动到底部按钮样式 (归一化至尊版) */
-#cascade-scroll-bottom-btn {
+#manager-scroll-bottom-btn {
   position: absolute;
   left: calc(50% + 120px) !important;
   right: auto !important;
@@ -38,13 +38,13 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
-#cascade-scroll-bottom-btn.visible {
+#manager-scroll-bottom-btn.visible {
   opacity: 1;
   pointer-events: auto;
   transform: translateX(-50%) translateY(0) scale(1) !important;
 }
 
-#cascade-scroll-bottom-btn:hover {
+#manager-scroll-bottom-btn:hover {
   color: #ffffff !important;
   background: #fbbf24 !important;
   border-color: #fbbf24 !important;
@@ -52,12 +52,12 @@
   box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
 }
 
-#cascade-scroll-bottom-btn svg {
+#manager-scroll-bottom-btn svg {
   width: 20px;
   height: 20px;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
 }
 
-#cascade-scroll-bottom-btn:active {
+#manager-scroll-bottom-btn:active {
   transform: translateX(-50%) translateY(0) scale(0.95) !important;
 }

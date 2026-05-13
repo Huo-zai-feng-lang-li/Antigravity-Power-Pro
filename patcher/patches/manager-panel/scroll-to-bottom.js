@@ -6,7 +6,7 @@
  * 2. 识别 Cascade 侧边栏和 Manager 主窗口两种场景。
  */
 
-const BTN_ID = "cascade-scroll-bottom-btn";
+const BTN_ID = "manager-scroll-bottom-btn";
 const THRESHOLD = 100;
 
 /** 查找合适的挂载根节点 */
