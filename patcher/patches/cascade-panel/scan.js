@@ -429,7 +429,7 @@ const initPromptEnhanceButton = async () => {
   // 必须用 cssText + !important 覆盖 enhance.js 中 position: relative !important
   btn.style.cssText = `
     position: absolute !important;
-    bottom: 8px !important;
+    bottom: -2px !important;
     right: 12px !important;
     z-index: 99 !important;
     margin: 0 !important;
