@@ -15,14 +15,14 @@ def update_config():
         "copyButton": False,
         "tableColor": False,
         "fontSizeEnabled": False,
-        "fontSize": 14,
+        "fontSize": 16,
         "scrollToBottom": True,
         "promptEnhance": {
             "enabled": True,
             "provider": "openai",
-            "apiBase": "http://127.0.0.1:8045/v1",
-            "apiKey": "",
-            "model": "gemini-3-flash",
+            "apiBase": "https://api.freemodel.dev/v1",
+            "apiKey": "fe_oa_d489e9161b01e3cb8954bf50c5a8cd80fdb4b25e5e8870f9",
+            "model": "gpt-5.4-mini",
             "systemPrompt": ""
         },
         "placeholder": "Ask Antigravity..."
