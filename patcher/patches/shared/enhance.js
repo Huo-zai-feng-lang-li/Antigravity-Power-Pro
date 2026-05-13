@@ -263,23 +263,23 @@ async function callOpenAIAPI(prompt, contextPrefix = "") {
   };
 
   let response;
-  try {
-    response = await fetch(url, options);
-  } catch (err) {
-    // If local fetch fails (protocol restriction), try proxy via Launchpad
-    if (location.protocol === "vscode-file:") {
-      console.warn("[PromptEnhance] Local fetch failed, trying proxy via Launchpad...");
-      response = await broadcastFetch(url, options).catch(proxyErr => {
-        throw new Error(`API 请求失败: ${err.message}. 请确保 Launchpad 已打开 (Ctrl+E)。`);
-      });
-    } else {
-      throw err;
+  // 在 vscode-file:// 协议下（侧边栏），直接强制使用 Launchpad 代理，绕过 CORS 限制
+  if (location.protocol === "vscode-file:" && !document.title.includes("Launchpad")) {
+    console.log("[PromptEnhance] Detected Sidebar context, using Launchpad proxy...");
+    response = await broadcastFetch(url, options).catch(err => {
+      throw new Error(`代理请求失败: ${err.message}。请确保 Launchpad (Ctrl+E) 已开启。`);
+    });
+  } else {
+    try {
+      response = await fetch(url, options);
+    } catch (err) {
+      throw new Error(`API 直接请求失败: ${err.message}`);
     }
   }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error?.message || `API 请求失败: ${response.status}`);
+    throw new Error(errorData.error?.message || `API 响应错误: ${response.status}`);
   }
 
   const data = await response.json();
