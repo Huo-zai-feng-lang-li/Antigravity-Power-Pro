@@ -107,10 +107,9 @@ function isAnthropicAPI() {
 // 对话上下文收集 - 极简 innerText 方案
 // ============================================
 
-// 对话容器候选选择器 (按优先级)
+// 对话容器候选选择器 (按精准度排序, 越精准越优先)
 const CONVERSATION_SELECTORS = [
-  '.antigravity-agent-side-panel',
-  '[class*="cascade-scrollbar"]',
+  '[class*="cascade-scrollbar"]',          // Antigravity 对话消息滚动区
   '[data-testid="chat-list"]',
   '[data-testid="chat-history"]',
   '[class*="conversation"]',
@@ -120,10 +119,17 @@ const CONVERSATION_SELECTORS = [
   '[class*="overflow-y-auto"]',
 ];
 
+// 应排除的 DOM 噪声 (导航/按钮/状态栏)
+const NOISE_SELECTORS = [
+  'nav', '[class*="sidebar"]', '[class*="workspace"]',
+  '[class*="history"]', '[class*="toolbar"]', '[class*="statusbar"]',
+  'button', '[role="button"]', '[class*="tab-"]',
+];
+
 /**
- * 找到对话容器，返回其 innerText 的最后 N 字符
- * - 直接取 innerText，天然过滤脚本与隐藏元素
- * - 让 LLM 自己理解文本流，无需在此层做角色解析
+ * 找到对话容器, 提取仅对话内容的 innerText
+ * - 克隆节点后移除 UI 噪声, 再取 innerText
+ * - 让 LLM 自己理解文本流, 无需在此层做角色解析
  * @param {number} maxChars 
  * @returns {string}
  */
@@ -131,7 +137,15 @@ function collectConversationText(maxChars = 3000) {
   for (const selector of CONVERSATION_SELECTORS) {
     try {
       const el = document.querySelector(selector);
-      const text = el?.innerText?.trim();
+      if (!el) continue;
+
+      // 克隆后移除噪声节点
+      const clone = el.cloneNode(true);
+      NOISE_SELECTORS.forEach(ns => {
+        clone.querySelectorAll(ns).forEach(n => n.remove());
+      });
+
+      const text = clone.innerText?.trim();
       if (text && text.length > 30) {
         return text.slice(-maxChars);
       }
