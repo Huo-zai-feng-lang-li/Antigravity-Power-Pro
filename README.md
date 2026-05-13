@@ -110,7 +110,7 @@
 
 ## 🔧 手动定制 IDE 版本
 
-如果 Antigravity 升级后自动检测失败，可在 PowerShell 中执行以下命令手动对齐版本号：
+如果想自定义 Antigravity 版本可在 PowerShell 中执行以下命令手动定制版本号：
 
 ```powershell
 $p = "D:\Antigravity\resources\app\product.json"

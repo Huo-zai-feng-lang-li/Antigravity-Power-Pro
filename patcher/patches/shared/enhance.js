@@ -98,22 +98,24 @@ export function isEnabled() {
 // 对话上下文收集 - 极简 innerText 方案
 // ============================================
 
-// 对话容器候选选择器 (按精准度排序, 越精准越优先)
+// 对话容器候选选择器 (CDP 枚举实测, [0] 号容器精确命中对话内容)
 const CONVERSATION_SELECTORS = [
-  '[class*="cascade-scrollbar"]',          // Antigravity 对话消息滚动区
+  // 最精准: 侧边栏内 grow flex-col 的主对话滚动区 (CDP 实测 [0] 号容器)
+  '.antigravity-agent-side-panel .h-full.overflow-y-auto.grow',
+  '.antigravity-agent-side-panel .overflow-y-auto.grow',
+  // 兜底: 侧边栏根容器
+  '.antigravity-agent-side-panel',
   '[data-testid="chat-list"]',
   '[data-testid="chat-history"]',
   '[class*="conversation"]',
-  '[class*="chat-messages"]',
   '[role="log"]',
-  'main [class*="scroll"]',
-  '[class*="overflow-y-auto"]',
 ];
 
-// 应排除的 DOM 噪声 (导航/按钮/状态栏)
+// 应排除的 DOM 噪声 (导航/按钮/模型选择器/输入区)
 const NOISE_SELECTORS = [
-  'nav', '[class*="sidebar"]', '[class*="workspace"]',
-  '[class*="history"]', '[class*="toolbar"]', '[class*="statusbar"]',
+  'nav', 'select', '[role="combobox"]',
+  '[class*="toolbar"]', '[class*="statusbar"]',
+  '[class*="model-picker"]', '[class*="model-select"]',
   'button', '[role="button"]', '[class*="tab-"]',
 ];
 
