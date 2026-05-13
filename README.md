@@ -10,10 +10,12 @@
 
 <p align="center">
   <a href="https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro/releases">
-    <img src="https://img.shields.io/badge/version-v2.6.8-gold?style=flat-square" alt="版本">
+    <img src="https://img.shields.io/badge/version-v2.6.20-gold?style=flat-square" alt="版本">
+
   </a>
   <a href="https://codeium.com/antigravity">
-    <img src="https://img.shields.io/badge/支持_Antigravity-v1.15.8-green.svg?style=flat-square" alt="Antigravity">
+    <img src="https://img.shields.io/badge/支持_Antigravity-v1.23.2-green.svg?style=flat-square" alt="Antigravity">
+
   </a>
   <a href="https://codeium.com/windsurf">
     <img src="https://img.shields.io/badge/支持_Windsurf-✓-00b4d8.svg?style=flat-square" alt="Windsurf">
@@ -91,7 +93,10 @@
 
 | 补丁版本   | 支持 IDE 版本      | 发布日期   | 重大更新内容                                           |
 | :--------- | :----------------- | :--------- | :----------------------------------------------------- |
+| **v2.6.20** | v1.23.2 / Windsurf | 2026-05-13 | **全链路修复**：安装前自动清除遗留配置，滚动按钮强制居中，enhance.js 死代码清理，Freemodel API 开箱即用 |
+| **v2.6.18** | v1.23.2 / Windsurf | 2026-05-12 | 双路径注入架构，Rust 内置默认 API 配置，上下文采集去噪，版本配置三端对齐 |
 | **v2.6.0** | v1.15.8 / Windsurf | 2026-03-12 | **极简主义重构**：UI 聚焦三大核心功能，移除冗余项      |
+
 | **v2.5.7** | v1.15.8 / Windsurf | 2026-03-11 | 提示词增强逻辑优化与路径修复                          |
 | **v2.5.6** | v1.15.8 / Windsurf | 2026-03-11 | 优化提示词增强按钮样式（改为圆角矩形），提升视觉吸引力 |
 | **v2.5.5** | v1.15.8 / Windsurf | 2026-03-11 | 提示词增强模块复用优化，修复滚动按钮，去除冗余项       |
@@ -100,6 +105,24 @@
 | **v2.3.7** | v1.15.8            | 2026-01-29 | 初代提示词增强功能发布，支持自定义 LLM 配置            |
 | **v2.2.0** | v1.14.2            | 2026-01-21 | Manager 窗口 Mermaid 渲染与布局调节功能上线            |
 | **v2.1.0** | v1.14.2            | 2026-01-19 | 侧边栏字体调节，优化 Markdown 复制逻辑                 |
+
+---
+
+## 🔧 手动定制 IDE 版本
+
+如果 Antigravity 升级后自动检测失败，可在 PowerShell 中执行以下命令手动对齐版本号：
+
+```powershell
+$p = "D:\Antigravity\resources\app\product.json"
+$prod = Get-Content $p -Raw | ConvertFrom-Json
+$prod.ideVersion = "1.23.2"
+$prod.date = "2026-04-16T08:28:19.366Z"
+$prod | ConvertTo-Json -Depth 100 | Set-Content $p -Encoding UTF8
+Write-Output "✅ ideVersion & date 修改完成"
+```
+
+> [!NOTE]
+> 将路径中的 `D:\Antigravity` 替换为实际安装路径。执行后无需重新安装补丁，重启 IDE 即可生效。
 
 ---
 

@@ -93,15 +93,6 @@ export function isEnabled() {
   return config.enabled;
 }
 
-/**
- * 检查是否为 Anthropic API
- * @returns {boolean}
- */
-function isAnthropicAPI() {
-  return (
-    config.provider === "anthropic" || config.apiBase.includes("anthropic")
-  );
-}
 
 // ============================================
 // 对话上下文收集 - 极简 innerText 方案
@@ -189,132 +180,30 @@ function buildContextPrefix() {
   }
 
   return parts.length > 0 ? parts.join('\n') + '\n\n' : '';
-
-// ============================================
-// API 调用
-// ============================================
-
-  // 2. @ 引用的文件
-  if (context.attachedFiles && context.attachedFiles.length > 0) {
-    parts.push(`[引用: ${context.attachedFiles.join(", ")}]`);
-  }
-
-  // 3. 选中的代码
-  if (context.selectedCode) {
-    parts.push(`[选中代码:\n\`\`\`\n${context.selectedCode}\n\`\`\`]`);
-  }
-
-  // 4. 对话历史 - 这是最重要的部分
-  if (context.conversationHistory && context.conversationHistory.length > 0) {
-    parts.push("\n=== 当前对话历史 ===");
-    context.conversationHistory.forEach((msg, idx) => {
-      const roleLabel = msg.role === "assistant" ? "AI" : "用户";
-      parts.push(`[${roleLabel}]: ${msg.content}`);
-    });
-    parts.push("=== 对话历史结束 ===\n");
-  }
-
-  return parts.join("\n");
-}
-
-// ============================================
-// 兼容性函数 - 保持向后兼容
-// ============================================
-
-/**
- * 综合收集 IDE 上下文
- * 现在主要依赖 collectConversationContext
- * @returns {Object}
- */
-function collectIDEContext() {
-  // 使用新的对话上下文收集
-  const conversationContext = collectConversationContext();
-
-  // 转换为旧格式以保持兼容
-  return {
-    cachedMessages: [],
-    cachedFiles: [],
-    cachedCode: [],
-    currentFile: conversationContext.currentFile,
-    openTabs: [],
-    selectedCode: conversationContext.selectedCode,
-    recentMessages: conversationContext.conversationHistory,
-    attachedFiles: conversationContext.attachedFiles,
-    workspace: null,
-    activeFile: conversationContext.currentFile,
-    fiberContext: null,
-    // 新增：完整的对话上下文
-    conversationHistory: conversationContext.conversationHistory,
-  };
-}
-
-/**
- * 将上下文信息格式化为提示词前缀
- * 现在使用完整的对话历史，让 LLM 基于上下文优化提示词
- * @param {Object} context - 上下文对象
- * @returns {string} 格式化的上下文字符串
- */
-function formatContextForPrompt(context) {
-  const parts = [];
-
-  // 1. 当前文件（如果有）
-  if (context.currentFile || context.activeFile) {
-    parts.push(`[当前文件: ${context.currentFile || context.activeFile}]`);
-  }
-
-  // 2. 附加的文件引用（用户在输入框中 @ 引用的）
-  if (context.attachedFiles && context.attachedFiles.length > 0) {
-    parts.push(`[引用: ${context.attachedFiles.join(", ")}]`);
-  }
-
-  // 3. 选中的代码
-  if (context.selectedCode) {
-    parts.push(
-      `[选中代码:\n\`\`\`\n${context.selectedCode.substring(0, 2000)}\n\`\`\`]`,
-    );
-  }
-
-  // 4. 对话历史 - 这是最核心的部分
-  // 使用新的 conversationHistory 字段（如果存在）
-  const conversationHistory =
-    context.conversationHistory || context.recentMessages || [];
-
-  if (conversationHistory.length > 0) {
-    parts.push("\n=== 当前对话上下文 ===");
-
-    // 遍历对话历史，格式化每条消息
-    conversationHistory.forEach((msg, idx) => {
-      const roleLabel = msg.role === "assistant" ? "AI 回复" : "用户提问";
-      // 每条消息最多保留 1500 字符
-      const content =
-        msg.content.length > 1500
-          ? msg.content.substring(0, 1500) + "..."
-          : msg.content;
-      parts.push(`\n[${roleLabel} ${idx + 1}]:\n${content}`);
-    });
-
-    parts.push("\n=== 对话上下文结束 ===");
-  }
-
-  return parts.length > 0 ? parts.join("\n") + "\n\n" : "";
 }
 
 // ============================================
 // API 调用
 // ============================================
+
+/**
+ * 检查是否为 Anthropic API
+ */
+function isAnthropicAPI() {
+  return config.provider === "anthropic" || config.apiBase.includes("anthropic");
+}
+
+
 
 /**
  * 调用 Anthropic Claude API
- * @param {string} prompt - 原始提示词
- * @param {string} contextPrefix - 上下文前缀
- * @returns {Promise<string>} - 增强后的提示词
  */
 async function callAnthropicAPI(prompt, contextPrefix = "") {
   const userMessage = contextPrefix
     ? `上下文信息:\n${contextPrefix}\n用户原始提示词:\n${prompt.trim()}`
     : prompt.trim();
 
-  const response = await fetch(`${config.apiBase}/v1/messages`, {
+  const response = await fetch(`${config.apiBase}/messages`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -331,26 +220,15 @@ async function callAnthropicAPI(prompt, contextPrefix = "") {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      errorData.error?.message || `API 请求失败: ${response.status}`,
-    );
+    throw new Error(errorData.error?.message || `Anthropic API 请求失败: ${response.status}`);
   }
 
   const data = await response.json();
-  const content = data.content?.[0]?.text;
-
-  if (!content) {
-    throw new Error("API 返回内容为空");
-  }
-
-  return content.trim();
+  return data.content?.[0]?.text?.trim() || "";
 }
 
 /**
  * 调用 OpenAI 兼容 API
- * @param {string} prompt - 原始提示词
- * @param {string} contextPrefix - 上下文前缀
- * @returns {Promise<string>} - 增强后的提示词
  */
 async function callOpenAICompatibleAPI(prompt, contextPrefix = "") {
   const userMessage = contextPrefix
@@ -358,7 +236,7 @@ async function callOpenAICompatibleAPI(prompt, contextPrefix = "") {
     : prompt.trim();
 
   const messages = [
-    { role: "system", content: config.systemPrompt },
+    { role: "system", content: config.systemPrompt || DEFAULT_SYSTEM_PROMPT },
     { role: "user", content: userMessage },
   ];
 
@@ -378,38 +256,27 @@ async function callOpenAICompatibleAPI(prompt, contextPrefix = "") {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      errorData.error?.message || `API 请求失败: ${response.status}`,
-    );
+    throw new Error(errorData.error?.message || `OpenAI API 请求失败: ${response.status}`);
   }
 
   const data = await response.json();
-  const content = data.choices?.[0]?.message?.content;
-
-  if (!content) {
-    throw new Error("API 返回内容为空");
-  }
-
-  return content.trim();
+  return data.choices?.[0]?.message?.content?.trim() || "";
 }
 
 /**
- * 调用 LLM API 增强提示词（带上下文收集）
- * @param {string} prompt - 原始提示词
- * @returns {Promise<string>} - 增强后的提示词
+ * 调用 LLM API 增强提示词
  */
 export async function enhance(prompt) {
   if (!isEnabled()) {
     throw new Error("提示词增强功能未配置或未启用");
   }
 
-  if (!prompt || typeof prompt !== "string" || prompt.trim().length === 0) {
+  if (!prompt || !prompt.trim()) {
     throw new Error("提示词不能为空");
   }
 
-  // 收集 IDE 上下文（极简 innerText 方案）
   const contextPrefix = buildContextPrefix();
-  console.log('[PromptEnhance] 上下文长度:', contextPrefix.length, '字符');
+  console.log('[PromptEnhance] 触发增强, 上下文长度:', contextPrefix.length);
 
   try {
     if (isAnthropicAPI()) {

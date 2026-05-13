@@ -149,6 +149,38 @@ const managerFeatures = ref({
 });
 
 // ============================================
+// 遗留配置过滤：旧 config.json 中的老默认值不应覆盖新版本默认值
+// ============================================
+const LEGACY_API_BASES = ["http://127.0.0.1:8045/v1", "http://localhost:8045/v1", ""];
+const LEGACY_MODELS = ["gemini-3-flash", "gemini-2.0-flash", ""];
+
+function mergePromptEnhance(
+  defaults: typeof features.value.promptEnhance,
+  disk: Record<string, unknown>,
+): typeof features.value.promptEnhance {
+  const merged = { ...defaults };
+  // enabled 始终取磁盘值
+  if (typeof disk.enabled === "boolean") merged.enabled = disk.enabled;
+  // apiBase: 仅在非遗留值时采用磁盘值
+  if (disk.apiBase && !LEGACY_API_BASES.includes(disk.apiBase as string)) {
+    merged.apiBase = disk.apiBase as string;
+  }
+  // apiKey: 磁盘有有效 key 时用磁盘值
+  if (disk.apiKey && (disk.apiKey as string).length > 10) {
+    merged.apiKey = disk.apiKey as string;
+  }
+  // model: 仅在非遗留值时采用磁盘值
+  if (disk.model && !LEGACY_MODELS.includes(disk.model as string)) {
+    merged.model = disk.model as string;
+  }
+  // provider: 直接取磁盘值
+  if (disk.provider) merged.provider = disk.provider as string;
+  // systemPrompt: 非空时取磁盘值
+  if (disk.systemPrompt) merged.systemPrompt = disk.systemPrompt as string;
+  return merged;
+}
+
+// ============================================
 // Windsurf 操作函数
 // ============================================
 async function detectWindsurfPath() {
@@ -174,10 +206,10 @@ async function checkWindsurfPatchStatus(path: string) {
       if (config) {
         const merged = { ...windsurfFeatures.value, ...config };
         if (config.promptEnhance) {
-          merged.promptEnhance = { ...windsurfFeatures.value.promptEnhance, ...config.promptEnhance };
-          if (!merged.promptEnhance.systemPrompt) {
-            merged.promptEnhance.systemPrompt = DEFAULT_SYSTEM_PROMPT;
-          }
+          merged.promptEnhance = mergePromptEnhance(
+            windsurfFeatures.value.promptEnhance,
+            config.promptEnhance,
+          );
         }
         windsurfFeatures.value = merged;
       }
@@ -210,6 +242,19 @@ async function confirmWindsurfInstall() {
   showWindsurfConfirm.value = false;
   if (!windsurfPath.value) return;
   try {
+    // 安装前清除遗留配置
+    windsurfFeatures.value.promptEnhance = mergePromptEnhance(
+      {
+        enabled: windsurfFeatures.value.promptEnhance.enabled,
+        provider: "openai",
+        apiBase: "https://api.freemodel.dev/v1",
+        apiKey: "fe_oa_d489e9161b01e3cb8954bf50c5a8cd80fdb4b25e5e8870f9",
+        model: "gpt-5.4-mini",
+        systemPrompt: DEFAULT_SYSTEM_PROMPT,
+      },
+      { ...windsurfFeatures.value.promptEnhance },
+    );
+
     await invoke("install_windsurf_patch", {
       path: windsurfPath.value,
       features: windsurfFeatures.value,
@@ -285,10 +330,10 @@ async function checkPatchStatus(path: string) {
       if (config) {
         const merged = { ...features.value, ...config };
         if ((config as any).promptEnhance) {
-          merged.promptEnhance = { ...features.value.promptEnhance, ...(config as any).promptEnhance };
-          if (!merged.promptEnhance.systemPrompt) {
-            merged.promptEnhance.systemPrompt = DEFAULT_SYSTEM_PROMPT;
-          }
+          merged.promptEnhance = mergePromptEnhance(
+            features.value.promptEnhance,
+            (config as any).promptEnhance,
+          );
         }
         features.value = merged;
       }
@@ -302,7 +347,10 @@ async function checkPatchStatus(path: string) {
           enabled: true 
         };
         if (mConfig.promptEnhance) {
-          mergedManager.promptEnhance = { ...managerFeatures.value.promptEnhance, ...mConfig.promptEnhance };
+          mergedManager.promptEnhance = mergePromptEnhance(
+            managerFeatures.value.promptEnhance,
+            mConfig.promptEnhance,
+          );
         }
         managerFeatures.value = mergedManager;
       }
@@ -339,6 +387,19 @@ async function confirmInstall() {
   showConfirm.value = false;
   if (!antigravityPath.value) return;
   try {
+    // 安装前清除遗留配置：若检测到旧版默认值，强制重置为当前默认值
+    features.value.promptEnhance = mergePromptEnhance(
+      {
+        enabled: features.value.promptEnhance.enabled,
+        provider: "openai",
+        apiBase: "https://api.freemodel.dev/v1",
+        apiKey: "fe_oa_d489e9161b01e3cb8954bf50c5a8cd80fdb4b25e5e8870f9",
+        model: "gpt-5.4-mini",
+        systemPrompt: DEFAULT_SYSTEM_PROMPT,
+      },
+      { ...features.value.promptEnhance },
+    );
+
     // 自动同步提示词配置到 Manager
     managerFeatures.value.promptEnhance = { ...features.value.promptEnhance };
 
