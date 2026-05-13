@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro/releases">
-    <img src="https://img.shields.io/badge/version-v2.6.39-gold?style=flat-square" alt="版本">
+    <img src="https://img.shields.io/badge/version-v2.6.40-gold?style=flat-square" alt="版本">
 
   </a>
   <a href="https://codeium.com/antigravity">
@@ -93,7 +93,7 @@
 
 | 补丁版本    | 支持 IDE 版本      | 发布日期   | 重大更新内容                                                                                         |
 | :---------- | :----------------- | :--------- | :--------------------------------------------------------------------------------------------------- |
-| **v2.6.39** | v1.23.2 / Windsurf | 2026-05-14 | **优化**: 交互动效分级(Hover仅旋转, Click发光), 按钮位置强制归一化 |
+| **v2.6.40** | v1.23.2 / Windsurf | 2026-05-14 | **优化**: 交互动效分级(Hover仅旋转, Click发光), 按钮位置强制归一化 |
 | **v2.6.38** | v1.23.2 / Windsurf | 2026-05-14 | **根治**: 提示词增强回显重复 Bug, 注入状态原子化验证 |
 | **v2.6.37** | v1.23.2 / Windsurf | 2026-05-13 | **修复**: API 地址被重置 Bug, 按钮同步逻辑优化, **交互**: Hover 静默 & Loading 旋转 |
 | **v2.6.35** | v1.23.2 / Windsurf | 2026-05-13 | **视觉特效**: 星星按钮呼吸发光特效, 按钮位置归一化微调 |

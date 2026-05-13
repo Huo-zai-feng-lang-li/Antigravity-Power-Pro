@@ -1,20 +1,22 @@
-# 最新接续状态 (2026-05-13 19:50)
+# 最新接续状态 (2026-05-14 00:09)
 
 ## 核心进展
-- **v2.6.25 发布**: 修复提示词按钮输入检测 + 移除侧边栏重复滚动按钮 + 按钮下移 10px.
+- **版本归一化**: 成功回退并修复至 `v2.6.39`，解决了 v2.6.36 引入的严重回归。
+- **回显重复闭环**: 通过重构 `shared/enhance.js` 中的 `setInputValue` 为“原子化注入模式”，彻底解决了 IDE 输入框二次叠加内容的 Bug。
+- **API 锁定修复**: 移除了 `App.vue` 在安装过程中多余的配置强行合并逻辑，现在用户自定义 API 地址可正常持久化。
 
 ## 变更决策
-- **提示词按钮输入检测**: 点击处理器从宽泛的 `querySelectorAllDeep(INPUT_SELECTOR)` 改为与注入逻辑一致的精确 `panel.querySelector('[role="textbox"]')`, 并 strip 零宽字符.
-- **Manager findRoot 隔离**: `manager-panel/scroll-to-bottom.js` 移除 `.antigravity-agent-side-panel` 优先匹配, 避免 Manager 的滚动按钮侵入侧边栏.
-- **滚动按钮位置**: `cascade-panel.css` bottom 80px -> 70px.
+- **动效语义分级**: 使用 CSS 伪类区分 Hover (2s 慢旋, 背景静默) 与 Loading (0.8s 快旋 + 1.5s 霓虹荧光)，降低日常输入干扰。
+- **坐标标准化**: 侧边栏与 Manager 的按钮 `bottom` 统一锁定在 `8px`，优化视觉对齐。
+- **标签清理**: 已经物理删除了存在 Bug 的 `v2.6.36` Git Tag。
 
 ## 待办事项 (Next Steps)
-- [ ] 等 CI 构建 v2.6.25 exe, 下载后重新注入验证两个 Bug
-- [ ] 确认 Windsurf 的 systemPromptVersion 是否也需要同步处理
-- [ ] 清理 `tests/scripts/debug-cascade-diag.js` 调试脚本 (或保留为诊断工具)
+- [ ] **兼容性挂机测试**: 在 Windsurf 环境下进行长文本提示词增强测试，验证 `BroadcastChannel` 代理在极端网络延迟下的稳定性。
+- [ ] **UI 主题适配**: 检查在 Light Mode（亮色模式）下金色文字与白色背景的对比度是否需要微调。
 
 ## 关键上下文
 - 目录: `c:\Users\Administrator\Desktop\超级文件\AI-IDE\AI\Antigravity-Power-Pro`
-- 主要文件: `patcher/patches/cascade-panel/scan.js`, `patcher/patches/manager-panel/scroll-to-bottom.js`, `patcher/patches/cascade-panel/cascade-panel.css`
-- 调试方式: `D:\Antigravity\Antigravity.exe --remote-debugging-port=9000` + Playwright 连接
-- IDE 安装路径: `D:\Antigravity\`
+- 主要文件: 
+  - `patcher/patches/shared/enhance.js` (核心注入逻辑)
+  - `patcher/src/App.vue` (安装器配置中台)
+  - `patcher/patches/cascade-panel/scan.js` (侧边栏布局控制)
