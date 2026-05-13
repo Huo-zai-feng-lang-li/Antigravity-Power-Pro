@@ -370,11 +370,9 @@ const initPromptEnhanceButton = async () => {
   enhanceModule.init(config.promptEnhance);
   if (!enhanceModule.isEnabled()) return;
 
-  // 限定在侧边栏面板内查找输入框，避免匹配到 statusbar 等无关元素
-  const panel = document.querySelector('.antigravity-agent-side-panel');
-  const searchRoot = panel || document;
-  const input = searchRoot.querySelector('[role="textbox"][contenteditable="true"]') ||
-                searchRoot.querySelector('[contenteditable="true"]');
+  // 使用 querySelectorAllDeep 穿透 Shadow DOM 查找输入框
+  const inputs = querySelectorAllDeep('[role="textbox"][contenteditable="true"]', searchRoot);
+  const input = inputs.length > 0 ? inputs[0] : searchRoot.querySelector('[contenteditable="true"]');
 
   if (!input) {
     console.warn("[PromptEnhance] 侧边栏内未找到输入框");
@@ -386,10 +384,9 @@ const initPromptEnhanceButton = async () => {
 
   // 创建增强按钮
   const btn = enhanceModule.createEnhanceButton(async () => {
-    // 与注入逻辑保持一致: 限定在侧边栏面板内精确查找输入框
-    const currentPanel = document.querySelector('.antigravity-agent-side-panel') || document;
-    const currentInput = currentPanel.querySelector('[role="textbox"][contenteditable="true"]') ||
-                         currentPanel.querySelector('[contenteditable="true"]');
+    // 重新获取当前活跃输入框 (穿透 Shadow DOM)
+    const currentActiveInputs = querySelectorAllDeep('[role="textbox"][contenteditable="true"]');
+    const currentInput = currentActiveInputs.length > 0 ? currentActiveInputs[0] : input;
 
     if (!currentInput) {
       enhanceModule.showErrorModal("找不到输入框");
@@ -414,10 +411,10 @@ const initPromptEnhanceButton = async () => {
     try {
       const enhanced = await enhanceModule.enhance(text);
       const success = await enhanceModule.setInputValue(currentInput, enhanced);
+      
       enhanceModule.showResultModal(
         enhanced,
-        success ? () => {} : () => navigator.clipboard.writeText(enhanced).catch(() => {}),
-        () => {},
+        success ? () => {} : (res) => navigator.clipboard.writeText(res).catch(() => {})
       );
     } catch (error) {
       console.error("[PromptEnhance] 增强失败:", error);

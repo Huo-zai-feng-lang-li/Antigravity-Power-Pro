@@ -371,18 +371,31 @@ async function setInputValue(input, value) {
     input.value = value;
   }
 
+  // 强制聚焦
+  input.focus();
+
   // 方法2: execCommand (某些 IDE 必需)
   try {
+    // 为 contenteditable 建立选区
+    if (input.contentEditable === "true") {
+      const range = document.createRange();
+      range.selectNodeContents(input);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } else {
+      input.select();
+    }
     document.execCommand("selectAll", false, null);
     document.execCommand("insertText", false, value);
   } catch (e) {
     console.warn("[PromptEnhance] execCommand 失败，尝试 fallback");
   }
 
-  await sleep(50);
+  await sleep(100); // 增加等待时间
   if (getInputValue(input) === value) return true;
 
-  // 方法3: 原生 Setterfallback
+  // 方法3: 原生 Setter fallback
   const nativeSetter = Object.getOwnPropertyDescriptor(
     input.contentEditable === "true" ? window.HTMLElement.prototype : window.HTMLTextAreaElement.prototype,
     input.contentEditable === "true" ? "innerText" : "value"
@@ -399,6 +412,7 @@ async function setInputValue(input, value) {
   input.dispatchEvent(new Event("input", { bubbles: true }));
   input.dispatchEvent(new Event("change", { bubbles: true }));
 
+  await sleep(50);
   return getInputValue(input) === value;
 }
 
@@ -509,6 +523,13 @@ export function injectStyles() {
       width: 14px !important;
       height: 14px !important;
     }
+    .Antigravity-Power-Pro-enhance-btn.loading svg {
+      animation: Antigravity-Power-Pro-spin 1s linear infinite !important;
+    }
+    @keyframes Antigravity-Power-Pro-spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
     .Antigravity-Power-Pro-toast {
       position: fixed;
       bottom: 120px;
@@ -524,7 +545,7 @@ export function injectStyles() {
       pointer-events: none;
       white-space: nowrap;
       backdrop-filter: blur(12px);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(251, 191, 36, 0.2);
       border: 1px solid rgba(251, 191, 36, 0.2);
     }
     .Antigravity-Power-Pro-toast.show {

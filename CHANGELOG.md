@@ -4,15 +4,19 @@
 
 ---
 
-## v2.6.28 (2026-05-13)
+## v2.6.29 (2026-05-13)
 
-### 功能与视觉优化
+### Bug 修复与优化
 
 | 改进项 | 详情 | 修复文件 |
 |-----|------|----------|
-| **视觉巅峰 (Obsidian Gold)** | 全面回归并优化了黑金玻璃拟态设计，按钮统一圆形化，增加 HSL 动态光效 | `shared/enhance.js` + `*.css` |
-| **连通性逻辑闭环** | 确认 BroadcastChannel 代理在复杂环境下的稳定性 | `shared/enhance.js` |
-| **布局对齐** | 侧边栏滚动按钮位置下移 10px，确保与输入框底部视觉间距舒适 | `cascade-panel.css` |
+| **增强按钮动效** | 修复了星星图标在处理时不转圈的问题，增加 CSS 帧动画 | `shared/enhance.js` |
+| **回显稳定性** | 针对侧边栏 Shadow DOM 环境，采用深度穿透查询 (Shadow-piercing) 重新定位输入框，并加强了 `setInputValue` 的聚焦与选区处理 | `shared/enhance.js` + `cascade-panel/scan.js` |
+| **API 状态反馈** | 优化了 Toast 与按钮状态的同步逻辑，确保用户能感知到正在处理 | `shared/enhance.js` |
+
+---
+
+## v2.6.28 (2026-05-13)
 
 ---
 
