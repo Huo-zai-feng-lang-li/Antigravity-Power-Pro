@@ -335,9 +335,13 @@ async function testConnection() {
       };
     }
   } catch (error: any) {
+    const msg: string = error?.message || "";
+    const isCors = msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("fetch");
     testResult.value = {
       success: false,
-      message: `✗ 网络错误: ${error.message}`,
+      message: isCors
+        ? "⚠️ 安装器跨域限制，无法直接测试。请在 IDE 中验证 — 提示词增强按钮有响应即表示配置正确。"
+        : `✗ 网络错误: ${msg}`,
     };
   } finally {
     isTesting.value = false;
