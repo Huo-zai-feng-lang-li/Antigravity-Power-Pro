@@ -4,8 +4,10 @@
  * 支持 OpenAI 兼容格式和 Anthropic Claude 格式
  *
  * 功能特性:
- * - 输入框旁显性按钮触发
- * -const DEFAULT_SYSTEM_PROMPT = `你是一个智能提示词优化器，专门帮助用户生成更有效的 AI 对话提示词。
+ * - 简洁的 toast 提示
+ */
+
+const DEFAULT_SYSTEM_PROMPT = `你是一个智能提示词优化器，专门帮助用户生成更有效的 AI 对话提示词。
 
 核心任务
 将用户输入的原始提示词优化为更清晰、更具体、更有效的版本。
