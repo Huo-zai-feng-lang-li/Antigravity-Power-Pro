@@ -4,15 +4,19 @@
 
 ---
 
+## v2.6.28 (2026-05-13)
+
+### 功能与视觉优化
+
+| 改进项 | 详情 | 修复文件 |
+|-----|------|----------|
+| **视觉巅峰 (Obsidian Gold)** | 全面回归并优化了黑金玻璃拟态设计，按钮统一圆形化，增加 HSL 动态光效 | `shared/enhance.js` + `*.css` |
+| **连通性逻辑闭环** | 确认 BroadcastChannel 代理在复杂环境下的稳定性 | `shared/enhance.js` |
+| **布局对齐** | 侧边栏滚动按钮位置下移 10px，确保与输入框底部视觉间距舒适 | `cascade-panel.css` |
+
+---
+
 ## v2.6.27 (2026-05-13)
-
-### Bug 修复
-
-| Bug | 根因 | 修复文件 | 关键细节 |
-|-----|------|----------|----------|
-| 侧边栏提示词增强 "Failed to fetch" | 主窗口 `vscode-file://` 协议限制导致 HTTPS 请求被 Electron 拦截, 而特定 Launchpad 窗口无此限制 | `shared/enhance.js` | 实现 **BroadcastChannel 跨窗口代理**, 侧边栏请求通过 Launchpad 转发 |
-| 侧边栏重复滚动按钮 | 管理面板按钮挂载位置冲突 | `cascade-panel/scroll-to-bottom.js` | 显式销毁冲突节点, 确保单按钮逻辑 |
-| 视觉风格回退 | 用户反馈不需要风格大幅改动 | `shared/enhance.js` + `*.css` | **撤回 Obsidian Gold 及圆形化改造**, 恢复原版极简样式, 仅保留逻辑修复 |
 
 ---
 
