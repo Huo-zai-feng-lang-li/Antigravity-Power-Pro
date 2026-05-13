@@ -81,7 +81,15 @@ window.updatePromptEnhanceConfig = (newConfig) => {
   console.log("[PromptEnhance] 配置已更新", config);
 };
 
-const isEnabled = () => config.enabled;
+export const init = (initialConfig) => {
+  if (initialConfig) {
+    config = { ...config, ...initialConfig };
+  }
+  injectStyles();
+  console.log("[PromptEnhance] 模块已初始化", config);
+};
+
+export const isEnabled = () => config.enabled;
 const isAnthropicAPI = () => config.provider === "anthropic" || config.apiBase.includes("anthropic");
 
 // ============================================
@@ -434,3 +442,4 @@ export function showErrorModal(msg) { showToast(msg, "error"); }
 export function showResultModal(enhanced, onApply) { if (onApply) onApply(enhanced); showToast("✓ 已优化", "success"); }
 export function getConfig() { return { ...config }; }
 export function triggerEnhance() { performEnhance(); }
+export { setInputValue };
