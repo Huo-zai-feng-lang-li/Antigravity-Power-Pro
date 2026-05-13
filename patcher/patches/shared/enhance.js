@@ -2,8 +2,10 @@
  * 提示词增强模块
  * 调用自定义 LLM API 优化用户输入的提示词
  * 支持 OpenAI 兼容格式和 Anthropic Claude 格式
- *
+ * 
  * 功能特性:
+ * - 直接替换输入框内容
+ * - 自动收集 IDE 上下文信息
  * - 简洁的 toast 提示
  */
 
@@ -26,7 +28,7 @@ const DEFAULT_SYSTEM_PROMPT = `你是一个智能提示词优化器，专门帮�
 5. 保持意图：不改变用户的原始意图，只是表达得更清晰
 
 输出格式 重要
-- 禁止使用 Markdown 语法（禁止 ** 加粗、禁止 # 标题、禁止 ` 代码块）
+- 禁止使用 Markdown 语法（禁止 ** 加粗、禁止 # 标题、禁止 \` 代码块）
 - 使用纯文本格式：换行分隔段落，用数字1./2. 或短横线 - 开头列表
 - 只输出优化后的提示词，不要任何解释和额外内容
 - 保持用户使用的语言（中文/英文）
@@ -55,137 +57,158 @@ const DEFAULT_CONFIG = {
 
 let config = { ...DEFAULT_CONFIG };
 
-/**
- * 初始化配置
- * @param {Object} userConfig - 用户配置
- */
-export function init(userConfig = {}) {
-  config = { ...DEFAULT_CONFIG, ...userConfig };
-  if (!config.systemPrompt) {
-    config.systemPrompt = DEFAULT_SYSTEM_PROMPT;
+// 初始化配置
+try {
+  const savedConfig = localStorage.getItem("Antigravity_PromptEnhance_Config");
+  if (savedConfig) {
+    const parsed = JSON.parse(savedConfig);
+    // 强制清理 legacy 错误配置
+    if (parsed.apiBase && parsed.apiBase.includes("127.0.0.1:8045")) {
+      console.log("[PromptEnhance] 清理旧版本地代理地址，重置为 Freemodel");
+      parsed.apiBase = DEFAULT_CONFIG.apiBase;
+      parsed.model = DEFAULT_CONFIG.model;
+    }
+    config = { ...config, ...parsed };
   }
-
-  // 始终注入样式，确保 Toast 和按钮视觉一致
-  injectStyles();
+} catch (e) {
+  console.error("[PromptEnhance] 加载配置失败:", e);
 }
 
-/**
- * 检查功能是否启用
- * @returns {boolean}
- */
-export function isEnabled() {
-  return config.enabled;
-}
+// 供外部更新配置的方法
+window.updatePromptEnhanceConfig = (newConfig) => {
+  config = { ...config, ...newConfig };
+  localStorage.setItem("Antigravity_PromptEnhance_Config", JSON.stringify(config));
+  console.log("[PromptEnhance] 配置已更新", config);
+};
 
+const isEnabled = () => config.enabled;
+const isAnthropicAPI = () => config.provider === "anthropic" || config.apiBase.includes("anthropic");
 
 // ============================================
-// 对话上下文收集 - 极简 innerText 方案
+// 上下文收集
 // ============================================
 
-// 对话容器候选选择器 (CDP 枚举实测, [0] 号容器精确命中对话内容)
 const CONVERSATION_SELECTORS = [
-  // 最精准: 侧边栏内 grow flex-col 的主对话滚动区 (CDP 实测 [0] 号容器)
-  '.antigravity-agent-side-panel .h-full.overflow-y-auto.grow',
-  '.antigravity-agent-side-panel .overflow-y-auto.grow',
-  // 兜底: 侧边栏根容器
-  '.antigravity-agent-side-panel',
-  '[data-testid="chat-list"]',
-  '[data-testid="chat-history"]',
-  '[class*="conversation"]',
-  '[role="log"]',
+  // Antigravity v1.23+ 唯一精准对话容器 (CDP 实测)
+  ".antigravity-agent-side-panel .h-full.overflow-y-auto.grow",
+  ".cascade-scrollbar",
+  ".conversation-container",
+  "[class*=\"conversation\"]",
 ];
 
-// 应排除的 DOM 噪声 (导航/按钮/模型选择器/输入区)
 const NOISE_SELECTORS = [
-  'nav', 'select', '[role="combobox"]',
-  '[class*="toolbar"]', '[class*="statusbar"]',
-  '[class*="model-picker"]', '[class*="model-select"]',
-  'button', '[role="button"]', '[class*="tab-"]',
+  ".model-selector-container",
+  ".chat-input-container",
+  "button",
+  ".antigravity-agent-side-panel-header",
 ];
 
 /**
- * 找到对话容器, 提取仅对话内容的 innerText
- * - 克隆节点后移除 UI 噪声, 再取 innerText
- * - 让 LLM 自己理解文本流, 无需在此层做角色解析
- * @param {number} maxChars 
- * @returns {string}
- */
-function collectConversationText(maxChars = 3000) {
-  for (const selector of CONVERSATION_SELECTORS) {
-    try {
-      const el = document.querySelector(selector);
-      if (!el) continue;
-
-      // 克隆后移除噪声节点
-      const clone = el.cloneNode(true);
-      NOISE_SELECTORS.forEach(ns => {
-        clone.querySelectorAll(ns).forEach(n => n.remove());
-      });
-
-      const text = clone.innerText?.trim();
-      if (text && text.length > 30) {
-        return text.slice(-maxChars);
-      }
-    } catch (_) { /* 继续下一个 */ }
-  }
-  return '';
-}
-
-/**
- * 获取当前活动标签页的文件名
- * @returns {string|null}
- */
-function getCurrentFile() {
-  const selectors = [
-    '[role="tab"][aria-selected="true"]',
-    '[class*="tab"][aria-selected="true"]',
-    '[class*="breadcrumb"] span:last-child',
-  ];
-  for (const sel of selectors) {
-    try {
-      const text = document.querySelector(sel)?.textContent?.trim();
-      if (text && /\.\w{1,10}$/.test(text)) return text;
-    } catch (_) { /* 继续 */ }
-  }
-  return null;
-}
-
-/**
- * 格式化上下文前缀（给 LLM 的输入）
- * @returns {string}
+ * 收集对话上下文信息
  */
 function buildContextPrefix() {
-  const parts = [];
+  let context = "";
 
-  const file = getCurrentFile();
-  if (file) parts.push(`[当前文件: ${file}]`);
-
-  const text = collectConversationText();
-  if (text) {
-    parts.push(`\n=== 当前对话上下文 (最近内容) ===\n${text}\n=== 对话上下文结束 ===`);
+  // 1. 获取对话滚动区域
+  let conversationEl = null;
+  for (const selector of CONVERSATION_SELECTORS) {
+    conversationEl = document.querySelector(selector);
+    if (conversationEl) break;
   }
 
-  return parts.length > 0 ? parts.join('\n') + '\n\n' : '';
+  if (conversationEl) {
+    // 克隆并过滤噪声元素
+    const clone = conversationEl.cloneNode(true);
+    NOISE_SELECTORS.forEach(s => {
+      clone.querySelectorAll(s).forEach(n => n.remove());
+    });
+    const historyText = clone.innerText.trim();
+    if (historyText) {
+      context += `对话历史:\n${historyText.substring(Math.max(0, historyText.length - 3000))}\n\n`;
+    }
+  }
+
+  // 2. 获取当前编辑文件名 (尝试从 Tab 获取)
+  const activeTab = document.querySelector("[class*=\"tab-\"].active, .tab.selected");
+  if (activeTab) {
+    context += `当前文件: ${activeTab.innerText.trim()}\n\n`;
+  }
+
+  // 3. 获取选中的代码 (如果可能)
+  const selection = window.getSelection().toString().trim();
+  if (selection && selection.length < 2000) {
+    context += `选中代码:\n${selection}\n\n`;
+  }
+
+  return context;
 }
 
 // ============================================
-// API 调用
+// LLM 交互
 // ============================================
 
 /**
- * 检查是否为 Anthropic API
+ * 执行提示词增强
+ * @param {string} prompt - 原始提示词
+ * @returns {Promise<string>} - 增强后的提示词
  */
-function isAnthropicAPI() {
-  return config.provider === "anthropic" || config.apiBase.includes("anthropic");
+export async function enhance(prompt) {
+  if (!prompt.trim()) {
+    throw new Error("提示词不能为空");
+  }
+
+  const contextPrefix = buildContextPrefix();
+
+  try {
+    if (isAnthropicAPI()) {
+      return await callAnthropicAPI(prompt, contextPrefix);
+    } else {
+      return await callOpenAIAPI(prompt, contextPrefix);
+    }
+  } catch (error) {
+    console.error("[PromptEnhance] API Error:", error);
+    throw error;
+  }
 }
 
+/**
+ * 调用 OpenAI 兼容 API
+ */
+async function callOpenAIAPI(prompt, contextPrefix = "") {
+  const userMessage = contextPrefix 
+    ? `上下文信息:\n${contextPrefix}\n用户原始提示词:\n${prompt.trim()}`
+    : prompt.trim();
 
+  const response = await fetch(`${config.apiBase}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${config.apiKey}`,
+    },
+    body: JSON.stringify({
+      model: config.model,
+      messages: [
+        { role: "system", content: config.systemPrompt || DEFAULT_SYSTEM_PROMPT },
+        { role: "user", content: userMessage },
+      ],
+      temperature: 0.7,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || `API 请求失败: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content?.trim() || prompt;
+}
 
 /**
  * 调用 Anthropic Claude API
  */
 async function callAnthropicAPI(prompt, contextPrefix = "") {
-  const userMessage = contextPrefix
+  const userMessage = contextPrefix 
     ? `上下文信息:\n${contextPrefix}\n用户原始提示词:\n${prompt.trim()}`
     : prompt.trim();
 
@@ -199,7 +222,7 @@ async function callAnthropicAPI(prompt, contextPrefix = "") {
     body: JSON.stringify({
       model: config.model,
       max_tokens: 2048,
-      system: config.systemPrompt,
+      system: config.systemPrompt || DEFAULT_SYSTEM_PROMPT,
       messages: [{ role: "user", content: userMessage }],
     }),
   });
@@ -210,504 +233,204 @@ async function callAnthropicAPI(prompt, contextPrefix = "") {
   }
 
   const data = await response.json();
-  return data.content?.[0]?.text?.trim() || "";
-}
-
-/**
- * 调用 OpenAI 兼容 API
- */
-async function callOpenAICompatibleAPI(prompt, contextPrefix = "") {
-  const userMessage = contextPrefix
-    ? `上下文信息:\n${contextPrefix}\n用户原始提示词:\n${prompt.trim()}`
-    : prompt.trim();
-
-  const messages = [
-    { role: "system", content: config.systemPrompt || DEFAULT_SYSTEM_PROMPT },
-    { role: "user", content: userMessage },
-  ];
-
-  const response = await fetch(`${config.apiBase}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${config.apiKey}`,
-    },
-    body: JSON.stringify({
-      model: config.model,
-      messages,
-      temperature: 0.7,
-      max_tokens: 2048,
-    }),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error?.message || `OpenAI API 请求失败: ${response.status}`);
-  }
-
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content?.trim() || "";
-}
-
-/**
- * 调用 LLM API 增强提示词
- */
-export async function enhance(prompt) {
-  if (!isEnabled()) {
-    throw new Error("提示词增强功能未配置或未启用");
-  }
-
-  if (!prompt || !prompt.trim()) {
-    throw new Error("提示词不能为空");
-  }
-
-  const contextPrefix = buildContextPrefix();
-  console.log('[PromptEnhance] 触发增强, 上下文长度:', contextPrefix.length);
-
-  try {
-    if (isAnthropicAPI()) {
-      return await callAnthropicAPI(prompt, contextPrefix);
-    } else {
-      return await callOpenAICompatibleAPI(prompt, contextPrefix);
-    }
-  } catch (error) {
-    if (error.name === "TypeError" && error.message.includes("fetch")) {
-      throw new Error("网络请求失败,请检查网络连接和 API 地址");
-    }
-    throw error;
-  }
+  return data.content?.[0]?.text?.trim() || prompt;
 }
 
 // ============================================
-// 输入框操作
+// DOM 交互逻辑
 // ============================================
 
-/**
- * 查找当前活动的输入框
- * @returns {HTMLTextAreaElement|HTMLInputElement|null}
- */
+const INPUT_SELECTORS = [
+  "[contenteditable=\"true\"][role=\"textbox\"]",
+  "textarea.native-textarea",
+  "textarea[placeholder*=\"Ask\"]",
+  "textarea[placeholder*=\"message\"]",
+  "#windsurf-input",
+];
+
 function findActiveInput() {
-  const active = document.activeElement;
-  if (
-    active &&
-    (active.tagName === "TEXTAREA" ||
-      (active.tagName === "INPUT" && active.type === "text") ||
-      active.contentEditable === "true")
-  ) {
-    return active;
+  for (const selector of INPUT_SELECTORS) {
+    const el = document.querySelector(selector);
+    if (el && el.isConnected) return el;
   }
-  return document.querySelector(
-    '[role="textbox"][contenteditable="true"], textarea[placeholder*="Ask"], .chat-input textarea'
-  );
+  return document.activeElement?.tagName === "TEXTAREA" || document.activeElement?.contentEditable === "true" 
+    ? document.activeElement : null;
 }
 
-/**
- * 获取输入框的值
- * @param {HTMLElement} input
- * @returns {string}
- */
 function getInputValue(input) {
-  if (input.contentEditable === "true") {
-    return input.textContent || "";
-  }
-  return input.value || "";
+  if (!input) return "";
+  return input.contentEditable === "true" ? (input.innerText || "") : (input.value || "");
 }
 
-/**
- * 设置输入框的值（保留换行和格式）
- * @param {HTMLElement} input
- * @param {string} value
- */
-/**
- * 辅助函数：延迟
- * @param {number} ms
- * @returns {Promise<void>}
- */
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/**
- * 可靠地设置输入框的值（保留换行和格式，处理 React 受控组件）
- * @param {HTMLElement} input
- * @param {string} value
- * @returns {Promise<boolean>} 是否设置成功
- */
-export async function setInputValue(input, value) {
-  console.log(
-    "[PromptEnhance] 开始设置输入框值, 元素类型:",
-    input.tagName,
-    "是否contentEditable:",
-    input.contentEditable,
-  );
-
-  // 先聚焦输入框
+async function setInputValue(input, value) {
+  if (!input) return false;
   input.focus();
-  await sleep(50);
 
-  // 方法1: 对于 contenteditable，使用 execCommand
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+  // 方法1: 直接操作 innerText/value
   if (input.contentEditable === "true") {
-    console.log("[PromptEnhance] 方法1: contenteditable + execCommand");
-    // 选中全部 → 插入新内容
+    input.innerText = value;
+  } else {
+    input.value = value;
+  }
+
+  // 方法2: execCommand (某些 IDE 必需)
+  try {
     document.execCommand("selectAll", false, null);
-    await sleep(10);
-    const success = document.execCommand("insertText", false, value);
-
-    if (success && input.textContent === value) {
-      console.log("[PromptEnhance] execCommand 成功");
-      return true;
-    }
-
-    // 备选: 直接设置 innerHTML
-    console.log("[PromptEnhance] execCommand 失败，尝试直接设置 innerHTML");
-    // 处理换行符，将其转换为 div 或 br，取决于具体编辑器的行为
-    // 大多数现代编辑器 (如 ProseMirror, Monaco) 在 contenteditable 中使用 div 或 p 表示换行
-    const formattedHtml = value
-      .split("\n")
-      .map((line) => (line ? `<div>${line}</div>` : "<div><br></div>"))
-      .join("");
-
-    input.innerHTML = formattedHtml;
-    input.dispatchEvent(
-      new InputEvent("input", { bubbles: true, inputType: "insertText" }),
-    );
-    return true;
+    document.execCommand("insertText", false, value);
+  } catch (e) {
+    console.warn("[PromptEnhance] execCommand 失败，尝试 fallback");
   }
 
-  // 方法2: 对于 textarea/input，尝试 execCommand（某些 Electron 框架支持）
-  console.log("[PromptEnhance] 方法2: textarea/input + execCommand");
-  input.focus();
-  input.select(); // 选中所有文本
-  await sleep(10);
-
-  const execSuccess = document.execCommand("insertText", false, value);
   await sleep(50);
+  if (getInputValue(input) === value) return true;
 
-  if (execSuccess && input.value === value) {
-    console.log("[PromptEnhance] execCommand 成功");
-    return true;
-  }
-
-  // 方法3: 使用原生 setter
-  console.log("[PromptEnhance] 方法3: 原生 setter + React 事件");
+  // 方法3: 原生 Setterfallback
   const nativeSetter = Object.getOwnPropertyDescriptor(
-    input.tagName === "TEXTAREA"
-      ? window.HTMLTextAreaElement.prototype
-      : window.HTMLInputElement.prototype,
-    "value",
+    input.contentEditable === "true" ? window.HTMLElement.prototype : window.HTMLTextAreaElement.prototype,
+    input.contentEditable === "true" ? "innerText" : "value"
   )?.set;
 
   if (nativeSetter) {
     nativeSetter.call(input, value);
   } else {
-    input.value = value;
+    if (input.contentEditable === "true") input.innerText = value;
+    else input.value = value;
   }
 
-  // 触发多种事件
-  input.dispatchEvent(
-    new InputEvent("input", {
-      bubbles: true,
-      cancelable: true,
-      inputType: "insertText",
-      data: value,
-    }),
-  );
+  // 触发事件
   input.dispatchEvent(new Event("input", { bubbles: true }));
   input.dispatchEvent(new Event("change", { bubbles: true }));
 
-  await sleep(100);
-  if (input.value === value) {
-    console.log("[PromptEnhance] 原生 setter 成功");
-    return true;
-  }
-
-  // 方法4: 使用剪贴板粘贴（终极方案）
-  console.log("[PromptEnhance] 方法4: 剪贴板粘贴");
-  try {
-    // 保存当前剪贴板内容
-    const originalClipboard = await navigator.clipboard
-      .readText()
-      .catch(() => "");
-
-    // 写入新内容到剪贴板
-    await navigator.clipboard.writeText(value);
-
-    // 聚焦并选中所有
-    input.focus();
-    input.select();
-    await sleep(10);
-
-    // 模拟粘贴事件
-    const pasteEvent = new ClipboardEvent("paste", {
-      bubbles: true,
-      cancelable: true,
-      clipboardData: new DataTransfer(),
-    });
-    pasteEvent.clipboardData.setData("text/plain", value);
-    input.dispatchEvent(pasteEvent);
-
-    // 或者使用 execCommand paste
-    document.execCommand("paste");
-
-    await sleep(100);
-
-    // 恢复原剪贴板
-    if (originalClipboard) {
-      await navigator.clipboard.writeText(originalClipboard);
-    }
-
-    if (input.value === value) {
-      console.log("[PromptEnhance] 剪贴板粘贴成功");
-      return true;
-    }
-  } catch (e) {
-    console.warn("[PromptEnhance] 剪贴板方法失败:", e);
-  }
-
-  console.warn(
-    "[PromptEnhance] 所有方法都失败了，输入框值:",
-    input.value?.substring(0, 50),
-  );
-  return false;
+  return getInputValue(input) === value;
 }
 
 // ============================================
-// Toast 提示
+// Toast & UI
 // ============================================
 
-/**
- * 显示 Toast 提示
- * @param {string} message
- * @param {'info'|'success'|'error'} type
- * @param {number} duration
- */
 function showToast(message, type = "info", duration = 2000) {
-  // 移除已有的 toast
   const existing = document.querySelector(".Antigravity-Power-Pro-toast");
   if (existing) existing.remove();
 
   const toast = document.createElement("div");
   toast.className = `Antigravity-Power-Pro-toast Antigravity-Power-Pro-toast-${type}`;
-  toast.textContent = message;
+  toast.innerText = message;
   document.body.appendChild(toast);
 
-  // 显示动画
-  requestAnimationFrame(() => {
-    toast.classList.add("show");
-  });
+  requestAnimationFrame(() => toast.classList.add("show"));
 
-  // 自动隐藏
   if (duration > 0) {
     setTimeout(() => {
       toast.classList.remove("show");
       setTimeout(() => toast.remove(), 200);
     }, duration);
   }
-
   return toast;
 }
 
-/**
- * 执行提示词增强（直接替换输入框内容）
- */
 async function performEnhance() {
   if (!isEnabled()) {
     showToast("提示词增强功能已关闭", "error");
     return;
   }
 
-  // 检查 API Key
   if (!config.apiKey) {
-    showToast("请先在 Antigravity-Power-Pro 配置 apiKey，设置好模型", "error", 5000);
+    showToast("请先在配置中设置 API Key", "error", 5000);
     return;
   }
 
   const input = findActiveInput();
   if (!input) {
-    showToast("未找到输入框", "error");
+    showToast("未找到活动输入框", "error");
     return;
   }
 
   const originalPrompt = getInputValue(input).trim();
   if (!originalPrompt) {
-    showToast("请先输入需要增强的提示词", "error");
+    showToast("请先输入提示词", "error");
     return;
   }
 
-  // 显示加载状态
   const loadingToast = showToast("✨ 正在优化提示词...", "info", 0);
-
   try {
     const enhanced = await enhance(originalPrompt);
-
-    // 直接替换输入框内容
-    setInputValue(input, enhanced);
-
-    // 移除加载提示，显示成功
+    const success = await setInputValue(input, enhanced);
     loadingToast.remove();
-    showToast("✓ 提示词已优化", "success", 1500);
+    if (success) showToast("✓ 已完成并自动填充", "success", 2000);
+    else showToast("⚠️ 优化成功但回显失败，请尝试手动刷新", "info", 4000);
   } catch (error) {
     loadingToast.remove();
-    showToast(`✗ ${error.message}`, "error", 3000);
-    console.error("[PromptEnhance] Error:", error);
+    showToast(`✗ 失败: ${error.message}`, "error", 4000);
   }
 }
 
-// 快捷键功能已移除，统一使用按钮触发
-
-/**
- * 创建增强按钮元素
- * @param {Function} onClick - 点击回调
- * @returns {HTMLButtonElement}
- */
 export function createEnhanceButton(onClick) {
   const btn = document.createElement("button");
   btn.className = "Antigravity-Power-Pro-enhance-btn";
-  btn.title = "";
   btn.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
-        </svg>
-    `;
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+    </svg>
+  `;
   btn.addEventListener("click", onClick || performEnhance);
   return btn;
 }
 
-/**
- * 注入样式
- */
 export function injectStyles() {
-  if (document.getElementById("Antigravity-Power-Pro-enhance-styles")) {
-    return;
-  }
-
+  if (document.getElementById("Antigravity-Power-Pro-enhance-styles")) return;
   const style = document.createElement("style");
   style.id = "Antigravity-Power-Pro-enhance-styles";
   style.textContent = `
-        /* 增强按钮样式 */
-        .Antigravity-Power-Pro-enhance-btn {
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            width: 26px !important;
-            height: 26px !important;
-            padding: 0 !important;
-            margin: -6px 4px 0 0 !important;
-            background: rgba(255, 255, 255, 0.1) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            border-radius: 4px !important;
-            color: rgba(255, 255, 255, 0.7) !important;
-            cursor: pointer !important;
-            transition: all 0.2s ease !important;
-            flex-shrink: 0 !important;
-            position: relative !important;
-        }
-
-        .Antigravity-Power-Pro-enhance-btn:hover {
-            background: rgba(251, 191, 36, 0.2) !important;
-            color: #fbbf24 !important;
-            border-color: rgba(251, 191, 36, 0.4) !important;
-        }
-
-        .Antigravity-Power-Pro-enhance-btn:active {
-            transform: scale(0.9) !important;
-        }
-
-        .Antigravity-Power-Pro-enhance-btn.loading {
-            pointer-events: none;
-            opacity: 0.6;
-        }
-
-        .Antigravity-Power-Pro-enhance-btn.loading svg {
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .Antigravity-Power-Pro-enhance-btn svg {
-            width: 14px;
-            height: 14px;
-        }
-
-        /* Toast 提示样式 */
-        .Antigravity-Power-Pro-toast {
-            position: fixed;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%) translateY(20px);
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 500;
-            z-index: 99999;
-            opacity: 0;
-            transition: all 0.2s ease;
-            pointer-events: none;
-            white-space: nowrap;
-        }
-
-        .Antigravity-Power-Pro-toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
-
-        .Antigravity-Power-Pro-toast-info {
-            background: rgba(59, 130, 246, 0.95);
-            color: white;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-        }
-
-        .Antigravity-Power-Pro-toast-success {
-            background: rgba(34, 197, 94, 0.95);
-            color: white;
-            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
-        }
-
-        .Antigravity-Power-Pro-toast-error {
-            background: rgba(239, 68, 68, 0.95);
-            color: white;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-        }
-    `;
+    .Antigravity-Power-Pro-enhance-btn {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 26px !important;
+      height: 26px !important;
+      padding: 0 !important;
+      margin: -6px 4px 0 0 !important;
+      background: rgba(255, 255, 255, 0.1) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      border-radius: 4px !important;
+      color: rgba(255, 255, 255, 0.7) !important;
+      cursor: pointer !important;
+      transition: all 0.2s ease !important;
+      flex-shrink: 0 !important;
+    }
+    .Antigravity-Power-Pro-enhance-btn:hover {
+      background: rgba(251, 191, 36, 0.2) !important;
+      color: #fbbf24 !important;
+      border-color: rgba(251, 191, 36, 0.4) !important;
+    }
+    .Antigravity-Power-Pro-toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 99999;
+      opacity: 0;
+      transition: all 0.2s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .Antigravity-Power-Pro-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .Antigravity-Power-Pro-toast-info { background: #3b82f6; color: white; }
+    .Antigravity-Power-Pro-toast-success { background: #22c55e; color: white; }
+    .Antigravity-Power-Pro-toast-error { background: #ef4444; color: white; }
+  `;
   document.head.appendChild(style);
 }
 
-/**
- * 显示错误提示（向后兼容）
- * @param {string} message - 错误信息
- */
-export function showErrorModal(message) {
-  showToast(`✗ ${message}`, "error", 3000);
-}
-
-/**
- * 显示结果（向后兼容，直接应用）
- * @param {string} enhancedPrompt - 增强后的提示词
- * @param {Function} onApply - 应用回调
- * @param {Function} onCancel - 取消回调
- */
-export function showResultModal(enhancedPrompt, onApply, onCancel) {
-  // 直接应用，不再显示弹窗
-  if (onApply) {
-    onApply(enhancedPrompt);
-  }
-  showToast("✓ 提示词已优化", "success", 1500);
-}
-
-/**
- * 获取配置
- * @returns {Object}
- */
-export function getConfig() {
-  return { ...config };
-}
-
-/**
- * 手动触发增强（供外部调用）
- */
-export function triggerEnhance() {
-  performEnhance();
-}
+export function showErrorModal(msg) { showToast(msg, "error"); }
+export function showResultModal(enhanced, onApply) { if (onApply) onApply(enhanced); showToast("✓ 已优化", "success"); }
+export function getConfig() { return { ...config }; }
+export function triggerEnhance() { performEnhance(); }
