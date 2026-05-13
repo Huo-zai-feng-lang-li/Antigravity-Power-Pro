@@ -371,18 +371,9 @@ async function setInputValue(input, value) {
   input.focus();
 
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const normalizedValue = value.trim();
 
-  // 方法1: 直接操作 innerText/value
-  if (input.contentEditable === "true") {
-    input.innerText = value;
-  } else {
-    input.value = value;
-  }
-
-  // 强制聚焦
-  input.focus();
-
-  // 方法2: execCommand (某些 IDE 必需)
+  // 1. 优先使用 execCommand 方法 (保持撤销历史，兼容框架事件)
   try {
     const sel = window.getSelection();
     if (input.contentEditable === "true") {
@@ -394,7 +385,7 @@ async function setInputValue(input, value) {
       input.select();
     }
     
-    // 触发 beforeinput 模拟真实输入行为，绕过某些框架拦截
+    // 模拟真实输入行为
     input.dispatchEvent(new InputEvent("beforeinput", { 
       inputType: "insertText", 
       data: value, 
@@ -402,41 +393,47 @@ async function setInputValue(input, value) {
       cancelable: true 
     }));
 
+    // 原子操作：全选并插入，替换旧内容
     document.execCommand("selectAll", false, null);
-    document.execCommand("insertText", false, value);
+    const execSuccess = document.execCommand("insertText", false, value);
 
-    // 触发 input 事件通知框架数据已变更
-    input.dispatchEvent(new InputEvent("input", { 
-      inputType: "insertText", 
-      data: value, 
-      bubbles: true 
-    }));
+    if (execSuccess) {
+      input.dispatchEvent(new InputEvent("input", { 
+        inputType: "insertText", 
+        data: value, 
+        bubbles: true 
+      }));
+      
+      await sleep(100);
+      // 如果已经成功设置成功，则直接退出，防止 double echo
+      if (getInputValue(input).trim() === normalizedValue) return true;
+    }
   } catch (e) {
-    console.warn("[PromptEnhance] execCommand 失败，尝试 fallback");
+    console.warn("[PromptEnhance] execCommand failed, falling back...");
   }
 
-  await sleep(200); // 增加等待时间让框架响应
-  if (getInputValue(input) === value) return true;
-
-  // 方法3: 原生 Setter fallback
-  const nativeSetter = Object.getOwnPropertyDescriptor(
-    input.contentEditable === "true" ? window.HTMLElement.prototype : window.HTMLTextAreaElement.prototype,
-    input.contentEditable === "true" ? "innerText" : "value"
-  )?.set;
-
-  if (nativeSetter) {
-    nativeSetter.call(input, value);
+  // 2. Fallback: 直接全量覆盖 (针对无法响应 execCommand 的容器)
+  console.log("[PromptEnhance] Using direct DOM fallback");
+  if (input.contentEditable === "true") {
+    input.innerText = value;
   } else {
-    if (input.contentEditable === "true") input.innerText = value;
-    else input.value = value;
+    input.value = value;
   }
 
-  // 触发通用变更事件
+  // 3. Fallback: 原生 Prototype Setter (穿透 React/Vue 拦截)
+  try {
+    const proto = input.contentEditable === "true" ? window.HTMLElement.prototype : window.HTMLTextAreaElement.prototype;
+    const prop = input.contentEditable === "true" ? "innerText" : "value";
+    const nativeSetter = Object.getOwnPropertyDescriptor(proto, prop)?.set;
+    if (nativeSetter) nativeSetter.call(input, value);
+  } catch (e) {}
+
+  // 强制触发通用同步事件
   input.dispatchEvent(new Event("input", { bubbles: true }));
   input.dispatchEvent(new Event("change", { bubbles: true }));
 
   await sleep(100);
-  return getInputValue(input) === value;
+  return getInputValue(input).trim() === normalizedValue;
 }
 
 // ============================================

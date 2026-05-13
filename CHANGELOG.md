@@ -4,6 +4,17 @@
 
 ---
 
+## v2.6.38 (2026-05-14)
+
+### 提示词回显根治 (Final Echo Fix)
+
+| 改进项 | 详情 | 修复文件 |
+|-----|------|----------|
+| **回显重复彻底解决** | 识别并移除了 `setInputValue` 函数中导致双倍输出的冗余 `innerText` 赋值。现在逻辑优化为“原子化 execCommand”，仅在失败时执行 DOM 兜底。 | `shared/enhance.js` |
+| **状态原子化验证** | 在注入内容后添加了即时的值校验逻辑。如果检测到值已由框架成功同步，将立即中断后续多余的 Dispatch 事件。 | `shared/enhance.js` |
+| **性能微调** | 减少了不必要的 `dispatchEvent` 干扰，移除了多余的 200ms 强制延时。 | `shared/enhance.js` |
+
+
 ## v2.6.37 (2026-05-13)
 
 ### 修复与交互调优 (Bug Fixes & UI Polish)
