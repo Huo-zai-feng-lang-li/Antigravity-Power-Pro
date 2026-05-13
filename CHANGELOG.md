@@ -4,15 +4,19 @@
 
 ---
 
-## v2.6.26 (2026-05-13)
+## v2.6.27 (2026-05-13)
 
 ### Bug 修复
 
 | Bug | 根因 | 修复文件 | 关键细节 |
 |-----|------|----------|----------|
 | 侧边栏提示词增强 "Failed to fetch" | 主窗口 `vscode-file://` 协议限制导致 HTTPS 请求被 Electron 拦截, 而特定 Launchpad 窗口无此限制 | `shared/enhance.js` | 实现 **BroadcastChannel 跨窗口代理**, 侧边栏请求通过 Launchpad 转发 |
-| 侧边栏重复滚动按钮 (彻底解决) | 尽管 v2.6.25 修改了 ID, 两个 CSS 依然在某些情况下共存; 且初始化顺序可能导致残留 | `cascade-panel/scroll-to-bottom.js` | 在 Cascade 按钮初始化时显式尝试销毁已存在的 Manager 按钮节点 |
-| 提示词视觉设计升级 | 用户反馈需要更 premium 的 UI | `shared/enhance.js` | 引入 **Obsidian Gold 黑金玻璃拟态** 设计, 按钮圆角改为 50%, 增加 HSL 金色发光与 Toast 毛玻璃效果 |
+| 侧边栏重复滚动按钮 | 管理面板按钮挂载位置冲突 | `cascade-panel/scroll-to-bottom.js` | 显式销毁冲突节点, 确保单按钮逻辑 |
+| 视觉风格回退 | 用户反馈不需要风格大幅改动 | `shared/enhance.js` + `*.css` | **撤回 Obsidian Gold 及圆形化改造**, 恢复原版极简样式, 仅保留逻辑修复 |
+
+---
+
+## v2.6.26 (2026-05-13)
 
 ### 关键备忘 (踩坑记录)
 

@@ -17,13 +17,9 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  
-  /* 豪华质感：深色背景 + 亮黄边框 */
-  background: rgba(30, 30, 30, 0.85) !important;
-  border: 2px solid rgba(251, 191, 36, 0.6) !important;
-  color: #fbbf24 !important;
-  
-  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
   cursor: pointer;
   outline: none !important;
   z-index: 9999;
@@ -46,10 +42,10 @@
 
 #manager-scroll-bottom-btn:hover {
   color: #ffffff !important;
-  background: #fbbf24 !important;
-  border-color: #fbbf24 !important;
+  background: rgba(255, 255, 255, 0.3) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
   transform: translateX(-50%) translateY(0) scale(1.1) !important;
-  box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
 #manager-scroll-bottom-btn svg {
