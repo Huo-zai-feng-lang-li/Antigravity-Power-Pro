@@ -244,7 +244,8 @@ async function callOpenAIAPI(prompt, contextPrefix = "") {
     ? `上下文信息:\n${contextPrefix}\n用户原始提示词:\n${prompt.trim()}`
     : prompt.trim();
 
-  const url = `${config.apiBase}/chat/completions`;
+  const baseUrl = config.apiBase.endsWith("/") ? config.apiBase.slice(0, -1) : config.apiBase;
+  const url = `${baseUrl}/chat/completions`;
   const options = {
     method: "POST",
     headers: {
@@ -266,7 +267,7 @@ async function callOpenAIAPI(prompt, contextPrefix = "") {
     response = await fetch(url, options);
   } catch (err) {
     // If local fetch fails (protocol restriction), try proxy via Launchpad
-    if (err.message.includes('fetch') || err.name === 'TypeError') {
+    if (location.protocol === "vscode-file:") {
       console.warn("[PromptEnhance] Local fetch failed, trying proxy via Launchpad...");
       response = await broadcastFetch(url, options).catch(proxyErr => {
         throw new Error(`API 请求失败: ${err.message}. 请确保 Launchpad 已打开 (Ctrl+E)。`);
@@ -282,7 +283,14 @@ async function callOpenAIAPI(prompt, contextPrefix = "") {
   }
 
   const data = await response.json();
-  return data.choices?.[0]?.message?.content?.trim() || prompt;
+  const content = data.choices?.[0]?.message?.content?.trim();
+  
+  if (!content) {
+    console.error("[PromptEnhance] API 返回格式不正确:", data);
+    throw new Error("无法从 API 获取优化结果，请确认模型设置是否正确");
+  }
+  
+  return content;
 }
 
 /**
@@ -376,23 +384,38 @@ async function setInputValue(input, value) {
 
   // 方法2: execCommand (某些 IDE 必需)
   try {
-    // 为 contenteditable 建立选区
+    const sel = window.getSelection();
     if (input.contentEditable === "true") {
       const range = document.createRange();
       range.selectNodeContents(input);
-      const sel = window.getSelection();
       sel.removeAllRanges();
       sel.addRange(range);
     } else {
       input.select();
     }
+    
+    // 触发 beforeinput 模拟真实输入行为，绕过某些框架拦截
+    input.dispatchEvent(new InputEvent("beforeinput", { 
+      inputType: "insertText", 
+      data: value, 
+      bubbles: true, 
+      cancelable: true 
+    }));
+
     document.execCommand("selectAll", false, null);
     document.execCommand("insertText", false, value);
+
+    // 触发 input 事件通知框架数据已变更
+    input.dispatchEvent(new InputEvent("input", { 
+      inputType: "insertText", 
+      data: value, 
+      bubbles: true 
+    }));
   } catch (e) {
     console.warn("[PromptEnhance] execCommand 失败，尝试 fallback");
   }
 
-  await sleep(100); // 增加等待时间
+  await sleep(200); // 增加等待时间让框架响应
   if (getInputValue(input) === value) return true;
 
   // 方法3: 原生 Setter fallback
@@ -408,11 +431,11 @@ async function setInputValue(input, value) {
     else input.value = value;
   }
 
-  // 触发事件
+  // 触发通用变更事件
   input.dispatchEvent(new Event("input", { bubbles: true }));
   input.dispatchEvent(new Event("change", { bubbles: true }));
 
-  await sleep(50);
+  await sleep(100);
   return getInputValue(input) === value;
 }
 

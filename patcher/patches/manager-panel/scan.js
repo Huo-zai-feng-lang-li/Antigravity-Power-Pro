@@ -127,7 +127,7 @@ const scan = () => {
 
                 btn.style.setProperty('position', 'absolute', 'important');
                 btn.style.setProperty('right', '12px', 'important');
-                btn.style.setProperty('bottom', '8px', 'important');
+                btn.style.setProperty('bottom', '-2px', 'important');
                 btn.style.setProperty('z-index', '999', 'important');
                 container.appendChild(btn);
             }

@@ -1,0 +1,65 @@
+[ {
+   "description": "",
+   "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@caff226ed96db00961b7046a5dc9f8db004e7fbb/inspector.html?ws=127.0.0.1:9000/devtools/page/AD861DC1C5E118FFC352CAF93C925940",
+   "id": "AD861DC1C5E118FFC352CAF93C925940",
+   "title": "Antigravity-Power-Pro - Antigravity [管理员]",
+   "type": "page",
+   "url": "vscode-file://vscode-app/d:/Antigravity/resources/app/out/vs/code/electron-browser/workbench/workbench.html",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:9000/devtools/page/AD861DC1C5E118FFC352CAF93C925940"
+}, {
+   "description": "",
+   "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@caff226ed96db00961b7046a5dc9f8db004e7fbb/inspector.html?ws=127.0.0.1:9000/devtools/page/4ED65B28D4C060748CD95B18366BE52F",
+   "id": "4ED65B28D4C060748CD95B18366BE52F",
+   "title": "Launchpad",
+   "type": "page",
+   "url": "vscode-file://vscode-app/d:/Antigravity/resources/app/out/vs/code/electron-browser/workbench/workbench-jetski-agent.html",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:9000/devtools/page/4ED65B28D4C060748CD95B18366BE52F"
+}, {
+   "description": "",
+   "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@caff226ed96db00961b7046a5dc9f8db004e7fbb/inspector.html?ws=127.0.0.1:9000/devtools/page/63752B895A82DA8BC2C69606D160F343",
+   "id": "63752B895A82DA8BC2C69606D160F343",
+   "title": "",
+   "type": "worker",
+   "url": "",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:9000/devtools/page/63752B895A82DA8BC2C69606D160F343"
+}, {
+   "description": "",
+   "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@caff226ed96db00961b7046a5dc9f8db004e7fbb/inspector.html?ws=127.0.0.1:9000/devtools/page/392F5DBD64050CC78F083A8BEC09BC02",
+   "id": "392F5DBD64050CC78F083A8BEC09BC02",
+   "title": "",
+   "type": "worker",
+   "url": "",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:9000/devtools/page/392F5DBD64050CC78F083A8BEC09BC02"
+}, {
+   "description": "",
+   "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@caff226ed96db00961b7046a5dc9f8db004e7fbb/inspector.html?ws=127.0.0.1:9000/devtools/page/1B1E32BD84864CE6A8E5233B97947F89",
+   "id": "1B1E32BD84864CE6A8E5233B97947F89",
+   "title": "",
+   "type": "worker",
+   "url": "",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:9000/devtools/page/1B1E32BD84864CE6A8E5233B97947F89"
+}, {
+   "description": "",
+   "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@caff226ed96db00961b7046a5dc9f8db004e7fbb/inspector.html?ws=127.0.0.1:9000/devtools/page/5B16F1E890ADCDB9BADC601B3BBD27F7",
+   "id": "5B16F1E890ADCDB9BADC601B3BBD27F7",
+   "title": "",
+   "type": "worker",
+   "url": "",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:9000/devtools/page/5B16F1E890ADCDB9BADC601B3BBD27F7"
+}, {
+   "description": "",
+   "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@caff226ed96db00961b7046a5dc9f8db004e7fbb/inspector.html?ws=127.0.0.1:9000/devtools/page/037C839FA8A3329F531CF4197837146D",
+   "id": "037C839FA8A3329F531CF4197837146D",
+   "title": "",
+   "type": "worker",
+   "url": "",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:9000/devtools/page/037C839FA8A3329F531CF4197837146D"
+}, {
+   "description": "",
+   "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@caff226ed96db00961b7046a5dc9f8db004e7fbb/inspector.html?ws=127.0.0.1:9000/devtools/page/5BD2CBDF9DB17276D9A83C7DD7BC6B24",
+   "id": "5BD2CBDF9DB17276D9A83C7DD7BC6B24",
+   "title": "",
+   "type": "worker",
+   "url": "",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:9000/devtools/page/5BD2CBDF9DB17276D9A83C7DD7BC6B24"
+} ]
