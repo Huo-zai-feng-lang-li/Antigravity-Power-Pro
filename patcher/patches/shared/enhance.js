@@ -539,11 +539,12 @@ export function injectStyles() {
       background: rgba(251, 191, 36, 0.15) !important;
       color: #fbbf24 !important;
       border-color: rgba(251, 191, 36, 0.8) !important;
-      box-shadow: 0 0 12px rgba(251, 191, 36, 0.4) !important;
+      animation: Antigravity-Power-Pro-glow 2s ease-in-out infinite !important;
       transform: scale(1.05) !important;
     }
     .Antigravity-Power-Pro-enhance-btn:hover svg {
       animation: Antigravity-Power-Pro-spin 2s linear infinite !important;
+      filter: drop-shadow(0 0 5px rgba(251, 191, 36, 0.6)) !important;
     }
     .Antigravity-Power-Pro-enhance-btn svg {
       width: 14px !important;
@@ -555,6 +556,11 @@ export function injectStyles() {
     @keyframes Antigravity-Power-Pro-spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
+    }
+    @keyframes Antigravity-Power-Pro-glow {
+      0% { box-shadow: 0 0 8px rgba(251, 191, 36, 0.3), inset 0 0 5px rgba(251, 191, 36, 0.2); }
+      50% { box-shadow: 0 0 18px rgba(251, 191, 36, 0.6), inset 0 0 8px rgba(251, 191, 36, 0.3); }
+      100% { box-shadow: 0 0 8px rgba(251, 191, 36, 0.3), inset 0 0 5px rgba(251, 191, 36, 0.2); }
     }
     .Antigravity-Power-Pro-toast {
       position: fixed;
