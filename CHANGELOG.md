@@ -4,6 +4,44 @@
 
 ---
 
+## v2.6.24 (2026-05-13)
+
+### Bug 修复
+
+| Bug | 根因 | 修复文件 | 关键细节 |
+|-----|------|----------|----------|
+| 滚动按钮偏右 (根治) | `workbench.html` 同时加载 `cascade-panel.css` 和 `manager-panel.css`, 两者用相同 ID `#cascade-scroll-bottom-btn` 定义不同 `left` 值, 后加载的 `calc(50%+120px)` 覆盖 `50%` | `manager-panel/scroll-to-bottom.js` + `manager-panel.css` | Manager 按钮 ID 改为 `#manager-scroll-bottom-btn`, 彻底消除 CSS 选择器冲突 |
+| 安装器 systemPrompt 旧版 | `mergePromptEnhance` 无法区分旧版默认 prompt 与用户自定义 prompt, 旧版含 Markdown 格式(`## 标题`, `** 加粗`) 的默认值被保留 | `src/App.vue` | 引入 `SYSTEM_PROMPT_VERSION` 版本号机制, 磁盘版本 < 当前版本时自动重置 |
+
+### 关键备忘 (踩坑记录)
+
+#### 8. CSS ID 冲突: 多 CSS 文件共享 ID 的致命问题
+
+Manager 和 Cascade 的滚动按钮之前使用相同的 CSS ID `#cascade-scroll-bottom-btn`. 由于 Antigravity workbench.html 同时加载了 `cascade-panel.css` 和 `manager-panel.css`, 后加载的规则覆盖前者. 教训: **不同模块的 DOM 元素必须使用不同 ID, 即使它们"看似不会同时存在"**.
+
+通过 Playwright 远程调试 (`--remote-debugging-port=9000`) 抓取 computed style 确认了真实 left 值.
+
+#### 9. systemPrompt 版本号迁移机制
+
+在 `features.promptEnhance` 中新增 `systemPromptVersion` 字段:
+- 每次更新 `DEFAULT_SYSTEM_PROMPT` 时, 只需递增 `SYSTEM_PROMPT_VERSION` 常量
+- `mergePromptEnhance` 对比磁盘版本号: 旧版自动重置, 新版保留用户自定义
+- 不再依赖 Markdown 特征检测或文本比对
+
+---
+
+## v2.6.23 (2026-05-13)
+
+### Bug 修复
+
+| Bug | 根因 | 修复文件 | 关键细节 |
+|-----|------|----------|----------|
+| 滚动按钮偏右 | `.visible` 的 `transform` 缺少 `!important`, 被初始状态的 `!important` 覆盖, `translateX(-50%)` 居中失效 | `cascade-panel.css` + `manager-panel.css` | 给 `.visible` 的 transform 加 `!important` (后被 v2.6.24 的 ID 冲突根治取代) |
+| "请先输入" 误判 | `contenteditable` 元素无 `.value` 属性 (返回 `undefined`), `.textContent` 在某些 DOM 结构下为空 | `cascade-panel/scan.js` L402 | 优先使用 `innerText` 获取可见文本 |
+| 安装器 systemPrompt 旧版 (初修) | `mergePromptEnhance` 无条件保留磁盘 `systemPrompt` | `src/App.vue` | 添加与 DEFAULT_SYSTEM_PROMPT 的文本比对 (后被 v2.6.24 的版本号机制取代) |
+
+---
+
 ## v2.6.22 (2026-05-13)
 
 ### Bug 修复
