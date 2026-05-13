@@ -538,13 +538,20 @@ export function injectStyles() {
     .Antigravity-Power-Pro-enhance-btn:hover {
       background: rgba(251, 191, 36, 0.15) !important;
       color: #fbbf24 !important;
-      border-color: rgba(251, 191, 36, 0.8) !important;
-      animation: Antigravity-Power-Pro-glow 2s ease-in-out infinite !important;
+      border-color: rgba(251, 191, 36, 0.6) !important;
       transform: scale(1.05) !important;
     }
-    .Antigravity-Power-Pro-enhance-btn:hover svg {
-      animation: Antigravity-Power-Pro-spin 2s linear infinite !important;
-      filter: drop-shadow(0 0 5px rgba(251, 191, 36, 0.6)) !important;
+    .Antigravity-Power-Pro-enhance-btn.loading {
+      background: rgba(251, 191, 36, 0.25) !important;
+      color: #fbbf24 !important;
+      border-color: #fbbf24 !important;
+      animation: Antigravity-Power-Pro-glow 1.5s ease-in-out infinite !important;
+      transform: scale(1.1) !important;
+      box-shadow: 0 0 15px rgba(251, 191, 36, 0.5), inset 0 0 10px rgba(251, 191, 36, 0.3) !important;
+    }
+    .Antigravity-Power-Pro-enhance-btn.loading svg {
+      animation: Antigravity-Power-Pro-spin 0.8s linear infinite !important;
+      filter: drop-shadow(0 0 8px #fbbf24) !important;
     }
     .Antigravity-Power-Pro-enhance-btn svg {
       width: 14px !important;

@@ -13,7 +13,7 @@ import ManagerFeatureCard from "./components/ManagerFeatureCard.vue";
 import { getVersion } from "@tauri-apps/api/app";
 
 // 常量
-const APP_VERSION = ref("2.6.35");
+const APP_VERSION = ref("2.6.37");
 const GITHUB_URL = "https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro";
 // 每次更新 DEFAULT_SYSTEM_PROMPT 时递增此版本号，旧版 config 会自动重置
 const SYSTEM_PROMPT_VERSION = 2;
@@ -144,7 +144,7 @@ const managerFeatures = ref({
 // ============================================
 // 遗留配置过滤：旧 config.json 中的老默认值不应覆盖新版本默认值
 // ============================================
-const LEGACY_API_BASES = ["http://127.0.0.1:8045/v1", "http://localhost:8045/v1", ""];
+const LEGACY_API_BASES = ["http://127.0.0.1:8045/v1", "http://localhost:8045/v1"];
 const LEGACY_MODELS = ["gemini-3-flash", "gemini-2.0-flash", ""];
 
 function mergePromptEnhance(
@@ -240,19 +240,8 @@ async function confirmWindsurfInstall() {
   showWindsurfConfirm.value = false;
   if (!windsurfPath.value) return;
   try {
-    // 安装前清除遗留配置
-    windsurfFeatures.value.promptEnhance = mergePromptEnhance(
-      {
-        enabled: windsurfFeatures.value.promptEnhance.enabled,
-        provider: "openai",
-        apiBase: "https://api.freemodel.dev/v1",
-        apiKey: "fe_oa_d489e9161b01e3cb8954bf50c5a8cd80fdb4b25e5e8870f9",
-        model: "gpt-5.4-mini",
-        systemPrompt: DEFAULT_SYSTEM_PROMPT,
-        systemPromptVersion: SYSTEM_PROMPT_VERSION,
-      },
-      { ...windsurfFeatures.value.promptEnhance },
-    );
+    // 自动同步提示词配置到全局
+    managerFeatures.value.promptEnhance = { ...windsurfFeatures.value.promptEnhance };
 
     await invoke("install_windsurf_patch", {
       path: windsurfPath.value,
@@ -386,20 +375,6 @@ async function confirmInstall() {
   showConfirm.value = false;
   if (!antigravityPath.value) return;
   try {
-    // 安装前清除遗留配置：若检测到旧版默认值，强制重置为当前默认值
-    features.value.promptEnhance = mergePromptEnhance(
-      {
-        enabled: features.value.promptEnhance.enabled,
-        provider: "openai",
-        apiBase: "https://api.freemodel.dev/v1",
-        apiKey: "fe_oa_d489e9161b01e3cb8954bf50c5a8cd80fdb4b25e5e8870f9",
-        model: "gpt-5.4-mini",
-        systemPrompt: DEFAULT_SYSTEM_PROMPT,
-        systemPromptVersion: SYSTEM_PROMPT_VERSION,
-      },
-      { ...features.value.promptEnhance },
-    );
-
     // 自动同步提示词配置到 Manager
     managerFeatures.value.promptEnhance = { ...features.value.promptEnhance };
 
