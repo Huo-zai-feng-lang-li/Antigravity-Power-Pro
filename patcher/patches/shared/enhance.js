@@ -542,6 +542,9 @@ export function injectStyles() {
       box-shadow: 0 0 12px rgba(251, 191, 36, 0.4) !important;
       transform: scale(1.05) !important;
     }
+    .Antigravity-Power-Pro-enhance-btn:hover svg {
+      animation: Antigravity-Power-Pro-spin 2s linear infinite !important;
+    }
     .Antigravity-Power-Pro-enhance-btn svg {
       width: 14px !important;
       height: 14px !important;
