@@ -1,32 +1,36 @@
-# 最新接续状态 (2026-05-13 13:25)
+# 最新接续状态 (2026-05-13 17:24)
 
 ## 核心进展
-- **v2.6.20 已 tag 并推送**，CI 自动构建 EXE 中。
-- **上下文采集修复闭环**：通过 CDP 枚举 `.antigravity-agent-side-panel` 内所有 `.overflow-y-auto` 元素，实测确认 `[0]` 号元素（class 含 `grow flex-col`）为真实对话滚动区，选择器已更新为 `.antigravity-agent-side-panel .h-full.overflow-y-auto.grow`。
-- **安装前遗留配置清除**：`confirmInstall` 和 `confirmWindsurfInstall` 均在调用 Rust 前执行 `mergePromptEnhance` 强制重置旧版 `localhost:8045`、`gemini-3-flash` 等遗留值。
-- **废弃脚本全清**：`tests/scripts/` 下的 40+ diag/debug 文件已删除，仅保留 `cdp-utils.js` 和 `connect-antigravity.js`。
+- v2.6.22 已推送并打 tag, GitHub Actions CI 正在自动构建 EXE (`.github/workflows/release.yml` 触发于 push tag `v*`)
+- 修复了 enhance.js 全量重写后遗漏的 3 个关键导出 (`init`, `isEnabled`, `setInputValue`), 这是提示词增强按钮消失的根因
+- 修复了 cascade-panel.css 中 `transform` 属性重复定义导致滚动按钮不居中的 CSS Bug
+- 同步了 App.vue 中的系统提示词为纯文本版本 (移除 Markdown 语法要求), 并修复了反引号未转义导致的 TS 编译错误
 
 ## 变更决策
-
-| 文件 | 变更内容 |
-|------|----------|
-| `patcher/patches/shared/enhance.js` | CONVERSATION_SELECTORS 更新为 CDP 实测精准值；删除重复 `isAnthropicAPI` 和未使用 `isOpenAIAPI` |
-| `patcher/patches/cascade-panel/cascade-panel.css` | 滚动按钮 `left/right/transform` 加 `!important` |
-| `patcher/src/App.vue` | `confirmInstall` / `confirmWindsurfInstall` 安装前调用 `mergePromptEnhance` 清除遗留配置；`checkPatchStatus` 读取旧配置时过滤遗留值 |
-| `README.md` | 版本升至 v2.6.20，IDE 支持升至 v1.23.2，新增手动定制 PowerShell 章节 |
-| `tests/scripts/` | 删除全部临时诊断脚本 |
+- **enhance.js 全量重写**: 原文件因工具处理 Windows CRLF 换行符时字节偏移错位, 导致代码逻辑混乱. 最终使用 `write_to_file` 全量重建, 但遗漏了 `scan.js` 依赖的 3 个导出函数. 已补全
+- **CSS transform 合并**: `#cascade-scroll-bottom-btn` 规则块内 `transform` 被定义了两次 (第142行和第164行), 后者覆盖前者且缺少 `!important`, 导致 `translateX(-50%)` 居中失效. 已合并为末尾一处带 `!important` 的声明
+- **系统提示词双端同步**: `enhance.js` (IDE 内运行时) 和 `App.vue` (安装器 UI 展示) 的 `DEFAULT_SYSTEM_PROMPT` 必须保持一致. 两者都已更新为禁止 Markdown 符号的纯文本版本
+- **版本号策略**: force-push tag 不一定能触发 GitHub Actions 重新构建, 因此从 v2.6.21 升级到 v2.6.22 以确保干净触发 CI
 
 ## 待办事项 (Next Steps)
-- [ ] **等待用户实测**：用最新 EXE 安装后，确认：1) 提示词增强默认 freemodel.dev；2) 滚动按钮居中；3) 上下文采集有内容传送给 LLM
-- [ ] **Windsurf 侧上下文采集**：`enhance.js` 的 CONVERSATION_SELECTORS 目前仅针对 Antigravity DOM，Windsurf 的选择器是否有效，需用 Windsurf CDP 单独验证
-- [ ] **回显输入框验证**：`setInputValue` 已实现，但 `[contenteditable]` 的 nativeInputValueSetter 注入路径在新版 IDE 下需实际测试确认有效
+- [ ] **验证 v2.6.22 构建**: 等 GitHub Actions 完成构建 (~5-10分钟), 从 Releases 下载新版 EXE
+- [ ] **功能验证 (安装后)**: 1) 提示词增强按钮是否出现; 2) 滚动按钮是否居中; 3) 增强后输出是否为纯文本 (无 `**`/`##`)
+- [ ] **Git 清理**: 本地可能残留已取消的 tauri:build 中间产物 (`patcher/src-tauri/target/`), 可忽略或手动清理
+- [ ] **旧 tag 清理**: v2.6.21 tag 已无意义, 可考虑删除只保留 v2.6.22 + v2.6.20 + v2.6.18
 
 ## 关键上下文
 - 目录: `c:\Users\Administrator\Desktop\超级文件\AI-IDE\AI\Antigravity-Power-Pro`
 - 主要文件:
-  - `patcher/patches/shared/enhance.js` (上下文采集核心)
-  - `patcher/src/App.vue` (安装器配置合并逻辑)
-  - `patcher/patches/cascade-panel/cascade-panel.css` (滚动按钮样式)
-- CDP 调试命令: `D:\Antigravity\Antigravity.exe --remote-debugging-port=9000`
-- CDP 实测关键发现: `.antigravity-agent-side-panel` 存在于 workbench.html，无 iframe 隔离
-- 当前版本: `v2.6.20` (tag 已推送)
+  - `patcher/patches/shared/enhance.js` - 提示词增强核心模块 (全量重写版)
+  - `patcher/patches/cascade-panel/cascade-panel.css` - 滚动按钮样式
+  - `patcher/src/App.vue` - 安装器 UI + 系统提示词定义
+  - `patcher/patches/cascade-panel/scan.js` - DOM 扫描调度器, 是 enhance.js 的调用方 (不要修改)
+- CI 配置: `.github/workflows/release.yml` - push tag `v*` 触发 Windows EXE 自动构建
+- 调试环境: `D:\Antigravity\Antigravity.exe --remote-debugging-port=9000`
+- API 配置: Base=`https://api.freemodel.dev/v1`, Model=`gpt-5.4-mini`, Key=`fe_oa_d489e9161b01e3cb8954bf50c5a8cd80fdb4b25e5e8870f9`
+
+## 教训备忘
+- `enhance.js` 的导出接口必须与 `scan.js` 的 import 调用严格对齐: `init`, `isEnabled`, `enhance`, `createEnhanceButton`, `injectStyles`, `showErrorModal`, `showResultModal`, `getConfig`, `triggerEnhance`, `setInputValue`
+- 用编辑工具修改含大量中文的文件时, CRLF 字节偏移问题可能导致严重损坏, 优先使用 `write_to_file` 全量重写或 Node 脚本替换
+- CSS 同一规则块内重复属性, 后者覆盖前者 (与 `!important` 无关, 因为同一块内 specificity 相同)
+- force-push tag 不保证触发 GitHub Actions, 稳妥做法是 bump 新版本号
