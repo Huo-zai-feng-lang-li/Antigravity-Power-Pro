@@ -104,6 +104,63 @@ const CONVERSATION_SELECTORS = [
   "[class*=\"conversation\"]",
 ];
 
+// ============================================
+// Proxy Fetch Logic (Bypass vscode-file:// protocol restrictions)
+// ============================================
+
+const proxyChannel = new BroadcastChannel('Antigravity_Fetch_Proxy');
+
+// Listen for proxy requests
+proxyChannel.onmessage = async (e) => {
+    const { id, type, url, options } = e.data || {};
+    if (type === 'FETCH_REQUEST') {
+        // Only windows that can successfully fetch should respond. 
+        // We know Launchpad (jetski) works.
+        if (!window.location.href.includes('workbench-jetski-agent.html')) return;
+        
+        console.log("[PromptEnhance] Proxy serving request:", url);
+        try {
+            const resp = await fetch(url, options);
+            const ok = resp.ok;
+            const status = resp.status;
+            const data = await resp.json().catch(() => ({}));
+            proxyChannel.postMessage({ id, type: 'FETCH_RESPONSE', ok, status, data });
+        } catch (error) {
+            console.error("[PromptEnhance] Proxy fetch error:", error);
+            proxyChannel.postMessage({ id, type: 'FETCH_RESPONSE', error: error.message });
+        }
+    }
+};
+
+/**
+ * Proxy Fetch via BroadcastChannel fallback
+ */
+function broadcastFetch(url, options) {
+    return new Promise((resolve, reject) => {
+        const id = Math.random().toString(36).substring(2);
+        const timeout = setTimeout(() => {
+            proxyChannel.removeEventListener('message', handler);
+            reject(new Error("Proxy Fetch Timeout (Is Launchpad open?)"));
+        }, 10000);
+
+        const handler = (e) => {
+            if (e.data && e.data.id === id && e.data.type === 'FETCH_RESPONSE') {
+                clearTimeout(timeout);
+                proxyChannel.removeEventListener('message', handler);
+                if (e.data.error) reject(new Error(e.data.error));
+                else resolve({
+                    ok: e.data.ok,
+                    status: e.data.status,
+                    json: async () => e.data.data
+                });
+            }
+        };
+
+        proxyChannel.addEventListener('message', handler);
+        proxyChannel.postMessage({ id, type: 'FETCH_REQUEST', url, options });
+    });
+}
+
 const NOISE_SELECTORS = [
   ".model-selector-container",
   ".chat-input-container",
@@ -187,7 +244,8 @@ async function callOpenAIAPI(prompt, contextPrefix = "") {
     ? `上下文信息:\n${contextPrefix}\n用户原始提示词:\n${prompt.trim()}`
     : prompt.trim();
 
-  const response = await fetch(`${config.apiBase}/chat/completions`, {
+  const url = `${config.apiBase}/chat/completions`;
+  const options = {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -201,7 +259,22 @@ async function callOpenAIAPI(prompt, contextPrefix = "") {
       ],
       temperature: 0.7,
     }),
-  });
+  };
+
+  let response;
+  try {
+    response = await fetch(url, options);
+  } catch (err) {
+    // If local fetch fails (protocol restriction), try proxy via Launchpad
+    if (err.message.includes('fetch') || err.name === 'TypeError') {
+      console.warn("[PromptEnhance] Local fetch failed, trying proxy via Launchpad...");
+      response = await broadcastFetch(url, options).catch(proxyErr => {
+        throw new Error(`API 请求失败: ${err.message}. 请确保 Launchpad 已打开 (Ctrl+E)。`);
+      });
+    } else {
+      throw err;
+    }
+  }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -220,7 +293,8 @@ async function callAnthropicAPI(prompt, contextPrefix = "") {
     ? `上下文信息:\n${contextPrefix}\n用户原始提示词:\n${prompt.trim()}`
     : prompt.trim();
 
-  const response = await fetch(`${config.apiBase}/messages`, {
+  const url = `${config.apiBase}/messages`;
+  const options = {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -233,7 +307,21 @@ async function callAnthropicAPI(prompt, contextPrefix = "") {
       system: config.systemPrompt || DEFAULT_SYSTEM_PROMPT,
       messages: [{ role: "user", content: userMessage }],
     }),
-  });
+  };
+
+  let response;
+  try {
+    response = await fetch(url, options);
+  } catch (err) {
+    if (err.message.includes('fetch') || err.name === 'TypeError') {
+      console.warn("[PromptEnhance] Local fetch failed, trying proxy via Launchpad...");
+      response = await broadcastFetch(url, options).catch(proxyErr => {
+        throw new Error(`Anthropic API 请求失败: ${err.message}. 请确保 Launchpad 已打开 (Ctrl+E)。`);
+      });
+    } else {
+      throw err;
+    }
+  }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -395,45 +483,57 @@ export function injectStyles() {
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
-      width: 26px !important;
-      height: 26px !important;
+      width: 28px !important;
+      height: 28px !important;
       padding: 0 !important;
-      margin: -6px 4px 0 0 !important;
-      background: rgba(255, 255, 255, 0.1) !important;
-      border: 1px solid rgba(255, 255, 255, 0.1) !important;
-      border-radius: 4px !important;
-      color: rgba(255, 255, 255, 0.7) !important;
+      margin: 0 6px !important;
+      background: rgba(30, 30, 30, 0.8) !important;
+      border: 1px solid rgba(251, 191, 36, 0.4) !important;
+      border-radius: 50% !important;
+      color: rgba(251, 191, 36, 0.8) !important;
       cursor: pointer !important;
-      transition: all 0.2s ease !important;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
       flex-shrink: 0 !important;
+      backdrop-filter: blur(4px) !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+      outline: none !important;
     }
     .Antigravity-Power-Pro-enhance-btn:hover {
-      background: rgba(251, 191, 36, 0.2) !important;
+      background: rgba(251, 191, 36, 0.15) !important;
       color: #fbbf24 !important;
-      border-color: rgba(251, 191, 36, 0.4) !important;
+      border-color: rgba(251, 191, 36, 0.8) !important;
+      box-shadow: 0 0 12px rgba(251, 191, 36, 0.4) !important;
+      transform: scale(1.05) !important;
+    }
+    .Antigravity-Power-Pro-enhance-btn svg {
+      width: 14px !important;
+      height: 14px !important;
     }
     .Antigravity-Power-Pro-toast {
       position: fixed;
-      bottom: 100px;
+      bottom: 120px;
       left: 50%;
       transform: translateX(-50%) translateY(20px);
-      padding: 10px 20px;
-      border-radius: 8px;
+      padding: 12px 24px;
+      border-radius: 12px;
       font-size: 13px;
       font-weight: 500;
-      z-index: 99999;
+      z-index: 100000;
       opacity: 0;
-      transition: all 0.2s ease;
+      transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
       pointer-events: none;
       white-space: nowrap;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.2);
     }
     .Antigravity-Power-Pro-toast.show {
       opacity: 1;
       transform: translateX(-50%) translateY(0);
     }
-    .Antigravity-Power-Pro-toast-info { background: #3b82f6; color: white; }
-    .Antigravity-Power-Pro-toast-success { background: #22c55e; color: white; }
-    .Antigravity-Power-Pro-toast-error { background: #ef4444; color: white; }
+    .Antigravity-Power-Pro-toast-info { background: rgba(30, 30, 30, 0.9); color: #3b82f6; }
+    .Antigravity-Power-Pro-toast-success { background: rgba(30, 30, 30, 0.9); color: #22c55e; }
+    .Antigravity-Power-Pro-toast-error { background: rgba(30, 30, 30, 0.9); color: #ef4444; }
   `;
   document.head.appendChild(style);
 }

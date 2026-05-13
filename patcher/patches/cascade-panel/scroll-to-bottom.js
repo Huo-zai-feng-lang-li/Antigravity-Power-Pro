@@ -83,6 +83,10 @@ export const init = () => {
         const target = findScrollEl();
         if (target) target.scrollTo({ top: target.scrollHeight, behavior: "instant" });
       });
+
+      // 清除 manager-panel 可能注入的重复按钮
+      const dup = document.getElementById("manager-scroll-bottom-btn");
+      if (dup) dup.remove();
     }
 
     const update = () => {
