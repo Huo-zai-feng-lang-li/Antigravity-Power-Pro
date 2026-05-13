@@ -538,6 +538,10 @@ export function injectStyles() {
       border-color: rgba(251, 191, 36, 0.6) !important;
       transform: scale(1.05) !important;
     }
+    .Antigravity-Power-Pro-enhance-btn:hover svg {
+      animation: Antigravity-Power-Pro-spin 2s linear infinite !important;
+      filter: drop-shadow(0 0 5px rgba(251, 191, 36, 0.4)) !important;
+    }
     .Antigravity-Power-Pro-enhance-btn.loading {
       background: rgba(251, 191, 36, 0.25) !important;
       color: #fbbf24 !important;
