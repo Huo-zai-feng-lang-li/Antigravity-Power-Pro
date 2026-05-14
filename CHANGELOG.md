@@ -4,6 +4,16 @@
 
 ---
 
+## v2.6.43 (2026-05-14)
+
+### 侧边栏布局深度校准 (Sidebar Layout Calibration)
+
+| 改进项 | 详情 | 影响范围 |
+|-----|------|----------|
+| **视觉负偏移** | 将侧边栏按钮高度从 `2px` 下调至 `-2px`。通过穿透容器内边距边界，提供明显的下划视觉反馈。 | `cascade-panel/scan.js` |
+| **溢出裁切解除** | 显式为父容器开启 `overflow: visible !important`。防止按钮在下移过程中被容器边界裁切导致的“位移失效”假象。 | `cascade-panel/scan.js` |
+
+
 ## v2.6.42 (2026-05-14)
 
 ### 输入回显机制重构 (Echo Redundancy Elimination)
