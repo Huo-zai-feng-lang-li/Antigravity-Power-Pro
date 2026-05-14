@@ -4,6 +4,19 @@
 
 ---
 
+## v2.6.42 (2026-05-14)
+
+### 输入回显机制重构 (Echo Redundancy Elimination)
+
+这是针对在某些 IDE 构建版本中出现的“增强内容重复回显” Bug 的彻底修复方案。
+
+| 修复项 | 术语 | 根因与动作 |
+|-----|-----|----------|
+| **消除二次派发** | `Event De-duplication` | 移除了手动触发的 `beforeinput` 和 `input` 事件。`execCommand` 本身会触发原生事件，手动派发会导致框架接收到两次指令。 |
+| **精简赋值链路** | `Atomic Injection` | 移除了 `nativeSetter` 和冗余的 DOM 操作。现在遵循：Range 精准全选 -> `insertText` 覆盖。 |
+| **选区作用域修复** | `Selection Scoping` | 弃用 `document.execCommand("selectAll")`（作用于全局），改用 `Range.selectNodeContents` 精确锁定输入框。 |
+
+
 ## v2.6.41 (2026-05-14)
 
 ### 布局基准修复 (Layout Base Fix)
