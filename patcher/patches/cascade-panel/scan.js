@@ -428,9 +428,9 @@ const initPromptEnhanceButton = async () => {
   parent.style.setProperty('position', 'relative', 'important');
   parent.style.setProperty('overflow', 'visible', 'important');
   
-  // 逐个属性设置以确保最高优先级，设为离底 2px 实现视觉下划
+  // 逐个属性设置以确保最高优先级，设为离底 4px 实现视觉下划
   btn.style.setProperty('position', 'absolute', 'important');
-  btn.style.setProperty('bottom', '2px', 'important');
+  btn.style.setProperty('bottom', '4px', 'important');
   btn.style.setProperty('right', '12px', 'important');
   btn.style.setProperty('z-index', '999', 'important');
   btn.style.setProperty('margin', '0', 'important');
