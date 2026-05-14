@@ -79,4 +79,10 @@
 - **几何形状**: 功能按键 (如滚动到底部) 统一使用 **圆形 (Circular)**, 投影需包含金色发光效果 (`rgba(251, 191, 36, 0.4)`).
 - **多入口同步**: 修改侧边栏 (`cascade-panel.css`) 时, 必须同步更新 Manager 窗口 (`manager-panel.css`) 的视觉表现.
 - **Shadow DOM 穿透**: 注入 UI 到 IDE 暗层时, 必须使用 `querySelectorAllDeep` 逻辑, 否则在复杂的 Shadow DOM 容器 (如侧边栏输入框) 中会失效.
-- **防样式污染**: 必须添加 `outline: none !important` 消除 IDE 默认的蓝色聚焦边框.
+## v2.6.46+ 架构隔离红线 (关键防线)
+
+- **环境主权隔离**: `manager-panel/scan.js` 禁止干预侧边栏元素。必须包含 `if (input.closest('.antigravity-agent-side-panel')) return;` 隔离逻辑，确保侧边栏定位由 `cascade-panel/scan.js` 唯一控制。
+- **定位权下放**: `shared/enhance.js` 仅负责创建 UI 组件与 API 交互，**禁止**在共享模块内硬编码 `bottom/right/position` 等定位属性。所有位置参数必须在各自页面的 `scan.js` 中通过 `setProperty(..., 'important')` 动态注入。
+- **原子化注入准则**: 提示词回显必须采用 `Range` 选取 + `execCommand('insertText')` 的原子路径。严禁手动派发 `beforeinput` 或 `input` 事件，以防止在复杂的 IDE 监听环境下触发双倍回显 Bug。
+- **容器溢出保障**: 注入绝对定位按钮时，必须强制父容器 `overflow: visible !important`，防止按钮位移时被宿主容器意外截断。
+

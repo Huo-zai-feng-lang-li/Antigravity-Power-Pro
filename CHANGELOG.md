@@ -4,6 +4,16 @@
 
 ---
 
+## v2.6.46 (2026-05-14)
+
+### 侧边栏布局最终微调 (Final Sidebar Micro-adjustment)
+
+| 改进项 | 详情 | 影响范围 |
+|-----|------|----------|
+| **侧边栏高度微调** | 将侧边栏按钮高度从 `2px` 精确微调至 **`4px`**，以适配 IDE 侧边栏的视觉中心。 | `cascade-panel/scan.js` |
+| **逻辑隔离固化** | 维持 Manager 端的 `8px` 高度，并锁定针对 `side-panel` 的屏蔽逻辑，确保两端样式互不干扰。 | `manager-panel/scan.js` |
+
+
 ## v2.6.43 (2026-05-14)
 
 ### 侧边栏布局深度校准 (Sidebar Layout Calibration)

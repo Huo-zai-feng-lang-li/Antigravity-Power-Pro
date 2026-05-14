@@ -129,6 +129,7 @@ const scan = () => {
                 if (window.getComputedStyle(container).position === 'static') {
                     container.style.setProperty('position', 'relative', 'important');
                 }
+                container.style.setProperty('overflow', 'visible', 'important');
 
                 btn.style.setProperty('position', 'absolute', 'important');
                 btn.style.setProperty('right', '12px', 'important');

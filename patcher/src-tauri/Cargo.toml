@@ -1,6 +1,6 @@
 [package]
 name = "Antigravity-Power-Pro"
-version = "2.6.46"
+version = "2.6.47"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"
