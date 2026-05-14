@@ -373,10 +373,11 @@ async function setInputValue(input, value) {
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
   const normalizedValue = value.trim();
 
-  // 1. 优先使用 execCommand 方法 (保持撤销历史，兼容框架事件)
+  // 1. 优先使用 execCommand (保持撤销历史, execCommand 自身会触发 beforeinput/input 事件)
   try {
     const sel = window.getSelection();
     if (input.contentEditable === "true") {
+      // Range 精准选取输入框内所有内容, 不使用 document.execCommand("selectAll") 避免选区逃逸
       const range = document.createRange();
       range.selectNodeContents(input);
       sel.removeAllRanges();
@@ -384,35 +385,19 @@ async function setInputValue(input, value) {
     } else {
       input.select();
     }
-    
-    // 模拟真实输入行为
-    input.dispatchEvent(new InputEvent("beforeinput", { 
-      inputType: "insertText", 
-      data: value, 
-      bubbles: true, 
-      cancelable: true 
-    }));
 
-    // 原子操作：全选并插入，替换旧内容
-    document.execCommand("selectAll", false, null);
+    // 直接插入, execCommand 会自动触发原生 beforeinput + input 事件, 无需手动派发
     const execSuccess = document.execCommand("insertText", false, value);
 
     if (execSuccess) {
-      input.dispatchEvent(new InputEvent("input", { 
-        inputType: "insertText", 
-        data: value, 
-        bubbles: true 
-      }));
-      
-      await sleep(100);
-      // 如果已经成功设置成功，则直接退出，防止 double echo
+      await sleep(150);
       if (getInputValue(input).trim() === normalizedValue) return true;
     }
   } catch (e) {
     console.warn("[PromptEnhance] execCommand failed, falling back...");
   }
 
-  // 2. Fallback: 直接全量覆盖 (针对无法响应 execCommand 的容器)
+  // 2. Fallback: 直接 DOM 覆盖 (针对无法响应 execCommand 的容器)
   console.log("[PromptEnhance] Using direct DOM fallback");
   if (input.contentEditable === "true") {
     input.innerText = value;
@@ -420,19 +405,10 @@ async function setInputValue(input, value) {
     input.value = value;
   }
 
-  // 3. Fallback: 原生 Prototype Setter (穿透 React/Vue 拦截)
-  try {
-    const proto = input.contentEditable === "true" ? window.HTMLElement.prototype : window.HTMLTextAreaElement.prototype;
-    const prop = input.contentEditable === "true" ? "innerText" : "value";
-    const nativeSetter = Object.getOwnPropertyDescriptor(proto, prop)?.set;
-    if (nativeSetter) nativeSetter.call(input, value);
-  } catch (e) {}
-
-  // 强制触发通用同步事件
+  // 仅在 Fallback 路径触发同步事件 (execCommand 路径已自带, 不重复)
   input.dispatchEvent(new Event("input", { bubbles: true }));
-  input.dispatchEvent(new Event("change", { bubbles: true }));
 
-  await sleep(100);
+  await sleep(150);
   return getInputValue(input).trim() === normalizedValue;
 }
 
