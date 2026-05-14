@@ -4,6 +4,18 @@
 
 ---
 
+## v2.6.48 (2026-05-14)
+
+### 侧边栏注入崩溃修复 (Sidebar Injection Fix)
+
+| 改进项 | 详情 | 影响范围 |
+|-----|------|----------|
+| **崩溃修复** | 修复 `cascade-panel/scan.js` 中 `searchRoot` 变量未定义的 ReferenceError，恢复侧边栏增强按钮显示。 | `cascade-panel/scan.js` |
+| **架构隔离对齐** | 配合 v2.6.47 引入的隔离红线，同步为 Manager 容器增加 `overflow: visible` 强制属性。 | `manager-panel/scan.js` |
+| **版本同步** | 修正了全域 5 处版本号的不一致。 | 项目全局 |
+
+---
+
 ## v2.6.46 (2026-05-14)
 
 ### 侧边栏布局最终微调 (Final Sidebar Micro-adjustment)
