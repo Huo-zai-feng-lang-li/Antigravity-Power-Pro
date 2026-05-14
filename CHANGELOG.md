@@ -14,7 +14,18 @@
 | **性能收益** | 在侧边栏存在大量聊天历史时，扫描耗时降低约 40%-60%。 | `scan.js` 全系列 |
 ---
 
+## v2.6.52 (2026-05-15)
+
+### Manager 面板滚动按钮修复 (Manager Scroll Button Fix)
+
+| 修复项 | 根因 | 影响范围 |
+|--------|------|----------|
+| **滚动按钮不显示** | `scroll-to-bottom.js` 的 `findRoot()` 优先匹配 `.antigravity-agent-side-panel`，Manager 窗口 DOM 中同样存在此元素，导致按钮挂载到侧边栏容器后在侧边栏内找不到 Manager 滚动区，按钮永不显示。去除侧边栏优先逻辑，Manager 专用路径直接找 `.jetski-agent-container` 等容器。 | `manager-panel/scroll-to-bottom.js` |
+
+---
+
 ## v2.6.51 (2026-05-15)
+
 
 ### Windsurf 面板输入/回显修复 (Windsurf Input & Result Fix)
 

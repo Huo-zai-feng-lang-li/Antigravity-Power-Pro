@@ -9,19 +9,12 @@
 const BTN_ID = "manager-scroll-bottom-btn";
 const THRESHOLD = 100;
 
-/** 查找合适的挂载根节点 */\r
-const findRoot = () => {\r
-  // 1. 优先 Cascade 侧边栏\r
-  const cascade = document.querySelector(".antigravity-agent-side-panel");\r
-  if (cascade) return cascade;\r
-  \r
-  // 2. 针对 Manager 窗口，寻找聊天主体容器（避开侧边栏偏差）\r
-  const managerContainer = document.querySelector(".jetski-agent-container") || \r
-                           document.querySelector(".antigravity-manager-container") ||\r
-                           document.querySelector(".monaco-workbench") || \r
-                           document.body;\r
-  return managerContainer;\r
-};
+/** 查找挂载根节点 — Manager 专用，不匹配侧边栏 */
+const findRoot = () =>
+  document.querySelector(".jetski-agent-container") ||
+  document.querySelector(".antigravity-manager-container") ||
+  document.querySelector(".monaco-workbench") ||
+  document.body;
 
 /** 查找主滚动容器：增加隔离与排除逻辑 */
 const findScrollEl = (root) => {
