@@ -352,7 +352,12 @@ function querySelectorAllDeep(selector, root = document) {
   return list;
 }
 
-const initPromptEnhanceButton = async () => {
+/**
+ * 提示词增强按钮初始化
+ * 在输入框区域注入增强按钮
+ * @param {Element} root
+ */
+const initPromptEnhanceButton = async (root = getRoot()) => {
   // 全局单例: 已注入则跳过
   if (document.querySelector(`.${ENHANCE_BTN_CLASS}`)) return;
 
@@ -371,8 +376,8 @@ const initPromptEnhanceButton = async () => {
   if (!enhanceModule.isEnabled()) return;
 
   // 使用 querySelectorAllDeep 穿透 Shadow DOM 查找输入框
-  const inputs = querySelectorAllDeep('[role="textbox"][contenteditable="true"]', searchRoot);
-  const input = inputs.length > 0 ? inputs[0] : searchRoot.querySelector('[contenteditable="true"]');
+  const inputs = querySelectorAllDeep('[role="textbox"][contenteditable="true"]', root);
+  const input = inputs.length > 0 ? inputs[0] : root.querySelector('[contenteditable="true"]');
 
   if (!input) {
     console.warn("[PromptEnhance] 侧边栏内未找到输入框");
@@ -477,7 +482,7 @@ const init = () => {
 
   // 初始化提示词增强按钮
   if (config.promptEnhance?.enabled) {
-    initPromptEnhanceButton();
+    initPromptEnhanceButton(root);
   }
 
   const observer = new MutationObserver((mutations) => {
@@ -502,7 +507,7 @@ const init = () => {
 
     // 检查是否需要重新注入增强按钮
     if (config.promptEnhance?.enabled) {
-      initPromptEnhanceButton();
+      initPromptEnhanceButton(root);
     }
   });
 
