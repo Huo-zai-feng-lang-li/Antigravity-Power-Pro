@@ -4,6 +4,17 @@
 
 ---
 
+## v2.6.41 (2026-05-14)
+
+### 布局基准修复 (Layout Base Fix)
+
+| 改进项 | 详情 | 影响范围 |
+|-----|------|----------|
+| **定位锚定锁定** | 修正了侧边栏按钮无法下移的问题。显式为 `.antigravity-textarea-wrapper` 注入 `position: relative !important`，确保按钮的 `bottom` 计算拥有合法的物理参照系。 | `cascade-panel/scan.js` |
+| **坐标精细化** | 将侧边栏按钮 `bottom` 调整为 `2px`，通过抵消容器内边距实现真正的视觉沉降。 | `cascade-panel/scan.js` |
+| **权重增强** | 使用 `setProperty(..., 'important')` 模式重写所有内联样式，确保无视 IDE 默认样式的干扰。 | `cascade-panel/scan.js` |
+
+
 ## v2.6.39 (2026-05-14)
 
 ### 交互分级调优 (Interaction Layer Polish)
