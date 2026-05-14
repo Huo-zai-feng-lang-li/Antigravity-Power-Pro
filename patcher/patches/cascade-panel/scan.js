@@ -424,12 +424,13 @@ const initPromptEnhanceButton = async () => {
     }
   });
 
-  // 强制为父容器开启定位基准，必须加 !important 否则可能被宿主样式覆盖
+  // 强制为父容器开启定位基准并允许溢出显示，确保按钮下移不被裁剪
   parent.style.setProperty('position', 'relative', 'important');
+  parent.style.setProperty('overflow', 'visible', 'important');
   
-  // 逐个属性设置以确保最高优先级，下移 4px -> 设为离底 2px (补偿容器可能的 padding)
+  // 逐个属性设置以确保最高优先级，使用负偏移 (-2px) 实现真正的视觉下划
   btn.style.setProperty('position', 'absolute', 'important');
-  btn.style.setProperty('bottom', '2px', 'important');
+  btn.style.setProperty('bottom', '-2px', 'important');
   btn.style.setProperty('right', '12px', 'important');
   btn.style.setProperty('z-index', '999', 'important');
   btn.style.setProperty('margin', '0', 'important');
