@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro/releases">
-    <img src="https://img.shields.io/badge/version-v2.6.43-gold?style=flat-square" alt="版本">
+    <img src="https://img.shields.io/badge/version-v2.6.44-gold?style=flat-square" alt="版本">
 
   </a>
   <a href="https://codeium.com/antigravity">
@@ -93,7 +93,7 @@
 
 | 补丁版本    | 支持 IDE 版本      | 发布日期   | 重大更新内容                                                                                         |
 | :---------- | :----------------- | :--------- | :--------------------------------------------------------------------------------------------------- |
-| **v2.6.43** | v1.23.2 / Windsurf | 2026-05-14 | **修正**: 侧边栏按钮深度下移 (使用负偏移 -2px 并解除容器溢出裁剪) |
+| **v2.6.44** | v1.23.2 / Windsurf | 2026-05-14 | **修正**: 侧边栏按钮深度下移 (使用负偏移 -2px 并解除容器溢出裁剪) |
 | **v2.6.42** | v1.23.2 / Windsurf | 2026-05-14 | **根治**: 提示词回显多倍重复 Bug (移除冗余事件驱动 & 精简注入链) |
 | **v2.6.41** | v1.23.2 / Windsurf | 2026-05-14 | **修复**: 侧边栏按钮下移失效问题 (强制锚定父容器定位基准) |
 | **v2.6.40** | v1.23.2 / Windsurf | 2026-05-14 | **微调**: 侧边栏按钮位置下移 4px (差异化高度对齐) |

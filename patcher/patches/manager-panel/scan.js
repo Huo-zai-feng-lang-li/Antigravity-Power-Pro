@@ -40,6 +40,11 @@ const scan = () => {
 
     inputAreas.forEach(input => {
         try {
+            // 隔离侧边栏：侧边栏由专门的 cascade-panel/scan.js 处理，避免逻辑冲突
+            if (input.closest('.antigravity-agent-side-panel')) {
+              return;
+            }
+
             // 终端过滤 (针对 Manager 窗口优化：仅排除真正的命令行，保留输入框)
             if (input.closest('.terminal-container') || 
                 input.closest('.xterm-helper-textarea') ||
@@ -127,7 +132,7 @@ const scan = () => {
 
                 btn.style.setProperty('position', 'absolute', 'important');
                 btn.style.setProperty('right', '12px', 'important');
-                btn.style.setProperty('bottom', '8px', 'important');
+                btn.style.setProperty('bottom', '2px', 'important');
                 btn.style.setProperty('z-index', '999', 'important');
                 container.appendChild(btn);
             }
