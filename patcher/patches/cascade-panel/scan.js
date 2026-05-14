@@ -333,7 +333,8 @@ let enhanceModule = null;
  * @returns {Element|null}
  */
 function findCascadeInput() {
-  const inputs = querySelectorAllDeep(INPUT_SELECTOR);
+  const root = getRoot();
+  const inputs = querySelectorAllDeep(INPUT_SELECTOR, root);
   return inputs.length > 0 ? inputs[0] : null;
 }
 
@@ -390,7 +391,7 @@ const initPromptEnhanceButton = async (root = getRoot()) => {
   // 创建增强按钮
   const btn = enhanceModule.createEnhanceButton(async () => {
     // 重新获取当前活跃输入框 (穿透 Shadow DOM)
-    const currentActiveInputs = querySelectorAllDeep('[role="textbox"][contenteditable="true"]');
+    const currentActiveInputs = querySelectorAllDeep('[role="textbox"][contenteditable="true"]', getRoot());
     const currentInput = currentActiveInputs.length > 0 ? currentActiveInputs[0] : input;
 
     if (!currentInput) {
