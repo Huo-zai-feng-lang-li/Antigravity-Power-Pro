@@ -424,16 +424,16 @@ const initPromptEnhanceButton = async () => {
     }
   });
 
-  // 直接挂载到输入框的 parent 容器（不搜索 actionButton，避免跑到 statusbar）
-  parent.style.position = 'relative';
-  // 必须用 cssText + !important 覆盖 enhance.js 中 position: relative !important
-  btn.style.cssText = `
-    position: absolute !important;
-    bottom: 4px !important;
-    right: 12px !important;
-    z-index: 99 !important;
-    margin: 0 !important;
-  `;
+  // 强制为父容器开启定位基准，必须加 !important 否则可能被宿主样式覆盖
+  parent.style.setProperty('position', 'relative', 'important');
+  
+  // 逐个属性设置以确保最高优先级，下移 4px -> 设为离底 2px (补偿容器可能的 padding)
+  btn.style.setProperty('position', 'absolute', 'important');
+  btn.style.setProperty('bottom', '2px', 'important');
+  btn.style.setProperty('right', '12px', 'important');
+  btn.style.setProperty('z-index', '999', 'important');
+  btn.style.setProperty('margin', '0', 'important');
+  
   parent.appendChild(btn);
   console.log("[PromptEnhance] 按钮已注入到侧边栏输入框");
 };
