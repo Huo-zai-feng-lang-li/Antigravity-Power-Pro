@@ -128,7 +128,7 @@ const initPromptEnhance = async (config) => {
             return;
           }
 
-          const text = currentInput.value || currentInput.textContent || "";
+          const text = currentInput.innerText || currentInput.textContent || currentInput.value || "";
           if (!text.trim()) {
             enhance.showErrorModal("请先输入提示词");
             return;
@@ -137,8 +137,12 @@ const initPromptEnhance = async (config) => {
           btn.classList.add("loading");
           try {
             const enhanced = await enhance.enhance(text);
-            await enhance.setInputValue(currentInput, enhanced);
-            enhance.showResultModal(enhanced, () => {}, () => {});
+            const success = await enhance.setInputValue(currentInput, enhanced);
+            enhance.showResultModal(
+              enhanced,
+              success ? () => {} : null,
+              success ? null : (res) => navigator.clipboard.writeText(res).catch(() => {})
+            );
           } catch (error) {
             enhance.showErrorModal(error.message);
           } finally {

@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro/releases">
-    <img src="https://img.shields.io/badge/version-v2.6.49-gold?style=flat-square" alt="版本">
+    <img src="https://img.shields.io/badge/version-v2.6.51-gold?style=flat-square" alt="版本">
 
   </a>
   <a href="https://codeium.com/antigravity">
@@ -93,7 +93,8 @@
 
 | 补丁版本    | 支持 IDE 版本      | 发布日期   | 重大更新内容                                                                                         |
 | :---------- | :----------------- | :--------- | :--------------------------------------------------------------------------------------------------- |
-| **v2.6.49** | v1.23.2 / Windsurf | 2026-05-14 | **性能**: 扫描作用域收窄至根容器，大幅降低大规模 DOM 树下的 CPU 负载。 | ✅ 推荐 |
+| **v2.6.51** | v1.23.2 / Windsurf | 2026-05-15 | **修复**: Windsurf 面板输入框取值改用 `innerText`，回填结果准确反映成功/失败状态 | ✅ 推荐 |
+| **v2.6.49** | v1.23.2 / Windsurf | 2026-05-14 | **性能**: 扫描作用域收窄至根容器，大幅降低大规模 DOM 树下的 CPU 负载。 | - |
 | **v2.6.48** | v1.23.2 / Windsurf | 2026-05-14 | **修正**: 侧边栏注入崩溃修复，架构隔离红线落地，版本全量同步。 | - |
 | **v2.6.42** | v1.23.2 / Windsurf | 2026-05-14 | **根治**: 提示词回显多倍重复 Bug (移除冗余事件驱动 & 精简注入链) |
 | **v2.6.41** | v1.23.2 / Windsurf | 2026-05-14 | **修复**: 侧边栏按钮下移失效问题 (强制锚定父容器定位基准) |

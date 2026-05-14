@@ -373,41 +373,44 @@ async function setInputValue(input, value) {
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
   const normalizedValue = value.trim();
 
-  // 1. 优先使用 execCommand (保持撤销历史, execCommand 自身会触发 beforeinput/input 事件)
-  try {
-    const sel = window.getSelection();
-    if (input.contentEditable === "true") {
-      // Range 精准选取输入框内所有内容, 不使用 document.execCommand("selectAll") 避免选区逃逸
-      const range = document.createRange();
-      range.selectNodeContents(input);
-      sel.removeAllRanges();
-      sel.addRange(range);
-    } else {
-      input.select();
-    }
-
-    // 直接插入, execCommand 会自动触发原生 beforeinput + input 事件, 无需手动派发
-    const execSuccess = document.execCommand("insertText", false, value);
-
-    if (execSuccess) {
+  // contenteditable: 优先 innerText 赋值，天然保留换行符（\n 映射为 <br>）
+  // execCommand("insertText") 会将 \n 折叠为空白，换行丢失
+  if (input.contentEditable === "true") {
+    try {
+      input.innerText = value;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
       await sleep(150);
       if (getInputValue(input).trim() === normalizedValue) return true;
+    } catch (e) {
+      console.warn("[PromptEnhance] innerText assignment failed, falling back...");
     }
-  } catch (e) {
-    console.warn("[PromptEnhance] execCommand failed, falling back...");
+  } else {
+    // textarea/input: 使用 execCommand 保持撤销历史
+    try {
+      input.select();
+      const execSuccess = document.execCommand("insertText", false, value);
+      if (execSuccess) {
+        await sleep(150);
+        if (getInputValue(input).trim() === normalizedValue) return true;
+      }
+    } catch (e) {
+      console.warn("[PromptEnhance] execCommand failed, falling back...");
+    }
+    // Fallback: 直接赋值
+    input.value = value;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    await sleep(150);
+    if (getInputValue(input).trim() === normalizedValue) return true;
   }
 
-  // 2. Fallback: 直接 DOM 覆盖 (针对无法响应 execCommand 的容器)
-  console.log("[PromptEnhance] Using direct DOM fallback");
+  // 最终兜底: 强制 DOM 覆盖
+  console.log("[PromptEnhance] Using final DOM fallback");
   if (input.contentEditable === "true") {
     input.innerText = value;
   } else {
     input.value = value;
   }
-
-  // 仅在 Fallback 路径触发同步事件 (execCommand 路径已自带, 不重复)
   input.dispatchEvent(new Event("input", { bubbles: true }));
-
   await sleep(150);
   return getInputValue(input).trim() === normalizedValue;
 }
@@ -576,7 +579,17 @@ export function injectStyles() {
 }
 
 export function showErrorModal(msg) { showToast(msg, "error"); }
-export function showResultModal(enhanced, onApply) { if (onApply) onApply(enhanced); showToast("✓ 已优化", "success"); }
+export function showResultModal(enhanced, onApply, onFail) {
+  if (onApply) {
+    onApply(enhanced);
+    showToast("✓ 已优化并填充", "success");
+  } else if (onFail) {
+    onFail(enhanced);
+    showToast("⚠️ 已优化，回填失败，已复制到剪贴板", "info", 4000);
+  } else {
+    showToast("✓ 已优化", "success");
+  }
+}
 export function getConfig() { return { ...config }; }
 export function triggerEnhance() { performEnhance(); }
 export { setInputValue };

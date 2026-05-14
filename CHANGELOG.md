@@ -14,7 +14,19 @@
 | **性能收益** | 在侧边栏存在大量聊天历史时，扫描耗时降低约 40%-60%。 | `scan.js` 全系列 |
 ---
 
+## v2.6.51 (2026-05-15)
+
+### Windsurf 面板输入/回显修复 (Windsurf Input & Result Fix)
+
+| 修复项 | 根因 | 影响范围 |
+|--------|------|----------|
+| **输入取值错误** | `windsurf-panel.js` 对 `contenteditable` 元素使用 `.value`（永远 `undefined`），导致偶发"请先输入提示词"误报。改为 `innerText` 优先。 | `windsurf-panel/windsurf-panel.js` |
+| **回填状态误报** | `setInputValue` 返回值被忽略，`showResultModal` 始终显示"✓ 已优化并填充"，即使回填失败。现依据返回值走不同分支，失败时触发剪贴板兜底并给出准确提示。 | `windsurf-panel/windsurf-panel.js` |
+
+---
+
 ## v2.6.48 (2026-05-14)
+
 
 ### 侧边栏注入崩溃修复 (Sidebar Injection Fix)
 
