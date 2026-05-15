@@ -14,6 +14,16 @@
 | **性能收益** | 在侧边栏存在大量聊天历史时，扫描耗时降低约 40%-60%。 | `scan.js` 全系列 |
 ---
 
+## v2.6.59 (2026-05-15)
+
+### Manager 滚动按钮修复（根因：findRoot 错误使用 .part.editor）
+
+| 修复项 | 根因 | 影响范围 |
+|--------|------|----------|
+| **Manager 滚动按钮不显示** | `manager-panel` 补丁运行在独立的 `workbench-jetski-agent.html` 页面里，该页面不含 `.part.editor` 结构，导致上一版本的 `closest(".part.editor")` 永远返回 null，按钮永远不挂载。修复为：直接判断页面内是否存在聊天容器且不在 cascade 侧边栏内 | `manager-panel/scroll-to-bottom.js` |
+
+---
+
 ## v2.6.58 (2026-05-15)
 
 ### 三连补丁：规则加固 + 降级兜底 + Manager 滚动按钮精准识别
