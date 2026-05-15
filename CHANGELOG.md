@@ -2,6 +2,17 @@
 
 本文件记录每个版本的 Bug 修复和关键备忘, 防止后续改代码时重复踩坑. 时间格式如 `2026-05-15 09:00:00`同步的是git 提交时间
 
+## v2.6.62 (2026-05-15 21:17:00)
+
+### 双面板滚动按钮互斥修复
+
+| 修复项 | 根因 | 影响范围 |
+|--------|------|----------|
+| **侧边栏出现两个滚动按钮** | manager-panel.js 注入 workbench-jetski-agent.html 后在 `document.body` 创建 `manager-scroll-bottom-btn`，而侧边栏 cascade webview 共享外层 document 的部分 DOM 可见性，导致 manager 按钮视觉上出现在侧边栏区域。cascade 侧有事后 `dup.remove()` 清除逻辑但被 manager 的 MutationObserver 300ms 后重建覆盖 | `manager-panel/scroll-to-bottom.js` + `cascade-panel/scroll-to-bottom.js` |
+| **修复方案** | manager 的 `ensureButton()` 开头检测 `cascade-scroll-bottom-btn` 是否存在，若存在则让权不创建按钮；cascade 侧移除冗余的事后删除逻辑 | 同上 |
+
+---
+
 ## v2.6.61 (2026-05-15 20:31:00)
 
 ### Manager 滚动按钮终极修复 — findRoot/findScrollEl 条件判断全部落空

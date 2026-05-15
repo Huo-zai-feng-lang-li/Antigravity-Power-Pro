@@ -72,7 +72,7 @@ globs: *
 | 功能 | cascade-panel (侧边栏) | manager-panel (Manager) | 共享模块 |
 |------|----------------------|------------------------|---------|
 | **滚动到底部** | `cascade-panel/scroll-to-bottom.js`<br>BTN_ID=`cascade-scroll-bottom-btn` | `manager-panel/scroll-to-bottom.js`<br>BTN_ID=`manager-scroll-bottom-btn` | 无 (各自独立) |
-| **提示词增强** | `cascade-panel/scan.js` (第327行起) | `manager-panel/scan.js` (第5行起) | `shared/enhance.js` |
+| **提示词增强** | `cascade-panel/scan.js` 内 enhance 调用区 | `manager-panel/scan.js` 内 enhance 调用区 | `shared/enhance.js` |
 | **入口加载** | `cascade-panel/cascade-panel.js` | `manager-panel/manager-panel.js` | 无 |
 | **样式** | `cascade-panel/cascade-panel.css` | `manager-panel/manager-panel.css` | 无 |
 | **配置** | `cascade-panel/config.json` | `manager-panel/config.json` | 无 |
