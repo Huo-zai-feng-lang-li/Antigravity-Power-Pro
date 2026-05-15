@@ -43,6 +43,18 @@ globs: *
 - 聚合门户: `resources/app/out/vs/code/electron-browser/workbench/workbench.html`
 - 挂载须知: 替换修改该文件将不可避免地招致 “程序防篡改校验（安装似乎损坏）”，所以卸载功能被要求绝对退回 `.bak` 文件。并且 Windsurf 设置了严防死守的 `require-trusted-types-for`，已透过 `default` Trusted Types 全局下推来豁免。
 
+### DOM 选择器红线 (v2.6.61 取证结论)
+
+> **两个 IDE 页面均使用 Tailwind 工具类，严禁在补丁中硬编码依赖语义化类名 (如 `.chat-container`、`.agent-view-container`)。**
+
+| 环境 | CSS 类名体系 | 可用锚点 | 滚动容器识别策略 |
+|------|-------------|----------|-----------------|
+| **cascade-panel** (侧边栏) | Tailwind 工具类 (`.overflow-y-auto`, `.overflow-auto`) | `.antigravity-agent-side-panel` (补丁自注入) | 按 `.overflow-y-auto` + `scrollHeight` 降序取最大 |
+| **manager-panel** (Manager) | 纯 Tailwind 工具类 (`scrollbar-hide`, `overflow-y-auto`)，**无任何语义锚点** | `document.body` (独占页面) | 按 `getComputedStyle(el).overflowY` + `scrollHeight` 取最大 |
+
+- **禁止**: 在 `findRoot()` 或 `findScrollEl()` 中使用 `.chat-container`、`.conversation-container`、`.agent-view-container`、`.monaco-workbench` 等 IDE 原生语义类名作为必要条件判断
+- **必须**: 使用特征无关策略 — 遍历 DOM 按 `overflowY` + `scrollHeight` 取最大可滚动元素
+
 ## 设计规范 (视觉与环境控制)
 
 - **设计语言**: 统一使用 "Obsidian Gold" (黑金拟物极客) 风格。功能悬浮按键统一为 **Circular 圆形**，配搭金耀色晕投影 (`rgba(251, 191, 36, 0.4)`)。
