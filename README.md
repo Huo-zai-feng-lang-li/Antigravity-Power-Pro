@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro/releases">
-    <img src="https://img.shields.io/badge/version-v2.6.59-gold?style=flat-square" alt="版本">
+    <img src="https://img.shields.io/badge/version-v2.6.60-gold?style=flat-square" alt="版本">
 
   </a>
   <a href="https://codeium.com/antigravity">
@@ -93,7 +93,7 @@
 
 | 补丁版本    | 支持 IDE 版本      | 发布日期   | 重大更新内容                                                                                         |
 | :---------- | :----------------- | :--------- | :--------------------------------------------------------------------------------------------------- |
-| **v2.6.59** | v1.23.2 / Windsurf | 2026-05-15 | **根治**: 使用底层 Range/Selection 物理锁定划取输入区，消除“旧文本未清除而引发的优化追加堆叠”Bug | ✅ 推荐 |
+| **v2.6.60** | v1.23.2 / Windsurf | 2026-05-15 | **根治**: 使用底层 Range/Selection 物理锁定划取输入区，消除“旧文本未清除而引发的优化追加堆叠”Bug | ✅ 推荐 |
 | **v2.6.56** | v1.23.2 / Windsurf | 2026-05-15 | **修复**: 采用 ClipboardEvent 与 execCommand 强制绕透 React 虚拟 DOM，解决回显状态不固化 Bug | - |
 | **v2.6.55** | v1.23.2 / Windsurf | 2026-05-15 | **修复**: Manager 滚动按钮增加 +10000 优先级防御侧边栏高度争占。 | - |
 | **v2.6.54** | v1.23.2 / Windsurf | 2026-05-15 | **修复**: Manager 面板精确定位挂载主界面的条件渲染控制。 | - |

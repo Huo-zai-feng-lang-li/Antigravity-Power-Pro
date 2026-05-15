@@ -45,31 +45,26 @@ const findScrollEl = (root) => {
         prioritySelectors.forEach(s => {
             const els = searchRoot.querySelectorAll(s);
             els.forEach(el => {
-                // 排除逻辑：绝对不能是任何 IDE 原生侧边界面的滚动条
-                // .monaco-editor (避免代码文本滚动条被拦截)
-                // .search-view (避免搜索结果列表被拦截)
-                // .part.sidebar / .part.auxiliarybar (严格排除左右两大侧栏结构)
-                if (el.closest(".monaco-editor") || el.closest(".search-view") || el.closest(".part.sidebar") || el.closest(".part.auxiliarybar")) return;
-                
+                // 确保元素真的是个滚动容器（且内容超出）
                 if (el.scrollHeight > el.clientHeight + 20) {
-                    let basePriority = 20;
-                    // 如果发现确切的聊天区域容器，给予绝对高优先级，避免被文件资源管理器等篡夺
-                    if (el.classList.contains("chat-container") || el.classList.contains("cascade-scrollbar") || el.classList.contains("agent-view-container")) {
-                        basePriority += 10000;
+                    const style = window.getComputedStyle(el);
+                    // 只有这三种 overflow-y 设置才可能原生产生 scroll 事件
+                    if (style.overflowY === "auto" || style.overflowY === "scroll" || style.overflowY === "overlay" || style.overflow === "hidden") {
+                        let basePriority = 20;
+                        if (el.classList.contains("chat-container") || el.classList.contains("cascade-scrollbar") || el.classList.contains("agent-view-container")) {
+                            basePriority += 10000;
+                        }
+                        candidates.push({ el, priority: basePriority + el.scrollHeight });
                     }
-                    candidates.push({ el, priority: basePriority + el.scrollHeight });
                 }
             });
         });
 
-        // 如果没找到优先级容器，再尝试扫描通用容器，但仅限于 scope 内部
         const all = searchRoot.querySelectorAll("*");
         all.forEach(el => {
-            if (el.closest(".monaco-editor")) return; // 再次硬排除编辑器
-            
             if (el.scrollHeight > el.clientHeight + 20) {
                 const style = window.getComputedStyle(el);
-                if (style.overflowY === "auto" || style.overflowY === "scroll") {
+                if (style.overflowY === "auto" || style.overflowY === "scroll" || style.overflowY === "overlay") {
                     candidates.push({ el, priority: 5 + el.scrollHeight / 1000 });
                 }
             }
@@ -77,13 +72,12 @@ const findScrollEl = (root) => {
         });
     }
 
-    // 关键：从挂载点（root）开始向下找，而不是从 document 找
+    // 关键：从挂载点（root）开始向下找
     traverse(root);
     
-    // 如果在该 root 下没找到，再回退到 document 但限定在 Agent 容器内
+    // 如果没有找到优先的，并且根是 body，尝试在整个文档内找最大的 fallback
     if (candidates.length === 0 && root === document.body) {
-        const agentManager = document.querySelector(".antigravity-manager-container") || 
-                           document.querySelector(".jetski-agent-container");
+        const agentManager = document.querySelector(".antigravity-manager-container, .jetski-agent-container, .chat-container, .monaco-list-rows");
         if (agentManager) traverse(agentManager);
     }
     
@@ -155,6 +149,11 @@ export const init = () => {
     if (el !== trackedEl) {
         trackedEl?.removeEventListener("scroll", update);
         el.addEventListener("scroll", update, { passive: true });
+        
+        // 终极防水漏：在 root 级别捕获所有滚动事件，即使内部具体 DOM 被替换也能监听到
+        if (!trackedEl && root) {
+            root.addEventListener("scroll", update, true); 
+        }
         trackedEl = el;
     }
 
