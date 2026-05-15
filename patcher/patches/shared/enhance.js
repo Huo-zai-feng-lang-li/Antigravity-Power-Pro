@@ -489,7 +489,10 @@ async function performEnhance() {
     const success = await setInputValue(input, enhanced);
     loadingToast.remove();
     if (success) showToast("✓ 已完成并自动填充", "success", 2000);
-    else showToast("⚠️ 优化成功但回显失败，请尝试手动刷新", "info", 4000);
+    else {
+      navigator.clipboard.writeText(enhanced).catch(() => {});
+      showToast("⚠️ 写入遭拦截，结果已妥投至系统剪贴板 (Ctrl+V)", "info", 4000);
+    }
   } catch (error) {
     loadingToast.remove();
     showToast(`✗ 失败: ${error.message}`, "error", 4000);
