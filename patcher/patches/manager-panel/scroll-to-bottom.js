@@ -49,7 +49,7 @@ const findScrollEl = (root) => {
                 if (el.scrollHeight > el.clientHeight + 20) {
                     const style = window.getComputedStyle(el);
                     // 只有这三种 overflow-y 设置才可能原生产生 scroll 事件
-                    if (style.overflowY === "auto" || style.overflowY === "scroll" || style.overflowY === "overlay" || style.overflow === "hidden") {
+                    if (style.overflowY === "auto" || style.overflowY === "scroll" || style.overflowY === "overlay" || style.overflowY === "hidden") {
                         let basePriority = 20;
                         if (el.classList.contains("chat-container") || el.classList.contains("cascade-scrollbar") || el.classList.contains("agent-view-container")) {
                             basePriority += 10000;
@@ -109,7 +109,7 @@ export const init = () => {
 
   const ensureButton = () => {
     const root = findRoot();
-    const el = findScrollEl(root); // 传入 root，限制探测范围
+    const el = findScrollEl(root);
     
     if (!el || !root) return;
 
@@ -125,24 +125,23 @@ export const init = () => {
       }
 
       btn.addEventListener("click", () => {
-        const currentRoot = findRoot();
-        const target = findScrollEl(currentRoot); // 点击时也带 Context
+        const target = trackedEl || findScrollEl(findRoot());
         if (target) {
             target.scrollTo({ top: target.scrollHeight, behavior: "smooth" });
         }
       });
     }
 
+    // update 只做轻量计算，不重新扫描 DOM
     const update = () => {
-      const currentRoot = findRoot();
-      const currentScrollEl = findScrollEl(currentRoot);
-      if (!currentScrollEl || !currentScrollEl.isConnected) {
+      const scrollEl = trackedEl;
+      if (!scrollEl || !scrollEl.isConnected) {
         btn.classList.remove("visible");
         return;
       }
       
-      const gap = currentScrollEl.scrollHeight - currentScrollEl.scrollTop - currentScrollEl.clientHeight;
-      const shouldShow = currentScrollEl.clientHeight > 0 && gap > THRESHOLD;
+      const gap = scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight;
+      const shouldShow = scrollEl.clientHeight > 0 && gap > THRESHOLD;
       btn.classList.toggle("visible", shouldShow);
     };
 
@@ -162,11 +161,14 @@ export const init = () => {
 
   ensureButton();
 
-  // 增加扫描频率，确保动态内容加载后能及时挂载
-  const observer = new MutationObserver(ensureButton);
+  // 防抖 300ms，与 cascade 版本保持一致
+  let timer = null;
+  const observer = new MutationObserver(() => {
+    clearTimeout(timer);
+    timer = setTimeout(ensureButton, 300);
+  });
   observer.observe(document.body, { childList: true, subtree: true });
   
-  // 窗口大小改变也重新检测
   window.addEventListener("resize", ensureButton);
   
   console.log("[Manager] 滚动按钮已初始化 (全窗口支持)");

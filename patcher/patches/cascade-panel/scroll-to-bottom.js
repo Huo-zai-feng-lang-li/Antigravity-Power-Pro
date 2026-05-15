@@ -80,7 +80,7 @@ export const init = () => {
       }
 
       btn.addEventListener("click", () => {
-        const target = findScrollEl();
+        const target = trackedEl || findScrollEl();
         if (target) target.scrollTo({ top: target.scrollHeight, behavior: "instant" });
       });
 
@@ -89,15 +89,16 @@ export const init = () => {
       if (dup) dup.remove();
     }
 
+    // update 只做轻量计算，不重新扫描 DOM
     const update = () => {
-      const currentScrollEl = findScrollEl();
-      if (!currentScrollEl || !currentScrollEl.isConnected) {
+      const scrollEl = trackedEl;
+      if (!scrollEl || !scrollEl.isConnected) {
         btn.classList.remove("visible");
         return;
       }
       
-      const gap = currentScrollEl.scrollHeight - currentScrollEl.scrollTop - currentScrollEl.clientHeight;
-      const shouldShow = currentScrollEl.clientHeight > 0 && gap > THRESHOLD;
+      const gap = scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight;
+      const shouldShow = scrollEl.clientHeight > 0 && gap > THRESHOLD;
       btn.classList.toggle("visible", shouldShow);
     };
 
