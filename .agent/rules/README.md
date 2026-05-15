@@ -2,96 +2,56 @@
 trigger: glob
 ---
 
-- **配置零覆盖原则**: 补丁更新时，禁止覆盖用户已有的 `config.json`。必须采用增量合并逻辑，确保用户的 `apiKey` 和自定义 API 路径在升级后依然有效。
-- **版本全量同步**: 每次发布新 Tag 前，必须确保 `package.json`, `tauri.conf.json`, `Cargo.toml`, `App.vue`, `README.md` 五处版本号完全一致。
-- **发布审计**: 打 Tag 必须包含 `git push origin --tags -f` 操作。
+- **配置零覆盖原则**: 补丁更新时，禁止覆盖用户已有的 `config.json`。必须采用增量合并逻辑，确保用户的 `apiKey` 和自定义 API 路径在升级后依然有效。在 Rust 侧后端或 Vue 侧保存时也要分情况合并。
+- **版本全量同步**: 每次发布新 Tag 前，必须确保 6 处版本号完全一致：`patcher/package.json`、`patcher/src-tauri/tauri.conf.json`、`patcher/src-tauri/Cargo.toml`、`patcher/src/App.vue`、`README.md`、`README_EN.md`。
+- **发布审计**: 打 Tag 必须包含 `git push origin --tags` 等全链路声明，遵照 `/tag` 工作流要求。
 
-
-> 目标: 让 AI 一眼理解本项目在做什么, 补丁如何落地, 关键入口在哪里.
+> 目标: 让 AI 一眼理解本项目在做什么, 补丁如何落地, 关键入口在哪里。
 
 ## 项目定位
 
-- Antigravity-Power-Pro 是 Antigravity AI IDE 和 Windsurf IDE 的增强补丁.
-- Antigravity: 侧边栏 (cascade-panel) Mermaid/公式渲染, 一键复制, 表格修复, 字体调节, 提示词增强.
-- Windsurf: Cascade 面板字体调节, 提示词增强, 滚动到底部按钮.
-- 前端使用 Tab 切换布局 (Antigravity / Windsurf).
-- 当前重点支持 Windows, macOS 仅手动安装流程 (见 `README.md` / `patcher/patches/manual-install.md`).
+- Antigravity-Power-Pro 是 AI 本地 IDE（如 Cascade 原型版本和 Windsurf IDE） 的全能挂载增强补丁。
+- Antigravity：全面改造其 Cascade 面板和 Manager 面板（包含渲染增强、表格修复、回退样式、极客滚动控制以及高度定制的智能提示词 API 接口挂载等）。
+- Windsurf：改造其独立客户端（包括字体调节、增强悬浮模块、提示词等）。
+- 前端安装器使用了 Vue 提供的 Tab 布局进行环境切换（隔离状态）。
 
 ## 补丁落地流程 (核心链路)
 
-1. 桌面安装器位于 `patcher/` (Tauri + Vue).
-2. Rust 后端负责: 检测安装路径, 安装/卸载, 更新配置 (`patcher/src-tauri/src/commands/*.rs`).
-3. 安装时会:
-   - 备份 `resources/app/extensions/antigravity/cascade-panel.html` 为 `.bak`
-   - 写入补丁文件与 `cascade-panel/` 目录
-   - 生成 `cascade-panel/config.json` (功能开关)
-4. 补丁文件来源于 `patcher/patches/`, 嵌入清单由 `patcher/src-tauri/build.rs` 自动生成 (排除列表 `patcher/patches/.embed-exclude.txt`), `patcher/src-tauri/src/embedded.rs` 通过 `include!` 引入清单.
+1. 桌面安装器位于 `patcher/` (Tauri + Vue)。
+2. Rust 后端由 `patcher/src-tauri/src/commands/*.rs` 负责：检测各自 IDE 路径、拉取默认配置与本地磁盘比对（执行白名单功能开关控制）。
+3. 安装具体流程：
+   - IDE 核心入口 `XXXX.html` 被 `app/out/...` 等路径下的 HTML 入口引用，安装时会被备份为 `.bak`，再原封不动写入增强补丁 `<script type="module" src="..."></script>`。
+   - 补丁目录结构按 IDE 面板强隔离：`cascade-panel/`、`manager-panel/`、`windsurf-panel/`，配置互相不干扰（写入各自领域的 `config.json`）。
+4. 本地补丁源代码置于 `patcher/patches/`，Rust 于编译时使用 `build.rs` 自动索引并打包至嵌入单体（除开 `.embed-exclude.txt` 排列项）。
 
-## 关键目录 (修改点优先级)
+## 关键目录 (优先修改落点)
 
-- `patcher/patches/`: 注入到 Antigravity 的补丁源文件 (HTML/JS/CSS).
-- `patcher/src-tauri/`: 安装器后端逻辑 (路径检测, 备份/写入, 配置).
-- `patcher/src/`: 安装器前端 UI (功能开关, 安装/卸载按钮).
-- `docs/`: 开发, 发布, 结构, 已知问题与截图 (见 `docs/README.md`).
-- `tests/scripts/`: Playwright 脚本, 用于远程调试 Antigravity 的 Manager 窗口 DOM.
-- `patcher/patches/manual-install.md`: 随补丁压缩包提供的手动安装说明 (Windows/macOS).
-- `patcher/patches/workbench-jetski-agent.html` + `patcher/patches/manager-panel/`: Manager 窗口补丁入口与模块.
+- `patcher/patches/`: 全部补丁原始文件（HTML / JS / CSS），是前端视觉与注入的灵魂心脏。
+- `patcher/src-tauri/`: 安装引擎逻辑。所有路径嗅探和备份重构。
+- `patcher/src/`: 安装工具 UI 层，配置功能开关、检查各依赖可用性与系统同步。
+- `.agent/`: AI Agent 自定义准则、工作流程的约束核心与知识挂载。
 
-## IDE 内部 Hook 点
+## IDE 内部 Hook 锚标与漏洞机制
 
 ### Antigravity
-- 侧边栏: `resources/app/extensions/antigravity/cascade-panel.html`
-- Manager 窗口: `resources/app/out/vs/code/electron-browser/workbench/workbench-jetski-agent.html`
-- 注意: 修改 `workbench-jetski-agent.html` 会触发 "扩展已损坏" 提示, 但不影响使用.
+- 侧翼环境: `resources/app/extensions/antigravity/cascade-panel.html`
+- 会话中枢 (Manager): `resources/app/out/vs/code/electron-browser/workbench/workbench-jetski-agent.html`
 
 ### Windsurf
-- 主窗口: `resources/app/out/vs/code/electron-browser/workbench/workbench.html`
-- 补丁目录: 同级 `windsurf-panel/` (JS/CSS/config.json/enhance.js)
-- 修改 `workbench.html` 会触发 "安装似乎损坏" 提示, 通过清除 `product.json` checksums 解决.
-- CSP 启用了 `require-trusted-types-for 'script'`, 补丁通过注册 `default` Trusted Types 策略解决.
-- Cascade 面板 DOM: `#windsurf.cascadePanel`, 滚动区 `.cascade-scrollbar`, 输入框 `[contenteditable][role="textbox"]`.
+- 聚合门户: `resources/app/out/vs/code/electron-browser/workbench/workbench.html`
+- 挂载须知: 替换修改该文件将不可避免地招致 “程序防篡改校验（安装似乎损坏）”，所以卸载功能被要求绝对退回 `.bak` 文件。并且 Windsurf 设置了严防死守的 `require-trusted-types-for`，已透过 `default` Trusted Types 全局下推来豁免。
 
-## 运行逻辑速览 (侧边栏补丁)
+## v2.6.2+ 设计规范 (视觉与环境控制)
 
-- 入口: `patcher/patches/cascade-panel.html` -> `cascade-panel/cascade-panel.js`
-- `cascade-panel.js` 读取 `config.json`, 按需加载模块并启动扫描.
-- `scan.js` 基于 DOM 监听与内容稳定性判断触发渲染与复制按钮注入.
+- **设计语言**: 统一使用 "Obsidian Gold" (黑金拟物极客) 风格。功能悬浮按键统一为 **Circular 圆形**，配搭金耀色晕投影 (`rgba(251, 191, 36, 0.4)`)。
+- **UI 同步化**: 当你在某一环境例如 `cascade-panel` 修改了外观，**必须联动核准并更新**在 `manager-panel` 和 `windsurf-panel` 中的同级类视图。
+- **暗层穿透 (Shadow DOM)**: 对于 IDE 阴影 DOM 层深藏的结构（输入框文本），必须用特制的深穿透查询脚本（如 `querySelectorAllDeep`）去提取，切勿简单地相信标准的 `.querySelector`。
 
-## 构建与发布 (安装器)
+## v2.6.56+ 终极架构防护红线
 
-- 在 `patcher/` 下:
-  - `npm run tauri:dev`
-  - `npm run tauri:build`
-- 发布前需同步版本号: `patcher/package.json`, `patcher/src-tauri/tauri.conf.json`, `patcher/src-tauri/Cargo.toml`, `patcher/src/App.vue`, `README.md` (详见 `docs/guides/release-guide.md`).
-
-## 重要约束/风险
-
-- 嵌入清单由 build.rs 自动生成, 新增/删除补丁文件时确认 `.embed-exclude.txt` 是否需要更新 (如 `config.json`, 文档).
-- 安装逻辑使用白名单: 侧边栏仅 `cascade-panel.html` + `cascade-panel/`, Manager 仅 `workbench-jetski-agent.html` + `manager-panel/`, Windsurf 仅 `workbench-windsurf.html` -> `workbench.html` + `windsurf-panel/`.
-- Antigravity 官方更新会覆盖补丁, 需要重新安装.
-- 已知问题: 表格内含 `|` 的 LaTeX 公式渲染异常 (见 `docs/reference/known-issues.md`).
-
-## 开发注意事项 (工具/环境)
-
-- 文档统一使用英文标点符号 (中英文内容都使用英文标点), 避免中文标点导致工具处理异常.
-- `apply_patch` 在中文内容较长时可能触发 `byte index ... is not a char boundary`, 导致补丁失败.
-  - 解决: 使用提权 PowerShell `Set-Content -Encoding UTF8` 直接写入, 或先写 ASCII 再分段追加.
-- 写入 `patcher/patches/` 或清理 `tests/` 在沙箱下可能 `Access denied`, 需要使用提权命令执行写入/删除.
-- PowerShell `ConvertTo-Json | Set-Content` 会写入 UTF-8 BOM, 导致 serde_json 解析失败. Rust 代码已添加 `trim_start_matches('\u{feff}')` 处理.
-- Windsurf 卸载时需恢复 `product.json.bak`, 否则仍会显示 "安装损坏".
-
-## v2.6.2+ 设计规范 (视觉归一化)
-
-- **设计语言**: 统一使用 "Obsidian Gold" (黑金玻璃拟态) 风格.
-- **几何形状**: 功能按键 (如滚动到底部) 统一使用 **圆形 (Circular)**, 投影需包含金色发光效果 (`rgba(251, 191, 36, 0.4)`).
-- **多入口同步**: 修改侧边栏 (`cascade-panel.css`) 时, 必须同步更新 Manager 窗口 (`manager-panel.css`) 的视觉表现.
-- **Shadow DOM 穿透**: 注入 UI 到 IDE 暗层时, 必须使用 `querySelectorAllDeep` 逻辑, 否则在复杂的 Shadow DOM 容器 (如侧边栏输入框) 中会失效.
-## v2.6.46+ 架构隔离红线 (关键防线)
-
-- **环境主权隔离**: `manager-panel/scan.js` 禁止干预侧边栏元素。必须包含 `if (input.closest('.antigravity-agent-side-panel')) return;` 隔离逻辑，确保侧边栏定位由 `cascade-panel/scan.js` 唯一控制。
-- **定位权下放**: `shared/enhance.js` 仅负责创建 UI 组件与 API 交互，**禁止**在共享模块内硬编码 `bottom/right/position` 等定位属性。所有位置参数必须在各自页面的 `scan.js` 中通过 `setProperty(..., 'important')` 动态注入。
-- **虚拟 DOM 劫持准则 (v2.6.56+)**: 侧重于输入框的强制覆写时，严禁使用低级的 `input.innerText = value`。现代 IDE (React/Monaco) 存在死板的数据流单向绑定。若只改 DOM 会导致“状态脱轨回旋镖”（字面写进去了却被框架刷新吃掉）。必须使用 **原生用户交互伪装技术（`execCommand("insertText")` 组合假冒的 `ClipboardEvent("paste")` 物理级粘贴事件并手动 `dispatchEvent(new Event("input"))`）** 暴力击穿框架防线。
-- **UI 状态闭环底线 (v2.6.56+)**: 任何调度长耗时异步任务（如 LLM 提示词增强）时，必须配备完整的 `showResultModal()` 或全套 Toast 反馈 UI。在遭遇到极高防御级别无法写入的黑盒 Dom 时，必须安全降级为“复制到剪贴板并提示”，绝对禁止发生静默失败（吞并用户点击）。
-- **空间抢夺防护 (v2.6.55+)**: 向极度复杂的 Manager 等窗口挂载滚动监听、悬浮按钮时，切记不要使用贪婪的全局 `root` 查找。容易被同窗口内其他超长的独立侧边栏（如文件树、资源管理器）发生“焦点夺取”。必须进行精准判断、增加排异逻辑并叠加权重。
-- **容器溢出保障**: 注入绝对定位按钮时，必须强制父容器 `overflow: visible !important`，防止按钮位移时被宿主容器意外截断。
+- **虚拟 DOM 劫持准则**: 对框架富文本区施行暴力植入时，**严禁裸修 `innerText`**。此类操作将引发“状态脱轨回旋镖”（被 React 数据流吃掉）。必须利用 `execCommand("insertText")` 加码 `ClipboardEvent("paste")` 和底层事件唤醒来实现最高优先级的物理级事件注入。
+- **UI 状态闭环底线**: LLM 增强与各种大工作量任务派发时，不能允许“点击没反应用户干等”。如果在防守严密的特定环境实在打不穿（比如极少数怪异布局），必须提供安全回退方案并 **触发明显的剪贴板复制提示 (showResultModal) **，拒绝静默失败。
+- **空间焦点抢夺防护**: 向 Manager 类融合会话面板加插按钮或进行长列表追踪时（如滚动条吸底），禁绝贪婪匹配全体 root！这种行为会被窗口内同层文件列表等其他系统级长列表诱发劫夺，必须叠加专属 CSS 限定甚至施加超高 `10000` 权重，锁定专属领域挂载。
+- **环境主权隔离**: `manager-panel/scan.js` 扫描时必须规避并隔离已属于侧边栏 `cascade-panel` 的特有类容（如 `.antigravity-agent-side-panel` 元素），实现跨模块井水不犯河水。位置定点权必须交放给各面板自己管理。绝对定位容器必须加上 `overflow: visible !important` 的超高权柄，防止界面跳变被断层裁剪。
+- **遗留配置清洗**: App.vue 等设置界面的初始化里，若是探测到过去落后遗留的 API 地址或者淘汰默认值，应通过条件判定予以剔除和静默覆盖，不要给用户留下过时的包袱。
 
