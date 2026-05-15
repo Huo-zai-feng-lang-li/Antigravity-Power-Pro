@@ -1,6 +1,22 @@
 # Changelog
 
-本文件记录每个版本的 Bug 修复和关键备忘, 防止后续改代码时重复踩坑. 时间格式如 `2026-05-15 09:00:00`
+本文件记录每个版本的 Bug 修复和关键备忘, 防止后续改代码时重复踩坑. 时间格式如 `2026-05-15 09:00:00`同步的是git 提交时间
+
+## v2.6.61 (2026-05-15 20:31:00)
+
+### Manager 滚动按钮终极修复 — findRoot/findScrollEl 条件判断全部落空
+
+| 修复项 | 根因 | 影响范围 |
+|--------|------|----------|
+| **Manager 滚动按钮始终不显示** | `findRoot()` 查找 `.chat-container` / `.agent-view-container` 等语义类名，但 Manager 页面全部使用 Tailwind 工具类（如 `scrollbar-hide`、`overflow-y-auto`），导致 `findRoot()` 永远返回 `null`，`ensureButton()` 在守卫条件处直接退出 | `manager-panel/scroll-to-bottom.js` |
+| **修复方案** | Manager 补丁独占 `workbench-jetski-agent.html`，`findRoot()` 直接返回 `document.body`；`findScrollEl()` 改为按 `scrollHeight` 取最大可滚动元素，不再依赖任何语义类名 | `manager-panel/scroll-to-bottom.js` |
+
+### 踩坑备忘
+
+- Manager 页面 DOM 全部由 Tailwind CSS 驱动，无任何语义化类名（`.chat-container` 等不存在），补丁代码不可依赖这些选择器
+- CDP 取证流程：注入检查 → 模块加载检查 → `init()` 手动调用 → 确认 `findRoot()` 返回 `null` → 定位根因
+
+---
 
 ## v2.6.60 (2026-05-15 20:00:46)
 

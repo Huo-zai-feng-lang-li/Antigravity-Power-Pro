@@ -11,78 +11,42 @@ const THRESHOLD = 100;
 
 /** 查找挂载根节点 — Manager 专用
  * 
- * 架构说明：manager-panel 补丁注入在独立的 workbench-jetski-agent.html 里运行。
- * 该页面不含 .part.editor / .part.sidebar 等主工作区结构。
- * 只需判断：当前 DOM 里有聊天容器，且不在 cascade 侧边栏内，即确认是 Manager 环境。
+ * 架构说明：manager-panel 补丁独占 workbench-jetski-agent.html。
+ * 该页面不含 .part.editor / .part.sidebar / .monaco-workbench 等结构，
+ * 也不使用语义化类名（全 Tailwind 工具类）。直接返回 document.body。
  */
-const findRoot = () => {
-  const chatEl = document.querySelector(
-    ".chat-container, .conversation-container, .agent-view-container, .jetski-agent-container, .antigravity-manager-container"
-  );
-  // 排除：若聊天容器嵌在 cascade 侧边栏里，说明我们在侧边栏页面，绝不挂载
-  if (!chatEl || chatEl.closest(".antigravity-agent-side-panel")) return null;
-  return document.querySelector(".monaco-workbench") || document.body;
-};
+const findRoot = () => document.body;
 
-/** 查找主滚动容器：增加隔离与排除逻辑 */
+/** 查找主滚动容器 — 按 scrollHeight 取最大可滚动元素
+ * 
+ * Manager 页面全部用 Tailwind 工具类（如 scrollbar-hide、overflow-y-auto），
+ * 不含 .chat-container / .cascade-scrollbar 等语义类名。
+ * 策略：遍历所有元素，找 overflow-y 为 auto/scroll 且 scrollHeight 最大的那个。
+ */
 const findScrollEl = (root) => {
     if (!root) return null;
-    
-    // 优先寻找特定的聊天/Agent 专用滚动类名
-    const prioritySelectors = [
-        ".cascade-scrollbar",
-        ".chat-container",
-        ".monaco-list-rows",
-        ".agent-view-container",
-        ".monaco-scrollable-element"
-    ];
 
-    let candidates = [];
+    let best = null;
+    let bestHeight = 0;
 
-    function traverse(searchRoot) {
-        if (!searchRoot) return;
-        
-        prioritySelectors.forEach(s => {
-            const els = searchRoot.querySelectorAll(s);
-            els.forEach(el => {
-                // 确保元素真的是个滚动容器（且内容超出）
-                if (el.scrollHeight > el.clientHeight + 20) {
-                    const style = window.getComputedStyle(el);
-                    // 只有这三种 overflow-y 设置才可能原生产生 scroll 事件
-                    if (style.overflowY === "auto" || style.overflowY === "scroll" || style.overflowY === "overlay" || style.overflowY === "hidden") {
-                        let basePriority = 20;
-                        if (el.classList.contains("chat-container") || el.classList.contains("cascade-scrollbar") || el.classList.contains("agent-view-container")) {
-                            basePriority += 10000;
-                        }
-                        candidates.push({ el, priority: basePriority + el.scrollHeight });
-                    }
-                }
-            });
-        });
+    const check = (el) => {
+        if (el.scrollHeight <= el.clientHeight + 50) return;
+        const ov = window.getComputedStyle(el).overflowY;
+        if (ov !== "auto" && ov !== "scroll" && ov !== "overlay") return;
+        if (el.scrollHeight > bestHeight) {
+            bestHeight = el.scrollHeight;
+            best = el;
+        }
+    };
 
-        const all = searchRoot.querySelectorAll("*");
-        all.forEach(el => {
-            if (el.scrollHeight > el.clientHeight + 20) {
-                const style = window.getComputedStyle(el);
-                if (style.overflowY === "auto" || style.overflowY === "scroll" || style.overflowY === "overlay") {
-                    candidates.push({ el, priority: 5 + el.scrollHeight / 1000 });
-                }
-            }
-            if (el.shadowRoot) traverse(el.shadowRoot);
-        });
-    }
+    root.querySelectorAll("*").forEach(el => {
+        check(el);
+        if (el.shadowRoot) {
+            el.shadowRoot.querySelectorAll("*").forEach(check);
+        }
+    });
 
-    // 关键：从挂载点（root）开始向下找
-    traverse(root);
-    
-    // 如果没有找到优先的，并且根是 body，尝试在整个文档内找最大的 fallback
-    if (candidates.length === 0 && root === document.body) {
-        const agentManager = document.querySelector(".antigravity-manager-container, .jetski-agent-container, .chat-container, .monaco-list-rows");
-        if (agentManager) traverse(agentManager);
-    }
-    
-    if (candidates.length === 0) return null;
-    return candidates.sort((a, b) => b.priority - a.priority)[0].el;
+    return best;
 };
 
 const createArrowSVG = () => {
