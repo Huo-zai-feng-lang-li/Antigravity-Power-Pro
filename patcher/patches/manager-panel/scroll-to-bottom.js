@@ -72,6 +72,9 @@ export const init = () => {
   let trackedEl = null;
 
   const ensureButton = () => {
+    // 互斥：如果 cascade 滚动按钮已存在，说明此 DOM 由 cascade 管辖，manager 不创建按钮
+    if (document.getElementById("cascade-scroll-bottom-btn")) return;
+
     const root = findRoot();
     const el = findScrollEl(root);
     
