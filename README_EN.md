@@ -108,7 +108,11 @@ For manual installation, please refer to [manual-install.md](patcher/patches/man
 
 | Patch Version | Supported Antigravity Version | Date       | Update Content                                                                     |
 | ------------- | ----------------------------- | ---------- | ---------------------------------------------------------------------------------- |
-| v2.6.56       | v1.23.2 / Windsurf            | 2026-05-15 | **Fix**: Manager scroll button display issue (findRoot exclusion)                  |
+| v2.6.56       | v1.23.2 / Windsurf            | 2026-05-15 | **Ultimate Fix**: Native DOM inject via ClipboardEvent/execCommand, bypassing React Virtual DOM blocks |
+| v2.6.55       | v1.23.2 / Windsurf            | 2026-05-15 | **Fix**: Manager scroll priority +10000 to prevent hijacked tracking by sidebars   |
+| v2.6.54       | v1.23.2 / Windsurf            | 2026-05-15 | **Fix**: Manager scroll conditionally mounted to `.monaco-workbench` safely        |
+| v2.6.53       | v1.23.2 / Windsurf            | 2026-05-15 | **Tweak**: Removed aggressive fallback mapping to `.monaco-workbench`              |
+| v2.6.52       | v1.23.2 / Windsurf            | 2026-05-15 | **Fix**: Manager scroll button display issue (findRoot exclusion)                  |
 | v2.6.51       | v1.23.2 / Windsurf            | 2026-05-15 | **Fix**: Windsurf input value retrieval (innerText) and echo status accurate report|
 | v2.6.49       | v1.23.2 / Windsurf            | 2026-05-14 | **Performance**: Scoped scanning to root containers, reducing CPU load             |
 | v2.6.0        | v1.15.8 / Windsurf            | 2026-03-12 | Minimalist Refactor: Focus UI on 3 core features, removed redundant items          |
