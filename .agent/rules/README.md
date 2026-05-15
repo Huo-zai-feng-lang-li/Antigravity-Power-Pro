@@ -43,15 +43,15 @@ globs: 目标: 让 AI 一眼理解本项目在做什么, 补丁如何落地, 关
 - 聚合门户: `resources/app/out/vs/code/electron-browser/workbench/workbench.html`
 - 挂载须知: 替换修改该文件将不可避免地招致 “程序防篡改校验（安装似乎损坏）”，所以卸载功能被要求绝对退回 `.bak` 文件。并且 Windsurf 设置了严防死守的 `require-trusted-types-for`，已透过 `default` Trusted Types 全局下推来豁免。
 
-## v2.6.2+ 设计规范 (视觉与环境控制)
+## 设计规范 (视觉与环境控制)
 
 - **设计语言**: 统一使用 "Obsidian Gold" (黑金拟物极客) 风格。功能悬浮按键统一为 **Circular 圆形**，配搭金耀色晕投影 (`rgba(251, 191, 36, 0.4)`)。
 - **UI 同步化**: 当你在某一环境例如 `cascade-panel` 修改了外观，**必须联动核准并更新**在 `manager-panel` 和 `windsurf-panel` 中的同级类视图。
 - **暗层穿透 (Shadow DOM)**: 对于 IDE 阴影 DOM 层深藏的结构（输入框文本），必须用特制的深穿透查询脚本（如 `querySelectorAllDeep`）去提取，切勿简单地相信标准的 `.querySelector`。
 
-## v2.6.56+ 终极架构防护红线
+## 终极架构防护红线
 
-- **虚拟 DOM 劫持准则 (v2.6.57+)**: 对框架富文本区施行暴力植入时，**严禁使用 `innerText = ""` 发号施令清理，也严禁依赖浏览器封装的 `execCommand("selectAll")`**。这两种弱鸡手段会立刻招致“光标首尾坍塌”而演变为恶性的“追加 Bug”！必须采用最底层的 Selection/Range API 对容器内全体子节点发动武装级划取：`range.selectNodeContents(input)` 配合 `selection.addRange` 死锁包裹住旧本文后，再行触发 `execCommand("insertText")` 及降级 `paste` 事件。
+- **虚拟 DOM 劫持准则**: 对框架富文本区施行暴力植入时，**严禁使用 `innerText = ""` 发号施令清理，也严禁依赖浏览器封装的 `execCommand("selectAll")`**。这两种弱鸡手段会立刻招致“光标首尾坍塌”而演变为恶性的“追加 Bug”！必须采用最底层的 Selection/Range API 对容器内全体子节点发动武装级划取：`range.selectNodeContents(input)` 配合 `selection.addRange` 死锁包裹住旧本文后，再行触发 `execCommand("insertText")` 及降级 `paste` 事件。
 - **UI 状态闭环底线**: LLM 增强与各种大工作量任务派发时，不能允许“点击没反应用户干等”。如果在防守严密的特定环境实在打不穿（比如极少数怪异布局），必须提供安全回退方案并 **触发明显的剪贴板复制提示 (showResultModal) **，拒绝静默失败。
 - **空间焦点抢夺防护**: 向 Manager 类融合会话面板加插按钮或进行长列表追踪时（如滚动条吸底），禁绝贪婪匹配全体 root！这种行为会被窗口内同层文件列表等其他系统级长列表诱发劫夺，必须叠加专属 CSS 限定甚至施加超高 `10000` 权重，锁定专属领域挂载。
 - **环境主权隔离**: `manager-panel/scan.js` 扫描时必须规避并隔离已属于侧边栏 `cascade-panel` 的特有类容（如 `.antigravity-agent-side-panel` 元素），实现跨模块井水不犯河水。位置定点权必须交放给各面板自己管理。绝对定位容器必须加上 `overflow: visible !important` 的超高权柄，防止界面跳变被断层裁剪。
