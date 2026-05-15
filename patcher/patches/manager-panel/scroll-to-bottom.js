@@ -9,25 +9,18 @@
 const BTN_ID = "manager-scroll-bottom-btn";
 const THRESHOLD = 100;
 
-/** 查找挂载根节点 — Manager 专用 */
+/** 查找挂载根节点 — Manager 专用
+ * 
+ * 架构说明：manager-panel 补丁注入在独立的 workbench-jetski-agent.html 里运行。
+ * 该页面不含 .part.editor / .part.sidebar 等主工作区结构。
+ * 只需判断：当前 DOM 里有聊天容器，且不在 cascade 侧边栏内，即确认是 Manager 环境。
+ */
 const findRoot = () => {
-  // 查找能够证明 Manager 处于打开状态的标志性容器（同时排除侧边栏）
-  // 查找各个可能散落的聊天容器
-  const chatEls = document.querySelectorAll(".chat-container, .conversation-container, .agent-view-container, .jetski-agent-container, .antigravity-manager-container, .antigravity-agent-side-panel");
-  let isManagerActive = false;
-  
-  for (const el of chatEls) {
-      // 灵魂鉴定：只有位于中心主编辑器区域的聊天窗口，才是真正的 Manager！
-      // (.part.sidebar 是左侧边栏，.part.auxiliarybar 是右侧边栏，.part.editor 是主编辑区)
-      if (el.closest(".part.editor")) {
-          isManagerActive = true;
-          break;
-      }
-  }
-
-  // 只有真正打开了 Manager 才会返回 .monaco-workbench 作为挂载点
-  // 因为 CSS 的定位依赖于主工作区居中
-  if (!isManagerActive) return null;
+  const chatEl = document.querySelector(
+    ".chat-container, .conversation-container, .agent-view-container, .jetski-agent-container, .antigravity-manager-container"
+  );
+  // 排除：若聊天容器嵌在 cascade 侧边栏里，说明我们在侧边栏页面，绝不挂载
+  if (!chatEl || chatEl.closest(".antigravity-agent-side-panel")) return null;
   return document.querySelector(".monaco-workbench") || document.body;
 };
 
