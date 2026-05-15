@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro/releases">
-    <img src="https://img.shields.io/badge/version-v2.6.62-gold?style=flat-square" alt="版本">
+    <img src="https://img.shields.io/badge/version-v2.6.63-gold?style=flat-square" alt="版本">
 
   </a>
   <a href="https://codeium.com/antigravity">
@@ -93,34 +93,15 @@
 
 | 补丁版本    | 支持 IDE 版本      | 发布日期   | 重大更新内容                                                                                         |
 | :---------- | :----------------- | :--------- | :--------------------------------------------------------------------------------------------------- |
+| **v2.6.63** | v1.23.2 / Windsurf | 2026-05-16 | **修复**: Manager 提示词增强按钮每2秒重复创建，改用 input 元素标记去重 | ✅ 推荐 |
 | **v2.6.62** | v1.23.2 / Windsurf | 2026-05-15 | **修复**: 双面板滚动按钮互斥 — 侧边栏不再出现 manager 的重复按钮 | ✅ 推荐 |
 | **v2.6.61** | v1.23.2 / Windsurf | 2026-05-15 | **根治**: Manager 滚动按钮终极修复，移除对不存在的语义类名依赖，改为 Tailwind 工具类无关策略 | - |
 | **v2.6.60** | v1.23.2 / Windsurf | 2026-05-15 | **根治**: 使用底层 Range/Selection 物理锁定划取输入区，消除“旧文本未清除而引发的优化追加堆叠”Bug | ✅ 推荐 |
-| **v2.6.56** | v1.23.2 / Windsurf | 2026-05-15 | **修复**: 采用 ClipboardEvent 与 execCommand 强制绕透 React 虚拟 DOM，解决回显状态不固化 Bug | - |
-| **v2.6.55** | v1.23.2 / Windsurf | 2026-05-15 | **修复**: Manager 滚动按钮增加 +10000 优先级防御侧边栏高度争占。 | - |
-| **v2.6.54** | v1.23.2 / Windsurf | 2026-05-15 | **修复**: Manager 面板精确定位挂载主界面的条件渲染控制。 | - |
-| **v2.6.53** | v1.23.2 / Windsurf | 2026-05-15 | **微调**: 剥离对 `.monaco-workbench` 的贪婪后退匹配。 | - |
-| **v2.6.52** | v1.23.2 / Windsurf | 2026-05-15 | **修复**: Manager 面板滚动按钮不显示（findRoot 误匹配侧边栏容器）| - |
-| **v2.6.51** | v1.23.2 / Windsurf | 2026-05-15 | **修复**: Windsurf 面板输入框取值改用 `innerText`，回填结果准确反映成功/失败状态 | - |
-| **v2.6.49** | v1.23.2 / Windsurf | 2026-05-14 | **性能**: 扫描作用域收窄至根容器，大幅降低大规模 DOM 树下的 CPU 负载。 | - |
-| **v2.6.48** | v1.23.2 / Windsurf | 2026-05-14 | **修正**: 侧边栏注入崩溃修复，架构隔离红线落地，版本全量同步。 | - |
-| **v2.6.42** | v1.23.2 / Windsurf | 2026-05-14 | **根治**: 提示词回显多倍重复 Bug (移除冗余事件驱动 & 精简注入链) |
-| **v2.6.41** | v1.23.2 / Windsurf | 2026-05-14 | **修复**: 侧边栏按钮下移失效问题 (强制锚定父容器定位基准) |
-| **v2.6.40** | v1.23.2 / Windsurf | 2026-05-14 | **微调**: 侧边栏按钮位置下移 4px (差异化高度对齐) |
-| **v2.6.39** | v1.23.2 / Windsurf | 2026-05-14 | **优化**: 交互动效分级 (Hover 仅旋转, Click 发光), 按钮位置强制归一化 |
-| **v2.6.38** | v1.23.2 / Windsurf | 2026-05-14 | **根治**: 提示词增强回显重复 Bug, 注入状态原子化验证 |
-| **v2.6.37** | v1.23.2 / Windsurf | 2026-05-13 | **修复**: API 地址被重置 Bug, 按钮同步逻辑优化, **交互**: Hover 静默 & Loading 旋转 |
-| **v2.6.35** | v1.23.2 / Windsurf | 2026-05-13 | **视觉特效**: 星星按钮呼吸发光特效, 按钮位置归一化微调 |
-| **v2.6.25** | v1.23.2 / Windsurf | 2026-05-13 | **修复**: 提示词按钮输入检测(零宽字符+精确定位), 移除侧边栏重复滚动按钮 |
-| **v2.6.24** | v1.23.2 / Windsurf | 2026-05-13 | **根治**: Manager/Cascade CSS ID 冲突导致滚动按钮偏右, systemPrompt 版本号迁移机制 |
-| **v2.6.23** | v1.23.2 / Windsurf | 2026-05-13 | **修复**: 滚动按钮居中(!important 优先级), prompt 输入检测(innerText), 安装器旧版 systemPrompt 合并 |
-| **v2.6.22** | v1.23.2 / Windsurf | 2026-05-13 | **核心修复**: 彻底修复 enhance.js 文件损坏问题, 恢复语法完整性, 优化 AI 输出格式为纯文本 |
-| **v2.6.20** | v1.23.2 / Windsurf | 2026-05-13 | **全链路修复**: 安装前自动清除遗留配置, 上下文采集 CDP 实测精准选择器, 滚动按钮强制居中 |
-| *早期版本*  | v1.15.8 / Windsurf | -          | 见 [GitHub Releases](https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro/releases)        |
+
 
 ---
 
-## 🔧 手动定制 IDE 版本
+## 🔧 想手动定制 IDE 版本号？
 
 如果想自定义 Antigravity 版本可在 PowerShell 中执行以下命令手动定制版本号：
 

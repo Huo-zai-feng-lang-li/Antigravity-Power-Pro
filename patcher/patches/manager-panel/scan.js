@@ -52,11 +52,13 @@ const scan = () => {
               return;
             }
 
+            // 使用 input 自身标记去重，避免按钮插入位置与检查位置不一致
+            if (input.dataset.enhanceAttached) return;
+
             const parent = input.parentElement || (input.parentNode instanceof ShadowRoot ? input.parentNode.host : null);
             if (!parent) return;
-            
-            // 查找是否已经存在按钮
-            if (parent.querySelector(`.${ENHANCE_BTN_CLASS}`)) return;
+
+            input.dataset.enhanceAttached = 'true';
 
             const btn = enhanceModule.createEnhanceButton(async () => {
                 const conf = enhanceModule.getConfig();
