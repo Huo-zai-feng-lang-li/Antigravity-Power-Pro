@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro/releases">
-    <img src="https://img.shields.io/badge/Version-v2.6.52-gold.svg?style=flat-square" alt="Version">
+    <img src="https://img.shields.io/badge/Version-v2.6.53-gold.svg?style=flat-square" alt="Version">
   </a>
   <a href="https://codeium.com/antigravity">
     <img src="https://img.shields.io/badge/Supports_Antigravity-v1.23.2-green.svg?style=flat-square" alt="Antigravity">
@@ -108,7 +108,7 @@ For manual installation, please refer to [manual-install.md](patcher/patches/man
 
 | Patch Version | Supported Antigravity Version | Date       | Update Content                                                                     |
 | ------------- | ----------------------------- | ---------- | ---------------------------------------------------------------------------------- |
-| v2.6.52       | v1.23.2 / Windsurf            | 2026-05-15 | **Fix**: Manager scroll button display issue (findRoot exclusion)                  |
+| v2.6.53       | v1.23.2 / Windsurf            | 2026-05-15 | **Fix**: Manager scroll button display issue (findRoot exclusion)                  |
 | v2.6.51       | v1.23.2 / Windsurf            | 2026-05-15 | **Fix**: Windsurf input value retrieval (innerText) and echo status accurate report|
 | v2.6.49       | v1.23.2 / Windsurf            | 2026-05-14 | **Performance**: Scoped scanning to root containers, reducing CPU load             |
 | v2.6.0        | v1.15.8 / Windsurf            | 2026-03-12 | Minimalist Refactor: Focus UI on 3 core features, removed redundant items          |

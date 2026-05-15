@@ -14,7 +14,18 @@
 | **性能收益** | 在侧边栏存在大量聊天历史时，扫描耗时降低约 40%-60%。 | `scan.js` 全系列 |
 ---
 
+## v2.6.53 (2026-05-15)
+
+### Manager 面板滚动按钮修复进阶 (Manager Scroll Button Precision Fix)
+
+| 修复项 | 根因 | 影响范围 |
+|--------|------|----------|
+| **滚动按钮溢出到主界面** | `findRoot()` 的垫底回退逻辑 `document.querySelector(".monaco-workbench") \|\| document.body` 过于贪婪。当 Manager 面板未打开时，它把整个 IDE 工作区当成了 Manager 容器，导致按钮被错误挂载到 IDE 的右下角。现在移除了回退路径，强制只允许挂载在真正的 Manager 容器节点上。 | `manager-panel/scroll-to-bottom.js` |
+
+---
+
 ## v2.6.52 (2026-05-15)
+
 
 ### Manager 面板滚动按钮修复 (Manager Scroll Button Fix)
 

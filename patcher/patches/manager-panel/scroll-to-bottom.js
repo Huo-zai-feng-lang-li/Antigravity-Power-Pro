@@ -9,12 +9,10 @@
 const BTN_ID = "manager-scroll-bottom-btn";
 const THRESHOLD = 100;
 
-/** 查找挂载根节点 — Manager 专用，不匹配侧边栏 */
+/** 查找挂载根节点 — 仅限 Manager 窗口专用，不匹配主工作区和侧边栏 */
 const findRoot = () =>
   document.querySelector(".jetski-agent-container") ||
-  document.querySelector(".antigravity-manager-container") ||
-  document.querySelector(".monaco-workbench") ||
-  document.body;
+  document.querySelector(".antigravity-manager-container");
 
 /** 查找主滚动容器：增加隔离与排除逻辑 */
 const findScrollEl = (root) => {
