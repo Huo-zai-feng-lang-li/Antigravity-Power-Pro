@@ -9,10 +9,24 @@
 const BTN_ID = "manager-scroll-bottom-btn";
 const THRESHOLD = 100;
 
-/** 查找挂载根节点 — 仅限 Manager 窗口专用，不匹配主工作区和侧边栏 */
-const findRoot = () =>
-  document.querySelector(".jetski-agent-container") ||
-  document.querySelector(".antigravity-manager-container");
+/** 查找挂载根节点 — Manager 专用 */
+const findRoot = () => {
+  // 查找能够证明 Manager 处于打开状态的标志性容器（同时排除侧边栏）
+  const chatEls = document.querySelectorAll(".chat-container, .conversation-container, .agent-view-container, .jetski-agent-container, .antigravity-manager-container");
+  let isManagerActive = false;
+  
+  for (const el of chatEls) {
+      if (!el.closest(".antigravity-agent-side-panel")) {
+          isManagerActive = true;
+          break;
+      }
+  }
+
+  // 只有真正打开了 Manager 才会返回 .monaco-workbench 作为挂载点
+  // 因为 CSS 的定位依赖于主工作区居中
+  if (!isManagerActive) return null;
+  return document.querySelector(".monaco-workbench") || document.body;
+};
 
 /** 查找主滚动容器：增加隔离与排除逻辑 */
 const findScrollEl = (root) => {

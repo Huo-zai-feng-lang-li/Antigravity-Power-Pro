@@ -14,6 +14,16 @@
 | **性能收益** | 在侧边栏存在大量聊天历史时，扫描耗时降低约 40%-60%。 | `scan.js` 全系列 |
 ---
 
+## v2.6.54 (2026-05-15)
+
+### Manager 面板滚动按钮渲染修复 (Manager Scroll Button Mounting Fix)
+
+| 修复项 | 根因 | 影响范围 |
+|--------|------|----------|
+| **滚动按钮完全消失** | 在 v2.6.53 修复时过于粗暴地移除了 `.monaco-workbench` 的回调，这导致真正的 Manager 窗口里也找不到挂载点了（因为 Manager 弹窗其实就属于 `.monaco-workbench`）。重构挂载逻辑：侦听是否存在不属于侧边栏的 `.chat-container`，如果有，再挂载到 `.monaco-workbench`，兼顾了精准隔离和布局兼容。 | `manager-panel/scroll-to-bottom.js` |
+
+---
+
 ## v2.6.53 (2026-05-15)
 
 ### Manager 面板滚动按钮修复进阶 (Manager Scroll Button Precision Fix)
