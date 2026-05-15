@@ -55,6 +55,36 @@ globs: *
 - **禁止**: 在 `findRoot()` 或 `findScrollEl()` 中使用 `.chat-container`、`.conversation-container`、`.agent-view-container`、`.monaco-workbench` 等 IDE 原生语义类名作为必要条件判断
 - **必须**: 使用特征无关策略 — 遍历 DOM 按 `overflowY` + `scrollHeight` 取最大可滚动元素
 
+### 补丁文件修改地图 (双面板 × 双功能)
+
+> **修改任何功能前，必须先查此表确认涉及哪些文件，两个面板各自独立、禁止交叉引用。**
+
+#### 源码 → IDE 部署路径
+
+| 源码目录 (patcher/patches/) | 部署位置 (IDE 内) |
+|---------------------------|------------------|
+| `cascade-panel/*` | `D:/Antigravity/resources/app/extensions/antigravity/cascade-panel/` |
+| `manager-panel/*` | `D:/Antigravity/resources/app/out/vs/code/electron-browser/workbench/manager-panel/` |
+| `shared/enhance.js` | 两处均部署：`extensions/antigravity/shared/` 和 `workbench/shared/` |
+
+#### 功能模块对照表
+
+| 功能 | cascade-panel (侧边栏) | manager-panel (Manager) | 共享模块 |
+|------|----------------------|------------------------|---------|
+| **滚动到底部** | `cascade-panel/scroll-to-bottom.js`<br>BTN_ID=`cascade-scroll-bottom-btn` | `manager-panel/scroll-to-bottom.js`<br>BTN_ID=`manager-scroll-bottom-btn` | 无 (各自独立) |
+| **提示词增强** | `cascade-panel/scan.js` (第327行起) | `manager-panel/scan.js` (第5行起) | `shared/enhance.js` |
+| **入口加载** | `cascade-panel/cascade-panel.js` | `manager-panel/manager-panel.js` | 无 |
+| **样式** | `cascade-panel/cascade-panel.css` | `manager-panel/manager-panel.css` | 无 |
+| **配置** | `cascade-panel/config.json` | `manager-panel/config.json` | 无 |
+
+#### 修改注意事项
+
+1. **scroll-to-bottom.js 是两份独立文件**，不共享代码。修改一个面板时必须检查另一个是否需要同步
+2. **enhance.js 是共享模块**，两个面板的 `scan.js` 通过 `import('../shared/enhance.js')` 引用。修改 enhance.js 会同时影响两个面板
+3. **BTN_ID 严格隔离**：cascade 用 `cascade-scroll-bottom-btn`，manager 用 `manager-scroll-bottom-btn`，禁止混用
+4. **findRoot 策略不同**：cascade 用 `.antigravity-agent-side-panel || document.body`，manager 直接用 `document.body`
+5. **部署需重新安装**：源码修改后必须重新构建 exe 并执行安装，才能更新 IDE 内的部署文件
+
 ## 设计规范 (视觉与环境控制)
 
 - **设计语言**: 统一使用 "Obsidian Gold" (黑金拟物极客) 风格。功能悬浮按键统一为 **Circular 圆形**，配搭金耀色晕投影 (`rgba(251, 191, 36, 0.4)`)。
