@@ -14,6 +14,18 @@
 | **性能收益** | 在侧边栏存在大量聊天历史时，扫描耗时降低约 40%-60%。 | `scan.js` 全系列 |
 ---
 
+## v2.6.58 (2026-05-15)
+
+### 三连补丁：规则加固 + 降级兜底 + Manager 滚动按钮精准识别
+
+| 修复项 | 根因 | 影响范围 |
+|--------|------|----------|
+| **架构规则加固** | 将"禁止 selectAll + 必须用 Range.selectNodeContents"写进永恒规则库 | `.agent/rules/README.md` |
+| **增强降级兜底** | 回写失败时自动 `clipboard.writeText` 确保结果不丢失 | `shared/enhance.js` |
+| **Manager 滚动按钮消失** | `closest(".antigravity-agent-side-panel")` 误判 Manager 也满足条件，改为判断 `closest(".part.editor")` 精准识别主区域 | `manager-panel/scroll-to-bottom.js` |
+
+---
+
 ## v2.6.57 (2026-05-15)
 
 ### 彻底根除回显文本“只追加不覆盖”问题 (Range Override Injection Fix)
