@@ -6,7 +6,7 @@ description: 打 tag 发版前的检查清单和代码规范
 
 ## 前置检查 (必须全部通过才能打 tag)
 
-### 1. 版本号同步 (5 处)
+### 1. 版本号同步 (6 处)
 
 以下文件的版本号必须一致, 缺一不可:
 
@@ -18,6 +18,7 @@ grep -n '"version"' patcher/src-tauri/tauri.conf.json
 grep -n 'version = ' patcher/src-tauri/Cargo.toml
 grep -n 'APP_VERSION' patcher/src/App.vue
 grep -n 'version-v' README.md | head -1
+grep -n 'v2\.' README_EN.md | head -1
 ```
 
 ### 2. CHANGELOG.md 更新
@@ -35,7 +36,7 @@ grep -n 'version-v' README.md | head -1
 
 - [ ] CSS: 不同模块的 DOM 元素必须使用**不同 ID**, 禁止跨模块共享 CSS ID
 - [ ] CSS: 通过 JS toggle class 切换的属性, 初始态和目标态的 `!important` 级别必须一致
-- [ ] JS: `contenteditable` 元素取值优先用 `innerText`, 禁止用 `.value`
+- [ ] JS: `contenteditable` 元素**取值**用 `innerText`，**写入**必须用 `Range.selectNodeContents()` + `execCommand("insertText")`，严禁 `innerText = value` 赋值或 `execCommand("selectAll")`（会导致追加 Bug）
 - [ ] 系统提示词: 修改 `DEFAULT_SYSTEM_PROMPT` 时必须同时递增 `SYSTEM_PROMPT_VERSION`
 - [ ] 系统提示词: `App.vue` 和 `enhance.js` 的 `DEFAULT_SYSTEM_PROMPT` 必须同步
 - [ ] 嵌入排除: 新增/删除补丁文件时检查 `.embed-exclude.txt` 是否需要更新
@@ -65,7 +66,7 @@ cat patcher/patches/.embed-exclude.txt
 
 ### Step 1: 递增版本号
 
-同时修改 5 个文件的版本号 (如 2.6.24 -> 2.6.25).
+同时修改 **6 个文件**的版本号 (如 2.6.57 -> 2.6.58)：`patcher/package.json`、`tauri.conf.json`、`Cargo.toml`、`App.vue`、`README.md`、`README_EN.md`。
 
 ### Step 2: 更新文档
 
