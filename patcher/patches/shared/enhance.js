@@ -373,46 +373,57 @@ async function setInputValue(input, value) {
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
   const normalizedValue = value.trim();
 
-  // contenteditable: 优先 innerText 赋值，天然保留换行符（\n 映射为 <br>）
-  // execCommand("insertText") 会将 \n 折叠为空白，换行丢失
-  if (input.contentEditable === "true") {
-    try {
-      input.innerText = value;
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-      await sleep(150);
-      if (getInputValue(input).trim() === normalizedValue) return true;
-    } catch (e) {
-      console.warn("[PromptEnhance] innerText assignment failed, falling back...");
-    }
-  } else {
-    // textarea/input: 使用 execCommand 保持撤销历史
-    try {
-      input.select();
-      const execSuccess = document.execCommand("insertText", false, value);
-      if (execSuccess) {
-        await sleep(150);
-        if (getInputValue(input).trim() === normalizedValue) return true;
+  // 绝技：针对 React/Monaco 的终极事件链注入方案
+  try {
+    if (input.contentEditable === "true") {
+      // 1. 全选
+      document.execCommand("selectAll", false, null);
+      // 2. 插入文本 (这是能触发 Monaco/React 编辑器内部 Model 改变的唯一标准跨浏览器方法)
+      const success = document.execCommand("insertText", false, value);
+      
+      // 如果 insertText 在某些环境下失败或导致换行丢失，尝试使用 ClipboardEvent(paste)
+      if (!success || getInputValue(input).trim() !== normalizedValue) {
+        console.warn("[PromptEnhance] insertText failed/mismatched, trying Clipboard Paste Event");
+        input.innerText = ""; // 先清空
+        const dataTransfer = new DataTransfer();
+        dataTransfer.setData("text/plain", value);
+        input.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dataTransfer, bubbles: true, cancelable: true }));
+        input.dispatchEvent(new Event("input", { bubbles: true }));
       }
-    } catch (e) {
-      console.warn("[PromptEnhance] execCommand failed, falling back...");
+    } else {
+      // 对于 textarea，如果有 React 绑定的 value setter，必须调用原生 setter
+      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+        window.HTMLTextAreaElement.prototype,
+        "value"
+      )?.set || Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        "value"
+      )?.set;
+      
+      if (nativeInputValueSetter) {
+        nativeInputValueSetter.call(input, value);
+      } else {
+        input.value = value;
+      }
+      input.dispatchEvent(new Event("input", { bubbles: true }));
     }
-    // Fallback: 直接赋值
-    input.value = value;
+
+    await sleep(200);
+
+    // 双重校验：如果不匹配，说明修改未被有效接收
+    const endValue = getInputValue(input).trim();
+    if (endValue === normalizedValue) return true;
+    
+    // 如果走到这里依然失败，尝试直接改 DOM 但此时极大可能遭遇前端框架抛弃，判定失败交由降级剪贴板处理
+    input.innerText = value;
     input.dispatchEvent(new Event("input", { bubbles: true }));
     await sleep(150);
-    if (getInputValue(input).trim() === normalizedValue) return true;
-  }
+    return false; // 无论如何不骗用户成功，老实回退到写入剪贴板
 
-  // 最终兜底: 强制 DOM 覆盖
-  console.log("[PromptEnhance] Using final DOM fallback");
-  if (input.contentEditable === "true") {
-    input.innerText = value;
-  } else {
-    input.value = value;
+  } catch (e) {
+    console.error("[PromptEnhance] DOM set error:", e);
+    return false;
   }
-  input.dispatchEvent(new Event("input", { bubbles: true }));
-  await sleep(150);
-  return getInputValue(input).trim() === normalizedValue;
 }
 
 // ============================================

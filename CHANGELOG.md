@@ -14,6 +14,17 @@
 | **性能收益** | 在侧边栏存在大量聊天历史时，扫描耗时降低约 40%-60%。 | `scan.js` 全系列 |
 ---
 
+## v2.6.56 (2026-05-15)
+
+### 提示词增强双域通信 Bug 修复 (Prompt Enhance Virtual DOM Inject Fix)
+
+| 修复项 | 根因 | 影响范围 |
+|--------|------|----------|
+| **提示词成功但未回推至输入框** | 编辑器内置的聊天框采用了极度封闭的 React / Monaco 虚拟 DOM 拦截架构。过去的补丁使用了原生的修改 DOM `input.innerText = value` 来覆盖文本。**虽然字面显示成功了，但在框架的 Model 层它依然视作旧字符串！**本次重构强迫浏览器执行底层的 `document.execCommand("insertText")` 以及触发 `ClipboardEvent("paste")`，强制劫持 React 绑定并生效。 | `shared/enhance.js` |
+| **Manager 点击无反馈 (吞并状态)** | Manager 窗口的 `scan.js` 里在调度完 LLM 之后，缺少了极其关键的 `showResultModal()` 状态回调报告，导致不管是成功回写还是失败退化降级都完全处于“哑巴”状态。本次补充进闭环的回调与界面互动反馈。 | `manager-panel/scan.js` |
+
+---
+
 ## v2.6.55 (2026-05-15)
 
 ### Manager 面板层级权重修复 (Manager Scroll Priority Fix)

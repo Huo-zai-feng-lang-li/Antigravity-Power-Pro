@@ -75,7 +75,15 @@ const scan = () => {
                 btn.classList.add("loading");
                 try {
                     const enhanced = await enhanceModule.enhance(text);
-                    await enhanceModule.setInputValue(input, enhanced);
+                    const success = await enhanceModule.setInputValue(input, enhanced);
+                    
+                    enhanceModule.showResultModal(
+                      enhanced,
+                      success ? () => {} : (res) => navigator.clipboard.writeText(res).catch(() => {})
+                    );
+                } catch (error) {
+                    console.error("[Manager PromptEnhance] 增强失败:", error);
+                    enhanceModule.showErrorModal(error.message);
                 } finally {
                     btn.classList.remove("loading");
                 }
