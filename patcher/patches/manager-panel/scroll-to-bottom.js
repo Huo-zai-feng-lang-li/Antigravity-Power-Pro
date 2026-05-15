@@ -49,11 +49,16 @@ const findScrollEl = (root) => {
         prioritySelectors.forEach(s => {
             const els = searchRoot.querySelectorAll(s);
             els.forEach(el => {
-                // 排除逻辑：绝对不能是编辑器内部或者搜索结果列表等
-                if (el.closest(".monaco-editor") || el.closest(".search-view")) return;
+                // 排除逻辑：绝对不能是侧边栏、编辑器内部或者搜索结果列表等
+                if (el.closest(".monaco-editor") || el.closest(".search-view") || el.closest(".part.sidebar")) return;
                 
                 if (el.scrollHeight > el.clientHeight + 20) {
-                    candidates.push({ el, priority: 20 + el.scrollHeight });
+                    let basePriority = 20;
+                    // 如果发现确切的聊天区域容器，给予绝对高优先级，避免被文件资源管理器等篡夺
+                    if (el.classList.contains("chat-container") || el.classList.contains("cascade-scrollbar") || el.classList.contains("agent-view-container")) {
+                        basePriority += 10000;
+                    }
+                    candidates.push({ el, priority: basePriority + el.scrollHeight });
                 }
             });
         });
