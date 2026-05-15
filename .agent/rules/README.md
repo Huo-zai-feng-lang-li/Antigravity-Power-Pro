@@ -90,6 +90,8 @@ trigger: glob
 
 - **环境主权隔离**: `manager-panel/scan.js` 禁止干预侧边栏元素。必须包含 `if (input.closest('.antigravity-agent-side-panel')) return;` 隔离逻辑，确保侧边栏定位由 `cascade-panel/scan.js` 唯一控制。
 - **定位权下放**: `shared/enhance.js` 仅负责创建 UI 组件与 API 交互，**禁止**在共享模块内硬编码 `bottom/right/position` 等定位属性。所有位置参数必须在各自页面的 `scan.js` 中通过 `setProperty(..., 'important')` 动态注入。
-- **原子化注入准则**: 提示词回显必须采用 `Range` 选取 + `execCommand('insertText')` 的原子路径。严禁手动派发 `beforeinput` 或 `input` 事件，以防止在复杂的 IDE 监听环境下触发双倍回显 Bug。
+- **虚拟 DOM 劫持准则 (v2.6.56+)**: 侧重于输入框的强制覆写时，严禁使用低级的 `input.innerText = value`。现代 IDE (React/Monaco) 存在死板的数据流单向绑定。若只改 DOM 会导致“状态脱轨回旋镖”（字面写进去了却被框架刷新吃掉）。必须使用 **原生用户交互伪装技术（`execCommand("insertText")` 组合假冒的 `ClipboardEvent("paste")` 物理级粘贴事件并手动 `dispatchEvent(new Event("input"))`）** 暴力击穿框架防线。
+- **UI 状态闭环底线 (v2.6.56+)**: 任何调度长耗时异步任务（如 LLM 提示词增强）时，必须配备完整的 `showResultModal()` 或全套 Toast 反馈 UI。在遭遇到极高防御级别无法写入的黑盒 Dom 时，必须安全降级为“复制到剪贴板并提示”，绝对禁止发生静默失败（吞并用户点击）。
+- **空间抢夺防护 (v2.6.55+)**: 向极度复杂的 Manager 等窗口挂载滚动监听、悬浮按钮时，切记不要使用贪婪的全局 `root` 查找。容易被同窗口内其他超长的独立侧边栏（如文件树、资源管理器）发生“焦点夺取”。必须进行精准判断、增加排异逻辑并叠加权重。
 - **容器溢出保障**: 注入绝对定位按钮时，必须强制父容器 `overflow: visible !important`，防止按钮位移时被宿主容器意外截断。
 
