@@ -12,11 +12,14 @@ const THRESHOLD = 100;
 /** 查找挂载根节点 — Manager 专用 */
 const findRoot = () => {
   // 查找能够证明 Manager 处于打开状态的标志性容器（同时排除侧边栏）
-  const chatEls = document.querySelectorAll(".chat-container, .conversation-container, .agent-view-container, .jetski-agent-container, .antigravity-manager-container");
+  // 查找各个可能散落的聊天容器
+  const chatEls = document.querySelectorAll(".chat-container, .conversation-container, .agent-view-container, .jetski-agent-container, .antigravity-manager-container, .antigravity-agent-side-panel");
   let isManagerActive = false;
   
   for (const el of chatEls) {
-      if (!el.closest(".antigravity-agent-side-panel")) {
+      // 灵魂鉴定：只有位于中心主编辑器区域的聊天窗口，才是真正的 Manager！
+      // (.part.sidebar 是左侧边栏，.part.auxiliarybar 是右侧边栏，.part.editor 是主编辑区)
+      if (el.closest(".part.editor")) {
           isManagerActive = true;
           break;
       }
@@ -49,8 +52,11 @@ const findScrollEl = (root) => {
         prioritySelectors.forEach(s => {
             const els = searchRoot.querySelectorAll(s);
             els.forEach(el => {
-                // 排除逻辑：绝对不能是侧边栏、编辑器内部或者搜索结果列表等
-                if (el.closest(".monaco-editor") || el.closest(".search-view") || el.closest(".part.sidebar")) return;
+                // 排除逻辑：绝对不能是任何 IDE 原生侧边界面的滚动条
+                // .monaco-editor (避免代码文本滚动条被拦截)
+                // .search-view (避免搜索结果列表被拦截)
+                // .part.sidebar / .part.auxiliarybar (严格排除左右两大侧栏结构)
+                if (el.closest(".monaco-editor") || el.closest(".search-view") || el.closest(".part.sidebar") || el.closest(".part.auxiliarybar")) return;
                 
                 if (el.scrollHeight > el.clientHeight + 20) {
                     let basePriority = 20;
