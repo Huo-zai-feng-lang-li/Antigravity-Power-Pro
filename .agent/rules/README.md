@@ -1,5 +1,6 @@
 ---
 trigger: glob
+globs: 目标: 让 AI 一眼理解本项目在做什么, 补丁如何落地, 关键入口在哪里
 ---
 
 - **配置零覆盖原则**: 补丁更新时，禁止覆盖用户已有的 `config.json`。必须采用增量合并逻辑，确保用户的 `apiKey` 和自定义 API 路径在升级后依然有效。在 Rust 侧后端或 Vue 侧保存时也要分情况合并。
@@ -10,8 +11,9 @@ trigger: glob
 
 ## 项目定位
 
-- Antigravity-Power-Pro 是 AI 本地 IDE（如 Cascade 原型版本和 Windsurf IDE） 的全能挂载增强补丁。
+- Antigravity-Power-Pro 是 AI 本地 IDE（如 Antigravity IDE Cascade 原型版本和 Windsurf IDE） 的全能挂载增强补丁。
 - Antigravity：全面改造其 Cascade 面板和 Manager 面板（包含渲染增强、表格修复、回退样式、极客滚动控制以及高度定制的智能提示词 API 接口挂载等）。
+- 当前只需要保留滚动底部和提示词增强俩个功能即可，其他功能默认全部关闭。
 - Windsurf：改造其独立客户端（包括字体调节、增强悬浮模块、提示词等）。
 - 前端安装器使用了 Vue 提供的 Tab 布局进行环境切换（隔离状态）。
 
@@ -54,4 +56,3 @@ trigger: glob
 - **空间焦点抢夺防护**: 向 Manager 类融合会话面板加插按钮或进行长列表追踪时（如滚动条吸底），禁绝贪婪匹配全体 root！这种行为会被窗口内同层文件列表等其他系统级长列表诱发劫夺，必须叠加专属 CSS 限定甚至施加超高 `10000` 权重，锁定专属领域挂载。
 - **环境主权隔离**: `manager-panel/scan.js` 扫描时必须规避并隔离已属于侧边栏 `cascade-panel` 的特有类容（如 `.antigravity-agent-side-panel` 元素），实现跨模块井水不犯河水。位置定点权必须交放给各面板自己管理。绝对定位容器必须加上 `overflow: visible !important` 的超高权柄，防止界面跳变被断层裁剪。
 - **遗留配置清洗**: App.vue 等设置界面的初始化里，若是探测到过去落后遗留的 API 地址或者淘汰默认值，应通过条件判定予以剔除和静默覆盖，不要给用户留下过时的包袱。
-

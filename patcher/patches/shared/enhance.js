@@ -376,15 +376,25 @@ async function setInputValue(input, value) {
   // 绝技：针对 React/Monaco 的终极事件链注入方案
   try {
     if (input.contentEditable === "true") {
-      // 1. 全选
-      document.execCommand("selectAll", false, null);
-      // 2. 插入文本 (这是能触发 Monaco/React 编辑器内部 Model 改变的唯一标准跨浏览器方法)
+      // 1. 强制选中该输入框的全部子节点内容 (放弃不可靠的 selectAll)
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(input);
+      selection.removeAllRanges();
+      selection.addRange(range);
+
+      // 2. 插入文本 (覆盖当前的 Selection)
       const success = document.execCommand("insertText", false, value);
       
       // 如果 insertText 在某些环境下失败或导致换行丢失，尝试使用 ClipboardEvent(paste)
       if (!success || getInputValue(input).trim() !== normalizedValue) {
         console.warn("[PromptEnhance] insertText failed/mismatched, trying Clipboard Paste Event");
-        input.innerText = ""; // 先清空
+        
+        // 再次确保处于全选状态，防止刚刚的失败导致光标塌陷
+        range.selectNodeContents(input);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        
         const dataTransfer = new DataTransfer();
         dataTransfer.setData("text/plain", value);
         input.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dataTransfer, bubbles: true, cancelable: true }));

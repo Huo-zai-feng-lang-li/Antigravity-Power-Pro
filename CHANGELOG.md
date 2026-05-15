@@ -14,6 +14,16 @@
 | **性能收益** | 在侧边栏存在大量聊天历史时，扫描耗时降低约 40%-60%。 | `scan.js` 全系列 |
 ---
 
+## v2.6.57 (2026-05-15)
+
+### 彻底根除回显文本“只追加不覆盖”问题 (Range Override Injection Fix)
+
+| 修复项 | 根因 | 影响范围 |
+|--------|------|----------|
+| **优化文本直接粘到了旧文本尾巴上** | React/Monaco 系统在识别 `execCommand("selectAll")` 时有时候不会精准锁定目标输入区，或者光标坍塌到底部。同时 `input.innerText = ""` 清空指令又被其屏蔽，这导致物理级别的 Paste 与 Insert 事件统统演变成了 **“尾部追加”**。此次升级祭出了底层的 `Range` 与 `Selection` 核心 API——强制用 `selectNodeContents(input)` 精准框选出所有旧文本后，再行触发替换打击，彻底达成“替换”效果。 | `shared/enhance.js` |
+
+---
+
 ## v2.6.56 (2026-05-15)
 
 ### 提示词增强双域通信 Bug 修复 (Prompt Enhance Virtual DOM Inject Fix)
