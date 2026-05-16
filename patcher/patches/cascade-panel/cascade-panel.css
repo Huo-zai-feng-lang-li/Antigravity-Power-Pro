@@ -163,6 +163,10 @@ body {
     transform: translateX(-50%) translateY(10px) scale(0.9) !important;
 }
 
+#cascade-scroll-bottom-btn.body-root {
+    position: fixed !important;
+}
+
 #cascade-scroll-bottom-btn.visible {
     opacity: 1;
     pointer-events: auto;

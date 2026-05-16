@@ -367,17 +367,29 @@ fn inject_cascade_into_html(html_path: &PathBuf) -> Result<(), String> {
         result = result.replacen("<head>", &format!("<head>{}", tt_bypass), 1);
     }
 
+    // Keep repeated installs idempotent even when older templates used a different tag spelling.
+    for tag in [
+        "<link rel=\"stylesheet\" href=\"./cascade-panel/cascade-panel.css\">",
+        "<link rel=\"stylesheet\" href=\"./cascade-panel/cascade-panel.css\"/>",
+        "<link rel=\"stylesheet\" href=\"./cascade-panel/cascade-panel.css\" />",
+    ] {
+        result = result.replace(tag, "");
+    }
+
+    for tag in [
+        "<script src=\"./cascade-panel/cascade-panel.js\" type=\"module\"></script>",
+        "<script type=\"module\" src=\"./cascade-panel/cascade-panel.js\"></script>",
+    ] {
+        result = result.replace(tag, "");
+    }
+
     // CSS
     let css_tag = "<link rel=\"stylesheet\" href=\"./cascade-panel/cascade-panel.css\">";
-    if !result.contains(css_tag) {
-        result = result.replacen("</head>", &format!("{}</head>", css_tag), 1);
-    }
+    result = result.replacen("</head>", &format!("{}</head>", css_tag), 1);
 
     // JS
     let js_tag = "<script src=\"./cascade-panel/cascade-panel.js\" type=\"module\"></script>";
-    if !result.contains(js_tag) {
-        result = result.replacen("</body>", &format!("{}</body>", js_tag), 1);
-    }
+    result = result.replacen("</body>", &format!("{}</body>", js_tag), 1);
 
     fs::write(html_path, result)
         .map_err(|e| format!("写入 HTML 失败: {}", e))?;

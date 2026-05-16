@@ -2,6 +2,25 @@
 
 本文件记录每个版本的 Bug 修复和关键备忘, 防止后续改代码时重复踩坑. 时间格式如 `2026-05-15 09:00:00`同步的是git 提交时间
 
+## v2.6.66 (2026-05-16 14:53:49)
+
+### Sidebar scroll button visibility and injection cleanup
+
+| Fix Item | Root Cause | Scope |
+|--------|------|----------|
+| **Sidebar scroll-to-bottom button disappeared in some layouts** | The state lock could keep an early element that had height but was not the real scroll container, and the old scanner only trusted a narrow set of overflow utility classes | `cascade-panel/scroll-to-bottom.js` |
+| **Scroll update path could become heavier than necessary** | Strict scrollability checks read computed style during scroll updates | `cascade-panel/scroll-to-bottom.js` |
+| **Repeated installs could leave duplicate Cascade CSS/JS tags in workbench.html** | The installer only checked one exact tag spelling and did not normalize older injected variants before reinserting | `src-tauri/src/commands/patch.rs` |
+| **Fix** | Use strict detection only during scans, keep scroll events on lightweight range checks, add body-root fixed positioning fallback, and normalize Cascade injection tags before insertion | Same as above |
+
+### Notes
+
+- Manager prompt enhancement remains isolated in `manager-panel/scan.js`; no shared selector or state was changed.
+- Manager scroll button keeps its existing `manager-scroll-bottom-btn` ID and separate page scope.
+- The CSS ID separation rule is preserved: Cascade and Manager buttons still use distinct IDs.
+
+---
+
 ## v2.6.65 (2026-05-16 14:30:00)
 
 ### Manager 滚动补丁同步 — Shadow DOM 穿透
