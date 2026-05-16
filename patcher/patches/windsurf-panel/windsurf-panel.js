@@ -22,8 +22,10 @@ if (window.trustedTypes && !window.trustedTypes.defaultPolicy) {
 }
 
 const SCRIPT_BASE = new URL("./", import.meta.url).href;
+const FEATURE_DEFAULTS_VERSION = 1;
 
 const DEFAULT_CONFIG = {
+  featureDefaultsVersion: FEATURE_DEFAULTS_VERSION,
   scrollToBottom: true,
   fontSizeEnabled: false,
   fontSize: 14,
@@ -37,6 +39,20 @@ const DEFAULT_CONFIG = {
   },
 };
 
+const normalizeConfig = (data = {}) => {
+  const source = data && typeof data === "object" && !Array.isArray(data) ? data : {};
+  const merged = {
+    ...DEFAULT_CONFIG,
+    ...source,
+    promptEnhance: { ...DEFAULT_CONFIG.promptEnhance, ...(source.promptEnhance || {}) },
+  };
+  if ((Number(source.featureDefaultsVersion) || 0) < FEATURE_DEFAULTS_VERSION) {
+    merged.fontSizeEnabled = false;
+  }
+  merged.featureDefaultsVersion = FEATURE_DEFAULTS_VERSION;
+  return merged;
+};
+
 const loadConfig = async () => {
   try {
     const url = new URL("config.json", SCRIPT_BASE).href;
@@ -46,7 +62,7 @@ const loadConfig = async () => {
     if (!data || typeof data !== "object" || Array.isArray(data)) {
       return DEFAULT_CONFIG;
     }
-    return { ...DEFAULT_CONFIG, ...data };
+    return normalizeConfig(data);
   } catch {
     return DEFAULT_CONFIG;
   }

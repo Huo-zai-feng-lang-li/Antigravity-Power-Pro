@@ -14,7 +14,11 @@ if (window.trustedTypes && !window.trustedTypes.defaultPolicy) {
 
 import { loadStyle } from "./utils.js";
 
+const FEATURE_DEFAULTS_VERSION = 1;
+const DEFAULT_OFF_KEYS = ["mermaid", "math", "copyButton", "tableColor", "fontSizeEnabled"];
+
 const DEFAULT_CONFIG = {
+  featureDefaultsVersion: FEATURE_DEFAULTS_VERSION,
   mermaid: false,
   math: false,
   copyButton: false,
@@ -32,6 +36,22 @@ const DEFAULT_CONFIG = {
   },
 };
 
+const normalizeConfig = (data = {}) => {
+    const source = data && typeof data === "object" && !Array.isArray(data) ? data : {};
+    const merged = {
+        ...DEFAULT_CONFIG,
+        ...source,
+        promptEnhance: { ...DEFAULT_CONFIG.promptEnhance, ...(source.promptEnhance || {}) },
+    };
+    if ((Number(source.featureDefaultsVersion) || 0) < FEATURE_DEFAULTS_VERSION) {
+        DEFAULT_OFF_KEYS.forEach((key) => {
+            merged[key] = false;
+        });
+    }
+    merged.featureDefaultsVersion = FEATURE_DEFAULTS_VERSION;
+    return merged;
+};
+
 // 后续逻辑保持不变...
 // 已经同步修改的代码逻辑：
 const loadConfig = async () => {
@@ -39,12 +59,7 @@ const loadConfig = async () => {
         const configUrl = new URL("./config.json", import.meta.url).href;
         const res = await fetch(configUrl, { cache: "no-store" });
         const data = await res.json();
-        // 深合并：确保 promptEnhance 子字段不丢失
-        return {
-            ...DEFAULT_CONFIG,
-            ...data,
-            promptEnhance: { ...DEFAULT_CONFIG.promptEnhance, ...(data.promptEnhance || {}) },
-        };
+        return normalizeConfig(data);
     } catch {
         return DEFAULT_CONFIG;
     }

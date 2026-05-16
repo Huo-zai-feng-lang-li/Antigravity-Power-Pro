@@ -16,14 +16,30 @@ if (window.trustedTypes && !window.trustedTypes.defaultPolicy) {
 }
 
 const SCRIPT_BASE = new URL('./', import.meta.url).href;
+const FEATURE_DEFAULTS_VERSION = 1;
 
 const DEFAULT_CONFIG = {
+    featureDefaultsVersion: FEATURE_DEFAULTS_VERSION,
     scrollToBottom: true,
     fontSizeEnabled: false,
     fontSize: 16,
     promptEnhance: {
         enabled: true,
     },
+};
+
+const normalizeConfig = (data = {}) => {
+    const source = data && typeof data === 'object' && !Array.isArray(data) ? data : {};
+    const merged = {
+        ...DEFAULT_CONFIG,
+        ...source,
+        promptEnhance: { ...DEFAULT_CONFIG.promptEnhance, ...(source.promptEnhance || {}) },
+    };
+    if ((Number(source.featureDefaultsVersion) || 0) < FEATURE_DEFAULTS_VERSION) {
+        merged.fontSizeEnabled = false;
+    }
+    merged.featureDefaultsVersion = FEATURE_DEFAULTS_VERSION;
+    return merged;
 };
 
 const loadStyle = (href) => {
@@ -48,7 +64,7 @@ const loadConfig = async () => {
         const res = await fetch(configUrl, { cache: 'no-store' });
         if (!res.ok) throw new Error();
         const data = await res.json();
-        return { ...DEFAULT_CONFIG, ...data };
+        return normalizeConfig(data);
     } catch {
         return DEFAULT_CONFIG;
     }

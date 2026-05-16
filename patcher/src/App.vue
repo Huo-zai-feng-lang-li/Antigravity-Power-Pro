@@ -13,10 +13,11 @@ import ManagerFeatureCard from "./components/ManagerFeatureCard.vue";
 import { getVersion } from "@tauri-apps/api/app";
 
 // 常量
-const APP_VERSION = ref("2.6.67");
+const APP_VERSION = ref("2.6.68");
 const GITHUB_URL = "https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro";
 // 每次更新 DEFAULT_SYSTEM_PROMPT 时递增此版本号，旧版 config 会自动重置
 const SYSTEM_PROMPT_VERSION = 2;
+const FEATURE_DEFAULTS_VERSION = 1;
 
 const DEFAULT_SYSTEM_PROMPT = `你是一个智能提示词优化器，专门帮助用户生成更有效的 AI 对话提示词。
 
@@ -77,6 +78,7 @@ const showConfirm = ref(false);
 // 侧边栏功能开关
 const features = ref({
   enabled: true,
+  featureDefaultsVersion: FEATURE_DEFAULTS_VERSION,
   mermaid: false,
   math: false,
   copyButton: false,
@@ -104,6 +106,7 @@ const isWindsurfInstalled = ref(false);
 const showWindsurfConfirm = ref(false);
 
 const windsurfFeatures = ref({
+  featureDefaultsVersion: FEATURE_DEFAULTS_VERSION,
   scrollToBottom: true,
   fontSizeEnabled: false,
   fontSize: 14,
@@ -127,6 +130,7 @@ const WINDSURF_PATCH_FILES = {
 // Manager 功能开关 (归一化至尊版)
 const managerFeatures = ref({
   enabled: true,
+  featureDefaultsVersion: FEATURE_DEFAULTS_VERSION,
   scrollToBottom: true,
   fontSizeEnabled: false,
   fontSize: 16,
@@ -146,6 +150,41 @@ const managerFeatures = ref({
 // ============================================
 const LEGACY_API_BASES = ["http://127.0.0.1:8045/v1", "http://localhost:8045/v1"];
 const LEGACY_MODELS = ["gemini-3-flash", "gemini-2.0-flash", ""];
+type FeatureDefaultsConfig = {
+  featureDefaultsVersion?: number;
+  mermaid?: boolean;
+  math?: boolean;
+  copyButton?: boolean;
+  tableColor?: boolean;
+  fontSizeEnabled?: boolean;
+};
+type DefaultOffFeatureKey = Exclude<keyof FeatureDefaultsConfig, "featureDefaultsVersion">;
+
+const CASCADE_DEFAULT_OFF_KEYS: readonly DefaultOffFeatureKey[] = [
+  "mermaid",
+  "math",
+  "copyButton",
+  "tableColor",
+  "fontSizeEnabled",
+];
+const FONT_DEFAULT_OFF_KEYS: readonly DefaultOffFeatureKey[] = ["fontSizeEnabled"];
+
+function normalizeDefaultOffFeatures<T extends FeatureDefaultsConfig>(
+  merged: T,
+  disk: FeatureDefaultsConfig,
+  keys: readonly DefaultOffFeatureKey[],
+): T {
+  const diskVersion = Number(disk.featureDefaultsVersion) || 0;
+  if (diskVersion < FEATURE_DEFAULTS_VERSION) {
+    keys.forEach((key) => {
+      if (key in merged) {
+        merged[key] = false;
+      }
+    });
+  }
+  merged.featureDefaultsVersion = FEATURE_DEFAULTS_VERSION;
+  return merged;
+}
 
 function mergePromptEnhance(
   defaults: typeof features.value.promptEnhance,
@@ -202,7 +241,11 @@ async function checkWindsurfPatchStatus(path: string) {
     if (isWindsurfInstalled.value) {
       const config = await invoke<any>("read_windsurf_patch_config", { path });
       if (config) {
-        const merged = { ...windsurfFeatures.value, ...config };
+        const merged = normalizeDefaultOffFeatures(
+          { ...windsurfFeatures.value, ...config },
+          config,
+          FONT_DEFAULT_OFF_KEYS,
+        );
         if (config.promptEnhance) {
           merged.promptEnhance = mergePromptEnhance(
             windsurfFeatures.value.promptEnhance,
@@ -316,7 +359,11 @@ async function checkPatchStatus(path: string) {
         fontSize?: number;
       } | null>("read_patch_config", { path });
       if (config) {
-        const merged = { ...features.value, ...config };
+        const merged = normalizeDefaultOffFeatures(
+          { ...features.value, ...config },
+          config,
+          CASCADE_DEFAULT_OFF_KEYS,
+        );
         if ((config as any).promptEnhance) {
           merged.promptEnhance = mergePromptEnhance(
             features.value.promptEnhance,
@@ -329,11 +376,11 @@ async function checkPatchStatus(path: string) {
       // 读取 Manager 配置
       const mConfig = await invoke<any>("read_manager_patch_config", { path });
       if (mConfig) {
-        const mergedManager = { 
-          ...managerFeatures.value, 
+        const mergedManager = normalizeDefaultOffFeatures({
+          ...managerFeatures.value,
           ...mConfig,
           enabled: true 
-        };
+        }, mConfig, FONT_DEFAULT_OFF_KEYS);
         if (mConfig.promptEnhance) {
           mergedManager.promptEnhance = mergePromptEnhance(
             managerFeatures.value.promptEnhance,

@@ -2,6 +2,26 @@
 
 本文件记录每个版本的 Bug 修复和关键备忘, 防止后续改代码时重复踩坑. 时间格式如 `2026-05-15 09:00:00`同步的是git 提交时间
 
+## v2.6.68 (2026-05-16 16:23:45)
+
+### 旧配置 copy 按钮残留修复
+
+| 修复项 | 根因 | 影响范围 |
+|--------|------|----------|
+| **复制按钮在默认关闭后仍显示** | 旧 `config.json` 缺少默认策略版本标记，读取时会继续保留历史 `copyButton: true` | `src/App.vue`、`src-tauri/src/commands/patch.rs` |
+| **更新配置没有覆盖实际运行路径** | `update_config` 只写 `extensions/antigravity/cascade-panel/config.json`，没有同步写 `workbench/cascade-panel/config.json` | Antigravity Cascade 运行配置 |
+| **字体等非核心开关可能沿用旧默认值** | 旧配置没有迁移边界，`fontSizeEnabled` 等字段会覆盖新版默认关闭策略 | Cascade、Manager、Windsurf 配置读取 |
+| **修复方案** | 增加 `featureDefaultsVersion`；无版本标记的旧配置自动关闭复制、字体、Mermaid、Math、表格修复类开关；滚动到底部和提示词增强保持默认开启；更新配置时双写 Cascade 配置路径 | 同上 |
+
+### 踩坑备忘
+
+- Cascade 存在 `extensions` 与 `workbench` 两份配置，实际运行入口可能读取 `workbench/cascade-panel/config.json`，更新配置必须双写。
+- `featureDefaultsVersion` 缺失按旧配置处理；用户在新版手动开启复制或字体后会写入版本标记，后续继续保留用户选择。
+- 补丁运行时加载配置也执行同一迁移，避免只替换新版 JS 但保留旧配置时继续显示 copy 按钮。
+- 本次迁移只影响非核心默认关闭项，不改提示词 API、apiKey、模型、自定义系统提示词与滚动开关。
+
+---
+
 ## v2.6.67 (2026-05-16 15:52:51)
 
 ### 默认功能开关收敛

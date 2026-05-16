@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro/releases">
-    <img src="https://img.shields.io/badge/version-v2.6.67-gold?style=flat-square" alt="版本">
+    <img src="https://img.shields.io/badge/version-v2.6.68-gold?style=flat-square" alt="版本">
 
   </a>
   <a href="https://codeium.com/antigravity">
@@ -93,6 +93,7 @@
 
 | 补丁版本    | 支持 IDE 版本      | 发布日期   | 重大更新内容                                                                                         |
 | :---------- | :----------------- | :--------- | :--------------------------------------------------------------------------------------------------- |
+| **v2.6.68** | v1.23.2 / Windsurf | 2026-05-16 | **修复**: 旧配置自动关闭复制、字体、渲染类非核心开关，并同步写入 workbench 运行配置，避免 copy 按钮继续显示 | ✅ 推荐 |
 | **v2.6.67** | v1.23.2 / Windsurf | 2026-05-16 | **配置**: 默认仅开启滚动到底部和提示词增强，复制按钮与字体调节保留可选但默认关闭 | ✅ 推荐 |
 | **v2.6.66** | v1.23.2 / Windsurf | 2026-05-16 | **修复**: 侧边栏滚动按钮容器识别兜底、滚动事件轻量化，并修复 Cascade 重复注入问题 | ✅ 推荐 |
 | **v2.6.65** | v1.23.2 / Windsurf | 2026-05-16 | **同步**: Manager 面板滚动补丁支持 Shadow DOM 穿透，确保与侧边栏逻辑归一 | ✅ 推荐 |

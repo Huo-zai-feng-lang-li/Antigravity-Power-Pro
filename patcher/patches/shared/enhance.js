@@ -424,10 +424,7 @@ async function setInputValue(input, value) {
     const endValue = getInputValue(input).trim();
     if (endValue === normalizedValue) return true;
     
-    // 如果走到这里依然失败，尝试直接改 DOM 但此时极大可能遭遇前端框架抛弃，判定失败交由降级剪贴板处理
-    input.innerText = value;
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-    await sleep(150);
+    // 如果走到这里依然失败，判定失败交由降级剪贴板处理
     return false; // 无论如何不骗用户成功，老实回退到写入剪贴板
 
   } catch (e) {

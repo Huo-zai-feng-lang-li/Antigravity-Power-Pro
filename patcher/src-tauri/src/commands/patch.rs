@@ -5,6 +5,8 @@ use std::fs;
 use std::path::PathBuf;
 use crate::embedded;
 
+const FEATURE_DEFAULTS_VERSION: u32 = 1;
+
 /// 提示词增强配置
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
@@ -39,6 +41,8 @@ impl Default for PromptEnhanceConfig {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(default)]
 pub struct FeatureConfig {
+    #[serde(rename = "featureDefaultsVersion")]
+    pub feature_defaults_version: u32,
     /// 是否启用侧边栏补丁 (禁用时还原所有侧边栏相关文件)
     pub enabled: bool,
     pub mermaid: bool,
@@ -61,6 +65,7 @@ pub struct FeatureConfig {
 impl Default for FeatureConfig {
     fn default() -> Self {
         Self {
+            feature_defaults_version: FEATURE_DEFAULTS_VERSION,
             enabled: true,
             mermaid: false,
             math: false,
@@ -78,6 +83,8 @@ impl Default for FeatureConfig {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(default)]
 pub struct ManagerFeatureConfig {
+    #[serde(rename = "featureDefaultsVersion")]
+    pub feature_defaults_version: u32,
     /// 是否启用 Manager 补丁 (禁用时还原所有 Manager 相关文件)
     pub enabled: bool,
     #[serde(rename = "scrollToBottom")]
@@ -94,6 +101,7 @@ pub struct ManagerFeatureConfig {
 impl Default for ManagerFeatureConfig {
     fn default() -> Self {
         Self {
+            feature_defaults_version: FEATURE_DEFAULTS_VERSION,
             enabled: true,
             scroll_to_bottom: true,
             font_size_enabled: false,
@@ -229,6 +237,21 @@ pub fn update_config(
 
     write_config_file(&cascade_config_path, &features)?;
 
+    let workbench_cascade_config_path = antigravity_path
+        .join("resources")
+        .join("app")
+        .join("out")
+        .join("vs")
+        .join("code")
+        .join("electron-browser")
+        .join("workbench")
+        .join("cascade-panel")
+        .join("config.json");
+
+    if workbench_cascade_config_path.parent().map(|p| p.exists()).unwrap_or(false) {
+        write_config_file(&workbench_cascade_config_path, &features)?;
+    }
+
     // Manager 配置
     let manager_config_path = antigravity_path
         .join("resources")
@@ -284,9 +307,15 @@ pub fn read_patch_config(path: String) -> Result<Option<FeatureConfig>, String> 
 
     let content = fs::read_to_string(&config_path)
         .map_err(|e| format!("读取配置失败: {}", e))?;
-    
-    let config: FeatureConfig = serde_json::from_str(&content)
+
+    let raw: serde_json::Value = serde_json::from_str(&content)
         .map_err(|e| format!("解析配置失败: {}", e))?;
+    let is_legacy_config = raw.get("featureDefaultsVersion").is_none();
+    let mut config: FeatureConfig = serde_json::from_value(raw)
+        .map_err(|e| format!("解析配置失败: {}", e))?;
+    if is_legacy_config {
+        config.feature_defaults_version = 0;
+    }
     
     Ok(Some(config))
 }
@@ -313,9 +342,15 @@ pub fn read_manager_patch_config(path: String) -> Result<Option<ManagerFeatureCo
 
     let content = fs::read_to_string(&config_path)
         .map_err(|e| format!("读取 Manager 配置失败: {}", e))?;
-    
-    let config: ManagerFeatureConfig = serde_json::from_str(&content)
+
+    let raw: serde_json::Value = serde_json::from_str(&content)
         .map_err(|e| format!("解析 Manager 配置失败: {}", e))?;
+    let is_legacy_config = raw.get("featureDefaultsVersion").is_none();
+    let mut config: ManagerFeatureConfig = serde_json::from_value(raw)
+        .map_err(|e| format!("解析 Manager 配置失败: {}", e))?;
+    if is_legacy_config {
+        config.feature_defaults_version = 0;
+    }
     
     Ok(Some(config))
 }
@@ -525,6 +560,7 @@ fn write_manager_patches(workbench_dir: &PathBuf, manager_features: &ManagerFeat
 /// 侧边栏配置文件生成
 fn write_config_file(config_path: &PathBuf, features: &FeatureConfig) -> Result<(), String> {
     let config_content = serde_json::json!({
+        "featureDefaultsVersion": FEATURE_DEFAULTS_VERSION,
         "mermaid": features.mermaid,
         "math": features.math,
         "copyButton": features.copy_button,
@@ -551,6 +587,7 @@ fn write_config_file(config_path: &PathBuf, features: &FeatureConfig) -> Result<
 /// Manager 配置文件生成
 fn write_manager_config_file(config_path: &PathBuf, features: &ManagerFeatureConfig) -> Result<(), String> {
     let config_content = serde_json::json!({
+        "featureDefaultsVersion": FEATURE_DEFAULTS_VERSION,
         "scrollToBottom": features.scroll_to_bottom,
         "fontSizeEnabled": features.font_size_enabled,
         "fontSize": features.font_size,
@@ -633,6 +670,8 @@ fn restore_backup_files(extensions_dir: &PathBuf, workbench_dir: &PathBuf) -> Re
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(default)]
 pub struct WindsurfFeatureConfig {
+    #[serde(rename = "featureDefaultsVersion")]
+    pub feature_defaults_version: u32,
     #[serde(rename = "scrollToBottom")]
     pub scroll_to_bottom: bool,
     #[serde(rename = "fontSizeEnabled")]
@@ -646,6 +685,7 @@ pub struct WindsurfFeatureConfig {
 impl Default for WindsurfFeatureConfig {
     fn default() -> Self {
         Self {
+            feature_defaults_version: FEATURE_DEFAULTS_VERSION,
             scroll_to_bottom: true,
             font_size_enabled: false,
             font_size: 14.0,
@@ -748,8 +788,14 @@ pub fn read_windsurf_patch_config(path: String) -> Result<Option<WindsurfFeature
 
     let content = fs::read_to_string(&config_path)
         .map_err(|e| format!("读取 Windsurf 配置失败: {}", e))?;
-    let config: WindsurfFeatureConfig = serde_json::from_str(&content)
+    let raw: serde_json::Value = serde_json::from_str(&content)
         .map_err(|e| format!("解析 Windsurf 配置失败: {}", e))?;
+    let is_legacy_config = raw.get("featureDefaultsVersion").is_none();
+    let mut config: WindsurfFeatureConfig = serde_json::from_value(raw)
+        .map_err(|e| format!("解析 Windsurf 配置失败: {}", e))?;
+    if is_legacy_config {
+        config.feature_defaults_version = 0;
+    }
     Ok(Some(config))
 }
 
@@ -808,6 +854,7 @@ fn write_windsurf_patches(workbench_dir: &PathBuf, features: &WindsurfFeatureCon
 /// 写入 Windsurf 配置文件
 fn write_windsurf_config_file(config_path: &PathBuf, features: &WindsurfFeatureConfig) -> Result<(), String> {
     let config_content = serde_json::json!({
+        "featureDefaultsVersion": FEATURE_DEFAULTS_VERSION,
         "scrollToBottom": features.scroll_to_bottom,
         "fontSizeEnabled": features.font_size_enabled,
         "fontSize": features.font_size,

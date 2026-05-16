@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro/releases">
-    <img src="https://img.shields.io/badge/Version-v2.6.67-gold.svg?style=flat-square" alt="Version">
+    <img src="https://img.shields.io/badge/Version-v2.6.68-gold.svg?style=flat-square" alt="Version">
   </a>
   <a href="https://codeium.com/antigravity">
     <img src="https://img.shields.io/badge/Supports_Antigravity-v1.23.2-green.svg?style=flat-square" alt="Antigravity">
@@ -108,6 +108,7 @@ For manual installation, please refer to [manual-install.md](patcher/patches/man
 
 | Patch Version | Supported Antigravity Version | Date       | Update Content                                                                     |
 | ------------- | ----------------------------- | ---------- | ---------------------------------------------------------------------------------- |
+| v2.6.68       | v1.23.2 / Windsurf            | 2026-05-16 | **修复**: 旧配置自动关闭复制、字体、渲染类非核心开关，并同步写入 workbench 运行配置，避免 copy 按钮继续显示 |
 | v2.6.67       | v1.23.2 / Windsurf            | 2026-05-16 | **配置**: 默认仅开启滚动到底部和提示词增强，复制按钮与字体调节保留可选但默认关闭 |
 | v2.6.66       | v1.23.2 / Windsurf            | 2026-05-16 | **Fix**: Sidebar scroll button robust container detection, lightweight scroll updates, and idempotent cascade injection |
 | v2.6.65       | v1.23.2 / Windsurf            | 2026-05-16 | **Sync**: Manager panel scroll patch supports Shadow DOM traversal, aligning with sidebar logic |

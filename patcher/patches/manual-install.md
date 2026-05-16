@@ -68,13 +68,14 @@
 
 补丁会在以下路径生成配置文件, 可按需修改:
 
-- 侧边栏: extensions/antigravity/cascade-panel/config.json
+- 侧边栏: extensions/antigravity/cascade-panel/config.json 与 out/vs/code/electron-browser/workbench/cascade-panel/config.json（两处保持一致）
 - Manager: out/vs/code/electron-browser/workbench/manager-panel/config.json
 
 示例 (侧边栏):
 
 ```json
 {
+  "featureDefaultsVersion": 1,
   "mermaid": false,
   "math": false,
   "copyButton": false,
@@ -92,6 +93,7 @@
 
 ```json
 {
+  "featureDefaultsVersion": 1,
   "scrollToBottom": true,
   "fontSizeEnabled": false,
   "fontSize": 16,
