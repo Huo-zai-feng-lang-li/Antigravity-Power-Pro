@@ -2,22 +2,38 @@
 
 本文件记录每个版本的 Bug 修复和关键备忘, 防止后续改代码时重复踩坑. 时间格式如 `2026-05-15 09:00:00`同步的是git 提交时间
 
+## v2.6.67 (2026-05-16 15:52:51)
+
+### 默认功能开关收敛
+
+| 修复项 | 根因 | 影响范围 |
+|--------|------|----------|
+| **默认功能开关不够收敛** | 补丁 fallback 配置和内置配置仍可能默认开启复制、字体、渲染类功能，与项目规则“仅默认开启滚动到底部和提示词增强”不一致 | `cascade-panel/`、`manager-panel/config.json`、`src-tauri/src/commands/`、安装器 UI |
+| **复制按钮没有独立可选入口** | 侧边栏设置界面保留了 `copyButton` 数据字段，但没有给用户暴露开关 | `src/components/FeatureCard.vue` |
+| **修复方案** | 默认仅开启滚动到底部和提示词增强；复制按钮、字体调节、Mermaid、Math、表格修复均默认关闭；复制按钮与字体调节保留为用户可选项 | 同上 |
+
+### 踩坑备忘
+
+- 默认值必须同时同步安装器 UI、Rust 后端默认值、补丁运行时 fallback 和内置 `config.json`，只改其中一处会导致无配置文件或手动安装场景回退到旧默认。
+- 更新日志统一使用中文，避免发布记录出现英文表头和英文说明。
+
+---
+
 ## v2.6.66 (2026-05-16 14:53:49)
 
-### Sidebar scroll button visibility and injection cleanup
+### 侧边栏滚动按钮显示与注入清理
 
-| Fix Item | Root Cause | Scope |
+| 修复项 | 根因 | 影响范围 |
 |--------|------|----------|
-| **Sidebar scroll-to-bottom button disappeared in some layouts** | The state lock could keep an early element that had height but was not the real scroll container, and the old scanner only trusted a narrow set of overflow utility classes | `cascade-panel/scroll-to-bottom.js` |
-| **Scroll update path could become heavier than necessary** | Strict scrollability checks read computed style during scroll updates | `cascade-panel/scroll-to-bottom.js` |
-| **Repeated installs could leave duplicate Cascade CSS/JS tags in workbench.html** | The installer only checked one exact tag spelling and did not normalize older injected variants before reinserting | `src-tauri/src/commands/patch.rs` |
-| **Fix** | Use strict detection only during scans, keep scroll events on lightweight range checks, add body-root fixed positioning fallback, and normalize Cascade injection tags before insertion | Same as above |
+| **侧边栏滚动到底部按钮在部分布局中不显示** | 状态锁可能缓存到早期出现但并非真实滚动容器的元素，旧扫描逻辑也只依赖少量 overflow 工具类 | `cascade-panel/scroll-to-bottom.js` |
+| **滚动事件路径存在额外性能开销** | 严格滚动容器判断在滚动事件中读取 computed style | `cascade-panel/scroll-to-bottom.js` |
+| **重复安装后 workbench.html 可能残留重复 Cascade CSS/JS 标签** | 安装器只检查一种精确标签写法，未在重新注入前归一化清理旧变体 | `src-tauri/src/commands/patch.rs` |
+| **修复方案** | 严格识别仅用于扫描，滚动事件改为轻量范围判断；新增 body-root fixed 定位兜底；注入前清理重复 Cascade 标签 | 同上 |
 
-### Notes
+### 踩坑备忘
 
-- Manager prompt enhancement remains isolated in `manager-panel/scan.js`; no shared selector or state was changed.
-- Manager scroll button keeps its existing `manager-scroll-bottom-btn` ID and separate page scope.
-- The CSS ID separation rule is preserved: Cascade and Manager buttons still use distinct IDs.
+- Manager 提示词增强仍隔离在 `manager-panel/scan.js`，本次没有改共享 selector 或共享状态。
+- Manager 滚动按钮继续使用 `manager-scroll-bottom-btn`，与 Cascade 的 `cascade-scroll-bottom-btn` 保持 ID 隔离。
 
 ---
 

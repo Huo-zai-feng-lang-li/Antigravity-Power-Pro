@@ -75,12 +75,16 @@
 
 ```json
 {
-  "mermaid": true,
-  "math": true,
-  "copyButton": true,
-  "tableColor": true,
-  "fontSizeEnabled": true,
-  "fontSize": 20
+  "mermaid": false,
+  "math": false,
+  "copyButton": false,
+  "tableColor": false,
+  "scrollToBottom": true,
+  "fontSizeEnabled": false,
+  "fontSize": 14,
+  "promptEnhance": {
+    "enabled": true
+  }
 }
 ```
 
@@ -88,13 +92,12 @@
 
 ```json
 {
-  "mermaid": true,
-  "math": true,
-  "copyButton": true,
-  "maxWidthEnabled": true,
-  "maxWidthRatio": 75,
-  "fontSizeEnabled": true,
-  "fontSize": 16
+  "scrollToBottom": true,
+  "fontSizeEnabled": false,
+  "fontSize": 16,
+  "promptEnhance": {
+    "enabled": true
+  }
 }
 ```
 

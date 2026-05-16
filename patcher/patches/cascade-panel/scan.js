@@ -23,12 +23,12 @@ import { renderMermaid } from "./mermaid.js";
  * 功能配置（由入口传入）
  */
 let config = {
-  mermaid: true,
-  math: true,
-  copyButton: true,
-  tableColor: true,
-  fontSizeEnabled: true,
-  fontSize: 20,
+  mermaid: false,
+  math: false,
+  copyButton: false,
+  tableColor: false,
+  fontSizeEnabled: false,
+  fontSize: 14,
   placeholder: "",
   promptEnhance: {
     enabled: false,

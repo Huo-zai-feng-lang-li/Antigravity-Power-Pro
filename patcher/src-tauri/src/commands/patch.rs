@@ -62,8 +62,8 @@ impl Default for FeatureConfig {
     fn default() -> Self {
         Self {
             enabled: true,
-            mermaid: true,
-            math: true,
+            mermaid: false,
+            math: false,
             copy_button: false,
             table_color: false,
             scroll_to_bottom: true,

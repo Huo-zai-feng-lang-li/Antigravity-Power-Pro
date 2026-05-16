@@ -15,10 +15,10 @@ if (window.trustedTypes && !window.trustedTypes.defaultPolicy) {
 import { loadStyle } from "./utils.js";
 
 const DEFAULT_CONFIG = {
-  mermaid: true,
-  math: true,
-  copyButton: true,
-  tableColor: true,
+  mermaid: false,
+  math: false,
+  copyButton: false,
+  tableColor: false,
   fontSizeEnabled: false,
   fontSize: 14,
   scrollToBottom: true,

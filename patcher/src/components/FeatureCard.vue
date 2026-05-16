@@ -19,6 +19,14 @@
 
       <label class="feature-item" :class="{ 'item-disabled': !model.enabled }">
         <div class="feature-info">
+          <span class="feature-name">复制按钮</span>
+          <p class="feature-desc">在消息内容区域显示复制按钮</p>
+        </div>
+        <input type="checkbox" v-model="model.copyButton" class="checkbox" :disabled="!model.enabled">
+      </label>
+
+      <label class="feature-item" :class="{ 'item-disabled': !model.enabled }">
+        <div class="feature-info">
           <span class="feature-name">侧边栏字体大小</span>
           <p class="feature-desc">调整 Cascade 面板整体字体大小</p>
         </div>

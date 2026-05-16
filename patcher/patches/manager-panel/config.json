@@ -1,10 +1,12 @@
 {
-    "mermaid": true,
-    "math": true,
-    "copyButton": true,
-    "tableColor": false,
-    "maxWidthEnabled": false,
-    "maxWidthRatio": 75,
+    "scrollToBottom": true,
     "fontSizeEnabled": false,
-    "fontSize": 16
+    "fontSize": 16,
+    "promptEnhance": {
+        "enabled": true,
+        "apiBase": "https://api.freemodel.dev/v1",
+        "apiKey": "",
+        "model": "gpt-5.4-mini",
+        "systemPrompt": ""
+    }
 }

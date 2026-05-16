@@ -35,12 +35,12 @@ pub struct FeatureFlags {
 impl Default for FeatureFlags {
     fn default() -> Self {
         Self {
-            mermaid: true,
-            math: true,
-            copy_button: true,
-            table_color: true,
-            font_size_enabled: true,
-            font_size: 20.0,
+            mermaid: false,
+            math: false,
+            copy_button: false,
+            table_color: false,
+            font_size_enabled: false,
+            font_size: 14.0,
         }
     }
 }
