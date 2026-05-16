@@ -20,12 +20,6 @@ pub struct AppConfig {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(default)]
 pub struct FeatureFlags {
-    pub mermaid: bool,
-    pub math: bool,
-    #[serde(rename = "copyButton")]
-    pub copy_button: bool,
-    #[serde(rename = "tableColor")]
-    pub table_color: bool,
     #[serde(rename = "fontSizeEnabled")]
     pub font_size_enabled: bool,
     #[serde(rename = "fontSize")]
@@ -35,10 +29,6 @@ pub struct FeatureFlags {
 impl Default for FeatureFlags {
     fn default() -> Self {
         Self {
-            mermaid: false,
-            math: false,
-            copy_button: false,
-            table_color: false,
             font_size_enabled: false,
             font_size: 14.0,
         }

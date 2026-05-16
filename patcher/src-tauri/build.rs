@@ -16,7 +16,6 @@ fn main() {
     let exclude = read_exclude_list(&exclude_path);
     let mut files: Vec<(String, String)> = Vec::new();
     collect_patch_files(&patches_dir, &patches_dir, &exclude, &mut files);
-    expand_shared_files(&patches_dir, &exclude, &mut files);
     files.sort();
 
     let output = render_embedded_list(&files);
@@ -71,47 +70,12 @@ fn collect_patch_files(
             Err(_) => continue,
         };
         let rel_str = normalize_path(rel);
-        if is_excluded(&rel_str, exclude) || rel_str.starts_with("shared/") {
+        if is_excluded(&rel_str, exclude) {
             continue;
         }
 
         println!("cargo:rerun-if-changed={}", path.display());
         files.push((rel_str.clone(), rel_str));
-    }
-}
-
-/// Expand shared/ files into both cascade-panel/ and windsurf-panel/ embed entries.
-const SHARED_TARGETS: &[&str] = &["cascade-panel", "windsurf-panel"];
-
-fn expand_shared_files(
-    patches_dir: &Path,
-    exclude: &HashSet<String>,
-    files: &mut Vec<(String, String)>,
-) {
-    let shared_dir = patches_dir.join("shared");
-    let entries = match fs::read_dir(&shared_dir) {
-        Ok(entries) => entries,
-        Err(_) => return,
-    };
-
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if !path.is_file() {
-            continue;
-        }
-        let filename = match path.file_name().and_then(|n| n.to_str()) {
-            Some(name) => name.to_string(),
-            None => continue,
-        };
-        let source = format!("shared/{}", filename);
-        if is_excluded(&source, exclude) {
-            continue;
-        }
-
-        println!("cargo:rerun-if-changed={}", path.display());
-        for target in SHARED_TARGETS {
-            files.push((format!("{}/{}", target, filename), source.clone()));
-        }
     }
 }
 

@@ -2,8 +2,8 @@
  * Manager Panel 补丁入口 (Unified Workbench Entry)
  * 适配新版 IDE (Cascade 整合进 Workbench 模式)
  * 
- * 功能 (极简模式)：
- * - 只有 字体大小调整 和 滚动到底部按钮
+ * 功能：
+ * - 滚动到底部、提示词增强、字体大小调整（默认关闭）
  */
 
 // 1. 注册受信任类型策略 (必须在最前面)
@@ -77,7 +77,7 @@ const applyFontSize = (userConfig) => {
 };
 
 (async () => {
-    console.log('[Manager Panel] 补丁载入 (极简模式：字体+滚动)...');
+    console.log('[Manager Panel] 补丁载入 (滚动+提示词+字体)...');
 
     try {
         await loadStyle('manager-panel.css');

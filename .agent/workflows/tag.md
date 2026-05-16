@@ -40,15 +40,29 @@ grep -n 'v2\.' README_EN.md | head -1
 - [ ] 系统提示词: 修改 `DEFAULT_SYSTEM_PROMPT` 时必须同时递增 `SYSTEM_PROMPT_VERSION`
 - [ ] 系统提示词: `App.vue` 和 `enhance.js` 的 `DEFAULT_SYSTEM_PROMPT` 必须同步
 - [ ] 嵌入排除: 新增/删除补丁文件时检查 `.embed-exclude.txt` 是否需要更新
+- [ ] 历史残留扫描: 确认已清理链路没有重新出现在运行时链路、配置模型、UI 开关和当前能力文档中
 - [ ] 圈复杂度 ≤ 9
+
+建议扫描命令:
+
+```bash
+rg -n "copyButton|copy_button|tableColor|table_color|table-fix|copy\.js|math\.js|mermaid\.js|extract\.js|icons\.js|constants\.js|anti-power\.sh|Antigravity-Power-Pro\.sh|Antigravity-Power-Pro-macOS\.sh|setInterval\(" patcher/src patcher/src-tauri patcher/patches README.md README_EN.md docs .agent/rules .agent/handoff.md CHANGELOG.md -S
+```
+
+允许例外:
+
+- `CHANGELOG.md` 的历史版本记录可以保留旧字段名。
+- README 当前能力说明不要继续宣传已清理链路。
+- `workbench-*.html` 的 `trusted-types` 白名单中出现 `mermaid` / `dompurifyMermaid` 属于 IDE 宿主页面安全策略，不代表补丁功能残留，禁止为了清词误删。
 
 ### 5. 嵌入文件验证
 
 确认 `build.rs` 自动生成的嵌入清单包含所有需要的补丁文件:
 
 ```bash
-grep -r "include!" patcher/src-tauri/src/embedded.rs
+grep -r "include!" patcher/src-tauri/src/embedded.rs patcher/src-tauri/build.rs
 cat patcher/patches/.embed-exclude.txt
+rg --files patcher/patches
 ```
 
 ### 6. 多入口同步检查

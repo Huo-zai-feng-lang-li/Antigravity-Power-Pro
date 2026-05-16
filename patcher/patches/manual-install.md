@@ -1,15 +1,13 @@
 # Antigravity-Power-Pro 补丁手动安装说明
 
-适用于 Windows 和 macOS 的手动安装与配置.
+适用于 Windows 的手动安装与配置.
 
 ## 适用场景
 
 - Windows: 推荐优先使用 Antigravity-Power-Pro.exe 安装器, 也可手动安装
-- macOS: 推荐优先使用 Antigravity-Power-Pro-macOS.sh 脚本, 也可手动安装
 
 ## 补丁包内容
 
-- Antigravity-Power-Pro-macOS.sh (macOS 安装脚本)
 - cascade-panel.html
 - cascade-panel/ 目录
 - workbench-jetski-agent.html
@@ -36,34 +34,6 @@
    - 复制 workbench-jetski-agent.html 与 manager-panel/ 到 workbench\
 4. 重新打开 Antigravity 与 Manager 窗口
 
-## macOS (推荐: 脚本方式)
-
-1. 解压补丁包, 打开 Terminal (终端) 进入目录
-2. 赋予脚本执行权限:
-   ```bash
-   chmod +x ./Antigravity-Power-Pro-macOS.sh
-   ```
-3. 运行脚本 (需要 sudo 权限):
-   ```bash
-   sudo ./Antigravity-Power-Pro-macOS.sh
-   ```
-4. 脚本会自动备份原文件并完成替换
-5. 重新打开 Antigravity 与 Manager 窗口
-
-## macOS (手动安装)
-
-1. 关闭所有 Antigravity 窗口
-2. 打开 Applications, 右键 Antigravity, 选择 显示包内容
-3. 进入目录:
-   - Antigravity.app/Contents/Resources/app/extensions/antigravity/
-   - Antigravity.app/Contents/Resources/app/out/vs/code/electron-browser/workbench/
-4. 备份并替换文件:
-   - 备份 cascade-panel.html -> cascade-panel.html.bak
-   - 复制 cascade-panel.html 与 cascade-panel/ 到 extensions/antigravity/
-   - 备份 workbench-jetski-agent.html -> workbench-jetski-agent.html.bak
-   - 复制 workbench-jetski-agent.html 与 manager-panel/ 到 workbench/
-5. 重新打开 Antigravity 与 Manager 窗口
-
 ## 配置开关
 
 补丁会在以下路径生成配置文件, 可按需修改:
@@ -76,10 +46,6 @@
 ```json
 {
   "featureDefaultsVersion": 1,
-  "mermaid": false,
-  "math": false,
-  "copyButton": false,
-  "tableColor": false,
   "scrollToBottom": true,
   "fontSizeEnabled": false,
   "fontSize": 14,

@@ -12,8 +12,8 @@ globs: *
 ## 项目定位
 
 - Antigravity-Power-Pro 是 AI 本地 IDE（如 Antigravity IDE Cascade 原型版本和 Windsurf IDE） 的全能挂载增强补丁。
-- Antigravity：全面改造其 Cascade 面板和 Manager 面板（包含渲染增强、表格修复、回退样式、极客滚动控制以及高度定制的智能提示词 API 接口挂载等）。
-- 当前只需要保留滚动底部和提示词增强俩个功能即可，其他功能默认全部关闭。
+- Antigravity：改造 Cascade 面板和 Manager 面板，当前聚焦滚动到底部、提示词增强、字体大小可选调节三条链路。
+- 当前默认只开启滚动到底部和提示词增强；字体大小调节允许保留，但必须默认关闭。
 - Windsurf：改造其独立客户端（包括字体调节、增强悬浮模块、提示词等）。
 - 前端安装器使用了 Vue 提供的 Tab 布局进行环境切换（隔离状态）。
 
@@ -73,6 +73,7 @@ globs: *
 |------|----------------------|------------------------|---------|
 | **滚动到底部** | `cascade-panel/scroll-to-bottom.js`<br>BTN_ID=`cascade-scroll-bottom-btn` | `manager-panel/scroll-to-bottom.js`<br>BTN_ID=`manager-scroll-bottom-btn` | 无 (各自独立) |
 | **提示词增强** | `cascade-panel/scan.js` 内 enhance 调用区 | `manager-panel/scan.js` 内 enhance 调用区 | `shared/enhance.js` |
+| **字体大小** | `cascade-panel/cascade-panel.js` + `cascade-panel/cascade-panel.css`，默认关闭 | `manager-panel/manager-panel.js` + `manager-panel/manager-panel.css`，默认关闭 | 无 |
 | **入口加载** | `cascade-panel/cascade-panel.js` | `manager-panel/manager-panel.js` | 无 |
 | **样式** | `cascade-panel/cascade-panel.css` | `manager-panel/manager-panel.css` | 无 |
 | **配置** | `cascade-panel/config.json` | `manager-panel/config.json` | 无 |

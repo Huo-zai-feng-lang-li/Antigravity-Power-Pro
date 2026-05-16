@@ -13,7 +13,7 @@ import ManagerFeatureCard from "./components/ManagerFeatureCard.vue";
 import { getVersion } from "@tauri-apps/api/app";
 
 // 常量
-const APP_VERSION = ref("2.6.68");
+const APP_VERSION = ref("2.6.69");
 const GITHUB_URL = "https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro";
 // 每次更新 DEFAULT_SYSTEM_PROMPT 时递增此版本号，旧版 config 会自动重置
 const SYSTEM_PROMPT_VERSION = 2;
@@ -79,10 +79,6 @@ const showConfirm = ref(false);
 const features = ref({
   enabled: true,
   featureDefaultsVersion: FEATURE_DEFAULTS_VERSION,
-  mermaid: false,
-  math: false,
-  copyButton: false,
-  tableColor: false,
   scrollToBottom: true,
   fontSizeEnabled: false,
   fontSize: 14,
@@ -123,7 +119,7 @@ const windsurfFeatures = ref({
 
 const WINDSURF_PATCH_FILES = {
   modified: ["workbench.html"],
-  added: ["windsurf-panel/  (字体+提示词增强)"],
+  added: ["windsurf-panel/  (滚动+提示词增强+字体)"],
   deprecated: [] as string[],
 };
 
@@ -152,21 +148,10 @@ const LEGACY_API_BASES = ["http://127.0.0.1:8045/v1", "http://localhost:8045/v1"
 const LEGACY_MODELS = ["gemini-3-flash", "gemini-2.0-flash", ""];
 type FeatureDefaultsConfig = {
   featureDefaultsVersion?: number;
-  mermaid?: boolean;
-  math?: boolean;
-  copyButton?: boolean;
-  tableColor?: boolean;
   fontSizeEnabled?: boolean;
 };
 type DefaultOffFeatureKey = Exclude<keyof FeatureDefaultsConfig, "featureDefaultsVersion">;
 
-const CASCADE_DEFAULT_OFF_KEYS: readonly DefaultOffFeatureKey[] = [
-  "mermaid",
-  "math",
-  "copyButton",
-  "tableColor",
-  "fontSizeEnabled",
-];
 const FONT_DEFAULT_OFF_KEYS: readonly DefaultOffFeatureKey[] = ["fontSizeEnabled"];
 
 function normalizeDefaultOffFeatures<T extends FeatureDefaultsConfig>(
@@ -351,10 +336,6 @@ async function checkPatchStatus(path: string) {
     if (isInstalled.value) {
       // 读取侧边栏配置
       const config = await invoke<{
-        mermaid: boolean;
-        math: boolean;
-        copyButton: boolean;
-        tableColor: boolean;
         fontSizeEnabled?: boolean;
         fontSize?: number;
       } | null>("read_patch_config", { path });
@@ -362,7 +343,7 @@ async function checkPatchStatus(path: string) {
         const merged = normalizeDefaultOffFeatures(
           { ...features.value, ...config },
           config,
-          CASCADE_DEFAULT_OFF_KEYS,
+          FONT_DEFAULT_OFF_KEYS,
         );
         if ((config as any).promptEnhance) {
           merged.promptEnhance = mergePromptEnhance(

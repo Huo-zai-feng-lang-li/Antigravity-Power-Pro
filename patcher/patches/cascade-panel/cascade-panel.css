@@ -1,15 +1,5 @@
-/* Base layout reset */
 :root {
     --cascade-panel-font-size: var(--vscode-font-size, 15px);
-}
-
-/* Ensure message blocks are positioned for copy buttons */
-.text-ide-message-block-bot-color,
-.text-ide-message-block-user-color,
-.prose,
-.prose-sm,
-[data-testid*="message"] {
-    position: relative !important;
 }
 
 html {
@@ -21,119 +11,6 @@ body {
     font-size: var(--cascade-panel-font-size);
 }
 
-/* Shared copy button styling - matches Good/Bad buttons */
-.cascade-copy-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.25rem;
-    padding: 0;
-    border: none;
-    border-radius: 4px;
-    background: transparent;
-    color: var(--vscode-editorWidget-foreground, currentColor);
-    font-size: 1em;
-    font-weight: 400;
-    line-height: 1.2;
-    transition: opacity 0.12s ease;
-    font-family: inherit;
-    cursor: pointer;
-    box-sizing: border-box;
-    appearance: none;
-    white-space: nowrap;
-    opacity: 0.7;
-}
-
-.cascade-copy-btn:hover {
-    opacity: 1;
-}
-
-.cascade-copy-btn span {
-    font-size: 1em;
-}
-
-.cascade-copy-btn svg {
-    height: 1.1em;
-    width: 1.1em;
-}
-
-.cascade-copy-btn.copied {
-    color: #22c55e;
-    opacity: 1;
-}
-
-/* Feedback copy button (next to Good/Bad) - no extra margin */
-.custom-copy-btn {
-    /* 与 Good/Bad 保持一致，不额外添加边距 */
-}
-
-.custom-copy-btn:hover {
-    opacity: 1;
-}
-
-/* Content-area copy button (only visible on hover/focus) */
-.cascade-copy-button {
-    position: absolute;
-    top: 4px;
-    right: 48px;
-    opacity: 0;
-    z-index: 10;
-    background: var(--vscode-editor-background, rgba(30, 30, 30, 0.9));
-    padding: 4px 8px;
-    border-radius: 4px;
-}
-
-[data-cascade-copy-bound='1']:hover .cascade-copy-button,
-[data-cascade-copy-bound='1']:focus-within .cascade-copy-button {
-    opacity: 0.7;
-}
-
-.cascade-copy-button:hover {
-    opacity: 1 !important;
-}
-
-/* Mermaid render container */
-.cascade-mermaid-container {
-    position: relative;
-    margin: 1em 0;
-    padding: 1em;
-    border-radius: 8px;
-    background: var(--vscode-editor-background, #1e1e1e);
-    border: 1px solid var(--vscode-editorWidget-border, #454545);
-    overflow-x: auto;
-}
-
-.cascade-mermaid-container svg {
-    max-width: 100%;
-    height: auto;
-    display: block;
-    margin: 0 auto;
-}
-
-/* Mermaid copy button */
-.cascade-mermaid-copy {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    background: var(--vscode-editorWidget-background, rgba(30, 30, 30, 0.8));
-    opacity: 0;
-    z-index: 1;
-}
-
-.cascade-mermaid-container:hover .cascade-mermaid-copy {
-    opacity: 0.7;
-}
-
-.cascade-mermaid-copy:hover {
-    opacity: 1 !important;
-}
-
-.cascade-mermaid-copy.copied {
-    color: #22c55e;
-    opacity: 1 !important;
-}
-
-/* 滚动到底部按钮 (归一化至尊版) */
 #cascade-scroll-bottom-btn {
     position: absolute !important;
     bottom: 70px !important;
@@ -146,12 +23,9 @@ body {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    
-    /* 豪华质感：深色背景 + 亮黄边框 */
     background: rgba(30, 30, 30, 0.85) !important;
     border: 1px solid rgba(251, 191, 36, 0.6) !important;
     color: #fbbf24 !important;
-    
     backdrop-filter: blur(8px);
     cursor: pointer;
     outline: none !important;

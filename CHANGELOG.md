@@ -2,6 +2,27 @@
 
 本文件记录每个版本的 Bug 修复和关键备忘, 防止后续改代码时重复踩坑. 时间格式如 `2026-05-15 09:00:00`同步的是git 提交时间
 
+## v2.6.69 (2026-05-16 19:06:41)
+
+### 非核心功能物理移除
+
+| 修复项 | 根因 | 影响范围 |
+|--------|------|----------|
+| **已删除功能仍可能被误恢复** | copy、Mermaid、Math、表格修复虽然默认关闭，但文件、类型字段、UI 文案和文档仍有残留引用 | `patcher/patches/`、`src/App.vue`、`src-tauri/src/commands/`、README、规则文件 |
+| **Manager 提示词扫描存在固定轮询开销** | 提示词按钮扫描使用 2 秒定时轮询，即使 DOM 没变化也会持续执行 | `manager-panel/scan.js` |
+| **Manager/Windsurf 单独安装可能缺共享模块** | `shared/enhance.js` 依赖 Cascade 安装时的副作用同步，单独安装 Manager 或 Windsurf 时共享目录可能不存在 | `src-tauri/build.rs`、`src-tauri/src/commands/patch.rs` |
+| **修复方案** | 物理删除 copy/Mermaid/Math/表格修复链路并清除配置字段；保留字体大小调节但默认关闭；Manager 扫描改为 DOM 变更节流触发；`shared/` 作为真实共享目录嵌入并随各入口安装 | 同上 |
+
+### 踩坑备忘
+
+- 当前默认只开启滚动到底部和提示词增强；字体大小调节可保留，但必须默认关闭。
+- copy、Mermaid、Math、表格修复已从运行时链路和安装器配置模型移除，除非用户明确要求，不要重新加回 UI 或默认配置。
+- `shared/` 必须作为真实共享目录嵌入；Manager/Windsurf 不能依赖 Cascade 安装副作用获得 `enhance.js`。
+- IDE 原生 HTML 的 `trusted-types` 白名单中出现 `mermaid`/`dompurifyMermaid` 属于宿主页面安全策略，不等于补丁功能残留，禁止为了“清词”误删。
+- 已删除的 macOS/Linux 脚本引用也要同步清理，避免文档指向不存在的文件。
+
+---
+
 ## v2.6.68 (2026-05-16 16:23:45)
 
 ### 旧配置 copy 按钮残留修复

@@ -1,23 +1,37 @@
-# 最新接续状态 (2026-05-16 03:07)
+# 最新接续状态 (2026-05-16 19:06)
 
 ## 核心进展
-- **v2.6.63 已发布**：在 v2.6.62 滚动修复基础上，进一步修复了 Manager 面板提示词按钮重复创建的 Bug。
-- **提示词按钮去重修复**：修复了 `manager-panel/scan.js` 轮询时检查位置与插入位置不一致导致的按钮堆叠问题。改用 `input.dataset.enhanceAttached` 在输入框自身打标记实现可靠去重。
-- **滚动互斥逻辑**：Manager 与 Cascade 面板的滚动按钮已实现完美的 ID 探测共生互斥。
-- **规则锁死**：`.agent/rules/README.md` 已同步所有架构红线，确保新会话不会丢失这些防御性逻辑。
+- **本轮发布目标为 v2.6.69**：删除非核心残留文件与引用后走 `/tag` 工作流；远端 tag 触发 GitHub 自动构建部署。
+- **非核心功能已物理移除**：copy、Mermaid、Math、表格修复相关 JS/CSS/工具文件已删除，Cascade 主链路不再 import 这些模块。
+- **保留功能边界已收敛**：滚动到底部与提示词增强默认开启；字体大小调节保留为可选功能，但默认关闭。
+- **Manager 性能边界已收敛**：提示词增强关闭时不再加载增强模块；扫描从固定 2 秒轮询改为 MutationObserver 节流触发。
+- **共享模块部署已修复**：`shared/enhance.js` 作为真实共享目录嵌入，Manager/Windsurf 单独安装也会写入 `workbench/shared/`。
 
-## 变更决策
-- **状态解耦**：UI 增强逻辑（如按钮注入）应优先在目标元素本身（如 `input`）使用 `dataset` 打标，而非依赖 DOM 层级查找，以应对复杂/变动的 Tailwind 嵌套结构。
-- **特征无关识别**：坚决执行特征识别容器策略（`scrollHeight` 最大值），严禁依赖原生 IDE 语义类名。
+## 功能边界红线
+- **默认开启**：滚动到底部按钮、提示词增强按钮。
+- **保留但默认关闭**：字体大小调节。
+- 当前规则只维护仍存在的功能边界；已删除链路不再作为可配置功能记录。
 
-## 待办事项 (Next Steps)
-- [ ] **性能监控**：观测长会话首次进入时的瞬间 CPU 峰值。若用户反馈卡顿明显，需限制 `findScrollEl` 的扫描频率或锁定 `trackedEl` 状态。
-- [ ] **Windsurf 同步**：目前的滚动优化暂未下推至 Windsurf 模块，后续可按需迁移。
+## 关键实现点
+- `FEATURE_DEFAULTS_VERSION = 1` 是当前默认策略边界。
+- 旧配置识别逻辑在 `patcher/src-tauri/src/commands/patch.rs`：缺少 `featureDefaultsVersion` 时返回 `0`，交给前端迁移。
+- 前端迁移逻辑在 `patcher/src/App.vue`：`normalizeDefaultOffFeatures()` 当前只负责清洗旧配置中的 `fontSizeEnabled`。
+- 补丁运行时迁移逻辑在：
+  - `patcher/patches/cascade-panel/cascade-panel.js`
+  - `patcher/patches/manager-panel/manager-panel.js`
+  - `patcher/patches/windsurf-panel/windsurf-panel.js`
+- 嵌入清单由 `patcher/src-tauri/build.rs` 生成；`shared/` 不能伪装成面板目录，必须以真实 `shared/*` 路径嵌入。
 
-## 关键上下文
-- 目录: `c:\Users\Administrator\Desktop\超级文件\AI-IDE\AI\Antigravity-Power-Pro`
-- 主要文件: 
-  - `patcher/patches/manager-panel/scan.js` (提示词去重逻辑)
-  - `patcher/patches/manager-panel/scroll-to-bottom.js` (滚动识别与互斥)
-  - `patcher/patches/cascade-panel/scroll-to-bottom.js` (互斥目标)
-  - `CHANGELOG.md` (记录了 v2.6.62/63 修复细节)
+## 已验证
+- `npm run build` 通过。
+- `cargo check` 通过。
+- 关键 JS `node --check` 通过：Cascade、Manager、Windsurf、shared enhance。
+- `git diff --check` 通过。
+- 历史残留扫描通过：仅剩 CHANGELOG 历史记录与 README_EN 当前移除说明。
+- 嵌入清单确认 `shared/enhance.js` 以真实 `shared/` 路径入包。
+- tag 推送待执行。
+
+## 后续注意
+- 用户明确偏好：不需要本地启动运行；发版走 tag，GitHub 自动构建。
+- 更新日志、提交说明、交付说明优先使用中文。
+- 下次修改功能默认值前，必须先检查 `.agent/rules/README.md` 与本文件，确认没有误放开非核心功能。

@@ -1,6 +1,5 @@
 import { querySelectorAllDeep } from './utils.js';
 
-const CONTENT_SELECTOR = '.antigravity-agent-side-panel, .chat-container, .conversation-container';
 const INPUT_SELECTOR = '[role="textbox"][contenteditable="true"], textarea[placeholder*="Ask"], .chat-input textarea';
 const ENHANCE_BTN_CLASS = "Antigravity-Power-Pro-enhance-btn";
 
@@ -17,16 +16,36 @@ const actionButtonSelectors = [
 
 let config = {};
 let enhanceModule = null;
+let observer = null;
+let scanTimer = 0;
+
+const getRoot = () => document.getElementById('window-container') || document.body;
+
+const scheduleScan = () => {
+    if (scanTimer) return;
+    scanTimer = window.setTimeout(() => {
+        scanTimer = 0;
+        scan();
+    }, 160);
+};
 
 export const start = async (userConfig) => {
     config = userConfig;
+    if (!config.promptEnhance?.enabled) {
+        console.log("[Manager] 提示词增强已关闭，跳过扫描器");
+        observer?.disconnect();
+        observer = null;
+        return;
+    }
+
     console.log("[Manager] 启动扫描，配置:", config);
     try {
         enhanceModule = await import('../shared/enhance.js');
         enhanceModule.init(config.promptEnhance);
-        
-        // 启动轮询检查
-        setInterval(scan, 2000);
+
+        observer?.disconnect();
+        observer = new MutationObserver(scheduleScan);
+        observer.observe(getRoot(), { childList: true, subtree: true });
         scan();
         console.log("[Manager] 扫描器已就绪");
     } catch (e) {
@@ -35,7 +54,9 @@ export const start = async (userConfig) => {
 };
 
 const scan = () => {
-    const root = document.getElementById('window-container') || document.body;
+    if (!enhanceModule?.isEnabled()) return;
+
+    const root = getRoot();
     const inputAreas = querySelectorAllDeep(INPUT_SELECTOR, root);
 
     inputAreas.forEach(input => {

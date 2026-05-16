@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro/releases">
-    <img src="https://img.shields.io/badge/Version-v2.6.68-gold.svg?style=flat-square" alt="Version">
+    <img src="https://img.shields.io/badge/Version-v2.6.69-gold.svg?style=flat-square" alt="Version">
   </a>
   <a href="https://codeium.com/antigravity">
     <img src="https://img.shields.io/badge/Supports_Antigravity-v1.23.2-green.svg?style=flat-square" alt="Antigravity">
@@ -30,7 +30,7 @@
 
 ## Introduction
 
-Antigravity-Power-Pro enhances the Antigravity Sidebar and Manager window by applying patches that provide features such as Mermaid rendering, Math formula rendering, one-click copy, table color fixes, and font size/width adjustments. We hope to continuously improve the experience through community collaboration. Issues and Pull Requests are welcome.
+Antigravity-Power-Pro enhances the Antigravity Sidebar, Manager window, and Windsurf conversation experience. The current release focuses on prompt enhancement, smart scroll, and optional font size adjustment.
 
 ---
 
@@ -41,15 +41,6 @@ Antigravity-Power-Pro enhances the Antigravity Sidebar and Manager window by app
 | **Prompt Enhancement**        | Connects to custom LLM APIs to optimize your prompts (similar to Augment Code)                    |
 | **Smart Scroll**             | Floating button in the sidebar to quickly locate the latest conversation                          |
 | **Font Adjustment**           | Freely adjust sidebar font size for the most comfortable reading experience                       |
-
-### Copy Feature Highlights
-
-- Code blocks automatically include language identifiers, e.g., ` ```python `
-- Tables are automatically converted to Markdown table format
-- Smartly ignores AI intermediate thinking processes, copying only the final result
-- Formulas and Mermaid diagrams are automatically restored to source code
-
----
 
 ## 📸 Demo
 
@@ -69,18 +60,9 @@ For screenshots, see [screenshots.md](docs/reference/screenshots.md).
 
 For manual installation, download the patch zip file from Releases (e.g., `Antigravity-Power-Pro-patches.zip`) and refer to [manual-install.md](patcher/patches/manual-install.md).
 
-### macOS & Linux
+### Manual Installation
 
-Now supports one-click replacement using the [Antigravity-Power-Pro.sh](patcher/patches/Antigravity-Power-Pro.sh) script.
-
-> ⚠️ **Note**: Due to permissions, it is recommended to run the script directly using the macOS built-in **Terminal**.
-
-```bash
-chmod +x ./Antigravity-Power-Pro.sh
-sudo ./Antigravity-Power-Pro.sh
-```
-
-For manual installation, please refer to [manual-install.md](patcher/patches/manual-install.md).
+For manual installation, download the patch zip from Releases and refer to [manual-install.md](patcher/patches/manual-install.md).
 
 ---
 
@@ -108,6 +90,7 @@ For manual installation, please refer to [manual-install.md](patcher/patches/man
 
 | Patch Version | Supported Antigravity Version | Date       | Update Content                                                                     |
 | ------------- | ----------------------------- | ---------- | ---------------------------------------------------------------------------------- |
+| v2.6.69       | v1.23.2 / Windsurf            | 2026-05-16 | **清理**: 物理删除复制、Mermaid、Math、表格修复链路；字体调节保留但默认关闭；Manager 提示词扫描改为 DOM 变更触发 |
 | v2.6.68       | v1.23.2 / Windsurf            | 2026-05-16 | **修复**: 旧配置自动关闭复制、字体、渲染类非核心开关，并同步写入 workbench 运行配置，避免 copy 按钮继续显示 |
 | v2.6.67       | v1.23.2 / Windsurf            | 2026-05-16 | **配置**: 默认仅开启滚动到底部和提示词增强，复制按钮与字体调节保留可选但默认关闭 |
 | v2.6.66       | v1.23.2 / Windsurf            | 2026-05-16 | **Fix**: Sidebar scroll button robust container detection, lightweight scroll updates, and idempotent cascade injection |
@@ -131,15 +114,6 @@ For manual installation, please refer to [manual-install.md](patcher/patches/man
 | v1.2.0        | v1.13.3                       | 2026-01-13 | Mermaid rendering                                                                  |
 | v1.1.0        | v1.13.3                       | 2026-01-13 | Math formula rendering                                                             |
 | v1.0.0        | v1.13.3                       | 2026-01-13 | One-click copy, table fix                                                          |
-
----
-
-## 📚 References
-
-The table color fix solution in this project references the following tutorials:
-
-- 📺 **Video Tutorial**: [Antigravity Perfect Dark Theme Modification Guide](https://www.bilibili.com/video/BV1vTrgBXEA1)
-- 📖 **Article**: [The Ultimate Solution for Invisible Table Text](https://dpit.lib00.com/zh/content/1192/antigravity-perfect-dark-theme-modification-guide-fix-invisible-table-text)
 
 ---
 

@@ -38,7 +38,7 @@ npm run tauri:build
 
 ## 生成补丁压缩包
 
-发布时需额外提供补丁压缩包 (用于手动安装, 兼容 macOS):
+发布时需额外提供补丁压缩包 (用于手动安装):
 
 ```powershell
 # 以项目根目录执行
@@ -64,8 +64,7 @@ git commit -m "release: vX.Y.Z"
 
 # 2. 创建标签并推送
 git tag vX.Y.Z
-git push origin master
-git push origin vX.Y.Z
+git push origin main --tags
 
 # 3. 使用 gh 发布
 gh release create vX.Y.Z `
@@ -101,7 +100,6 @@ Remove-Item Antigravity-Power-Pro-patches.zip
 > ## 安装
 >
 > - Windows: 下载 `Antigravity-Power-Pro.exe` 安装
-> - macOS: 下载 `Antigravity-Power-Pro-patches.zip` 手动安装
 > ```
 
 ---

@@ -1,9 +1,5 @@
 {
   "featureDefaultsVersion": 1,
-  "mermaid": false,
-  "math": false,
-  "copyButton": false,
-  "tableColor": false,
   "fontSizeEnabled": false,
   "fontSize": 14,
   "scrollToBottom": true,

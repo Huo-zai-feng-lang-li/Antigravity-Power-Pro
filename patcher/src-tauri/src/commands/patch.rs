@@ -45,12 +45,6 @@ pub struct FeatureConfig {
     pub feature_defaults_version: u32,
     /// 是否启用侧边栏补丁 (禁用时还原所有侧边栏相关文件)
     pub enabled: bool,
-    pub mermaid: bool,
-    pub math: bool,
-    #[serde(rename = "copyButton")]
-    pub copy_button: bool,
-    #[serde(rename = "tableColor")]
-    pub table_color: bool,
     #[serde(rename = "scrollToBottom")]
     pub scroll_to_bottom: bool,
     #[serde(rename = "fontSizeEnabled")]
@@ -67,10 +61,6 @@ impl Default for FeatureConfig {
         Self {
             feature_defaults_version: FEATURE_DEFAULTS_VERSION,
             enabled: true,
-            mermaid: false,
-            math: false,
-            copy_button: false,
-            table_color: false,
             scroll_to_bottom: true,
             font_size_enabled: false,
             font_size: 14.0,
@@ -480,13 +470,6 @@ fn write_cascade_patches(extensions_dir: &PathBuf, workbench_dir: &PathBuf, feat
             if let Some(p) = wb_path.parent() { fs::create_dir_all(p).ok(); }
             fs::write(&wb_path, &content)
                 .map_err(|e| format!("写入 workbench 失败 {:?}: {}", wb_path, e))?;
-
-            // build.rs 将 shared/X 嵌入为 cascade-panel/X,
-            // 但 scan.js import 路径是 ../shared/X, 需要同步写到 shared/ 目录
-            let filename = &relative_path["cascade-panel/".len()..];
-            let shared_path = workbench_dir.join("shared").join(filename);
-            if let Some(p) = shared_path.parent() { fs::create_dir_all(p).ok(); }
-            fs::write(&shared_path, &content).ok();
         }
         if relative_path.starts_with("shared/") {
             let wb_path = workbench_dir.join(&relative_path);
@@ -508,16 +491,23 @@ fn write_cascade_patches(extensions_dir: &PathBuf, workbench_dir: &PathBuf, feat
 /// 写入 Manager 补丁文件
 fn write_manager_patches(workbench_dir: &PathBuf, manager_features: &ManagerFeatureConfig) -> Result<(), String> {
     let manager_panel_dir = workbench_dir.join("manager-panel");
+    let shared_dir = workbench_dir.join("shared");
     
     // 先删除旧目录, 确保文件结构干净
     if manager_panel_dir.exists() {
         fs::remove_dir_all(&manager_panel_dir)
             .map_err(|e| format!("删除旧 manager-panel 目录失败: {}", e))?;
     }
+    if shared_dir.exists() {
+        fs::remove_dir_all(&shared_dir)
+            .map_err(|e| format!("删除旧 shared 目录失败: {}", e))?;
+    }
     
     // 创建目录
     fs::create_dir_all(&manager_panel_dir)
         .map_err(|e| format!("创建 manager-panel 目录失败: {}", e))?;
+    fs::create_dir_all(&shared_dir)
+        .map_err(|e| format!("创建 shared 目录失败: {}", e))?;
     
     // 写入 Manager 相关补丁文件
     let patch_files = embedded::get_all_files_runtime()?;
@@ -561,10 +551,6 @@ fn write_manager_patches(workbench_dir: &PathBuf, manager_features: &ManagerFeat
 fn write_config_file(config_path: &PathBuf, features: &FeatureConfig) -> Result<(), String> {
     let config_content = serde_json::json!({
         "featureDefaultsVersion": FEATURE_DEFAULTS_VERSION,
-        "mermaid": features.mermaid,
-        "math": features.math,
-        "copyButton": features.copy_button,
-        "tableColor": features.table_color,
         "scrollToBottom": features.scroll_to_bottom,
         "fontSizeEnabled": features.font_size_enabled,
         "fontSize": features.font_size,
@@ -813,17 +799,27 @@ fn backup_windsurf_files(workbench_dir: &PathBuf) -> Result<(), String> {
 /// 写入 Windsurf 补丁文件
 fn write_windsurf_patches(workbench_dir: &PathBuf, features: &WindsurfFeatureConfig) -> Result<(), String> {
     let panel_dir = workbench_dir.join("windsurf-panel");
+    let shared_dir = workbench_dir.join("shared");
 
     if panel_dir.exists() {
         fs::remove_dir_all(&panel_dir)
             .map_err(|e| format!("删除旧 windsurf-panel 目录失败: {}", e))?;
     }
+    if shared_dir.exists() {
+        fs::remove_dir_all(&shared_dir)
+            .map_err(|e| format!("删除旧 shared 目录失败: {}", e))?;
+    }
     fs::create_dir_all(&panel_dir)
         .map_err(|e| format!("创建 windsurf-panel 目录失败: {}", e))?;
+    fs::create_dir_all(&shared_dir)
+        .map_err(|e| format!("创建 shared 目录失败: {}", e))?;
 
     let patch_files = embedded::get_all_files_runtime()?;
     for (relative_path, content) in patch_files {
-        if relative_path != "workbench-windsurf.html" && !relative_path.starts_with("windsurf-panel/") {
+        if relative_path != "workbench-windsurf.html"
+            && !relative_path.starts_with("windsurf-panel/")
+            && !relative_path.starts_with("shared/")
+        {
             continue;
         }
 
