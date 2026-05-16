@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro/releases">
-    <img src="https://img.shields.io/badge/version-v2.6.63-gold?style=flat-square" alt="版本">
+    <img src="https://img.shields.io/badge/version-v2.6.64-gold?style=flat-square" alt="版本">
 
   </a>
   <a href="https://codeium.com/antigravity">
@@ -93,6 +93,7 @@
 
 | 补丁版本    | 支持 IDE 版本      | 发布日期   | 重大更新内容                                                                                         |
 | :---------- | :----------------- | :--------- | :--------------------------------------------------------------------------------------------------- |
+| **v2.6.64** | v1.23.2 / Windsurf | 2026-05-16 | **重构**: 滚动性能重构 — State Lock 模式解决长会话卡顿，修复事件监听器泄漏 | ✅ 推荐 |
 | **v2.6.63** | v1.23.2 / Windsurf | 2026-05-16 | **修复**: Manager 提示词增强按钮每2秒重复创建，改用 input 元素标记去重 | ✅ 推荐 |
 | **v2.6.62** | v1.23.2 / Windsurf | 2026-05-15 | **修复**: 双面板滚动按钮互斥 — 侧边栏不再出现 manager 的重复按钮 | ✅ 推荐 |
 | **v2.6.61** | v1.23.2 / Windsurf | 2026-05-15 | **根治**: Manager 滚动按钮终极修复，移除对不存在的语义类名依赖，改为 Tailwind 工具类无关策略 | - |

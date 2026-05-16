@@ -1,24 +1,23 @@
-# 最新接续状态 (2026-05-15 20:35:00)
+# 最新接续状态 (2026-05-16 03:07)
 
 ## 核心进展
-- 补丁升级至 **v2.6.61**，Manager 滚动按钮终极修复闭环。侧边栏 + Manager 双面板滚动功能均已通过实机验证。
+- **v2.6.63 已发布**：在 v2.6.62 滚动修复基础上，进一步修复了 Manager 面板提示词按钮重复创建的 Bug。
+- **提示词按钮去重修复**：修复了 `manager-panel/scan.js` 轮询时检查位置与插入位置不一致导致的按钮堆叠问题。改用 `input.dataset.enhanceAttached` 在输入框自身打标记实现可靠去重。
+- **滚动互斥逻辑**：Manager 与 Cascade 面板的滚动按钮已实现完美的 ID 探测共生互斥。
+- **规则锁死**：`.agent/rules/README.md` 已同步所有架构红线，确保新会话不会丢失这些防御性逻辑。
 
 ## 变更决策
-- **findRoot 终极简化**：Manager 补丁独占 `workbench-jetski-agent.html`，`findRoot()` 直接返回 `document.body`，不再查找任何语义类名。
-- **findScrollEl 特征无关策略**：遍历 DOM 按 `getComputedStyle(el).overflowY` + `scrollHeight` 取最大可滚动元素，不依赖任何 CSS 类名。
-- **DOM 选择器红线**：两个 IDE 页面均使用 Tailwind 工具类，已写入 `.agent/rules/README.md`，禁止依赖 `.chat-container` 等语义类名。
-- **提示词回填**：已全面切换至 `Range.selectNodeContents` 物理覆盖，回写失败自动落剪贴板。
+- **状态解耦**：UI 增强逻辑（如按钮注入）应优先在目标元素本身（如 `input`）使用 `dataset` 打标，而非依赖 DOM 层级查找，以应对复杂/变动的 Tailwind 嵌套结构。
+- **特征无关识别**：坚决执行特征识别容器策略（`scrollHeight` 最大值），严禁依赖原生 IDE 语义类名。
 
 ## 待办事项 (Next Steps)
-- [ ] 可选：清理 v2.6.57~v2.6.60 旧 tag
-- [ ] 可选：Windsurf 面板同步校验
-- [ ] 可选：重新构建安装器 exe 验证完整安装流程
+- [ ] **性能监控**：观测长会话首次进入时的瞬间 CPU 峰值。若用户反馈卡顿明显，需限制 `findScrollEl` 的扫描频率或锁定 `trackedEl` 状态。
+- [ ] **Windsurf 同步**：目前的滚动优化暂未下推至 Windsurf 模块，后续可按需迁移。
 
 ## 关键上下文
 - 目录: `c:\Users\Administrator\Desktop\超级文件\AI-IDE\AI\Antigravity-Power-Pro`
-- 主要文件:
-  - `patcher/patches/manager-panel/scroll-to-bottom.js` (Manager 滚动按钮核心)
-  - `patcher/patches/cascade-panel/scroll-to-bottom.js` (侧边栏滚动按钮)
-  - `patcher/patches/shared/enhance.js` (提示词增强回填)
-  - `.agent/rules/README.md` (架构红线 + DOM 选择器取证)
-  - `.agent/workflows/tag.md` (发版检查清单)
+- 主要文件: 
+  - `patcher/patches/manager-panel/scan.js` (提示词去重逻辑)
+  - `patcher/patches/manager-panel/scroll-to-bottom.js` (滚动识别与互斥)
+  - `patcher/patches/cascade-panel/scroll-to-bottom.js` (互斥目标)
+  - `CHANGELOG.md` (记录了 v2.6.62/63 修复细节)

@@ -61,14 +61,33 @@ const createArrowSVG = () => {
 
 export const init = () => {
   let trackedEl = null;
+  let btn = null;
+
+  /** State Lock: 已锁定的滚动容器仍然有效则跳过 O(N) 扫描 */
+  const isTrackedValid = () => 
+    trackedEl?.isConnected && trackedEl.clientHeight > 50;
+
+  /** 轻量滚动间距计算 — 绝不触发 DOM 扫描 */
+  const update = () => {
+    if (!trackedEl?.isConnected) {
+      btn?.classList.remove("visible");
+      return;
+    }
+    const gap = trackedEl.scrollHeight - trackedEl.scrollTop - trackedEl.clientHeight;
+    btn?.classList.toggle("visible", trackedEl.clientHeight > 0 && gap > THRESHOLD);
+  };
 
   const ensureButton = () => {
     const root = findRoot();
-    const el = findScrollEl();
-    
-    if (!el || !root) return;
+    if (!root) return;
 
-    let btn = document.getElementById(BTN_ID);
+    // State Lock: 有效容器直接复用，跳过全量 Shadow DOM 穿透遍历
+    const el = isTrackedValid() ? trackedEl : findScrollEl();
+    if (!el) return;
+
+    if (!btn || !btn.isConnected) {
+      btn = document.getElementById(BTN_ID);
+    }
     if (!btn) {
       btn = document.createElement("button");
       btn.id = BTN_ID;
@@ -84,19 +103,6 @@ export const init = () => {
         if (target) target.scrollTo({ top: target.scrollHeight, behavior: "instant" });
       });
     }
-
-    // update 只做轻量计算，不重新扫描 DOM
-    const update = () => {
-      const scrollEl = trackedEl;
-      if (!scrollEl || !scrollEl.isConnected) {
-        btn.classList.remove("visible");
-        return;
-      }
-      
-      const gap = scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight;
-      const shouldShow = scrollEl.clientHeight > 0 && gap > THRESHOLD;
-      btn.classList.toggle("visible", shouldShow);
-    };
 
     if (el !== trackedEl) {
         trackedEl?.removeEventListener("scroll", update);
@@ -116,5 +122,5 @@ export const init = () => {
   });
   
   observer.observe(document.body, { childList: true, subtree: true });
-  console.log("[Cascade] 滚动到底部按钮已启动 (Shadow Penetrating Mode)");
+  console.log("[Cascade] 滚动到底部按钮已启动 (状态锁定模式)");
 };

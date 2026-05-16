@@ -70,17 +70,36 @@ const createArrowSVG = () => {
 
 export const init = () => {
   let trackedEl = null;
+  let btn = null;
+
+  /** State Lock: 已锁定的滚动容器仍然有效则跳过 O(N) 扫描 */
+  const isTrackedValid = () => 
+    trackedEl?.isConnected && trackedEl.scrollHeight > trackedEl.clientHeight + 50;
+
+  /** 轻量滚动间距计算 — 绝不触发 DOM 扫描 */
+  const update = () => {
+    if (!trackedEl?.isConnected) {
+      btn?.classList.remove("visible");
+      return;
+    }
+    const gap = trackedEl.scrollHeight - trackedEl.scrollTop - trackedEl.clientHeight;
+    btn?.classList.toggle("visible", trackedEl.clientHeight > 0 && gap > THRESHOLD);
+  };
 
   const ensureButton = () => {
-    // 互斥：如果 cascade 滚动按钮已存在，说明此 DOM 由 cascade 管辖，manager 不创建按钮
+    // 互斥：cascade 按钮已存在说明此 DOM 由 cascade 管辖
     if (document.getElementById("cascade-scroll-bottom-btn")) return;
 
     const root = findRoot();
-    const el = findScrollEl(root);
-    
-    if (!el || !root) return;
+    if (!root) return;
 
-    let btn = document.getElementById(BTN_ID);
+    // State Lock: 有效容器直接复用，跳过万级节点遍历
+    const el = isTrackedValid() ? trackedEl : findScrollEl(root);
+    if (!el) return;
+
+    if (!btn || !btn.isConnected) {
+      btn = document.getElementById(BTN_ID);
+    }
     if (!btn) {
       btn = document.createElement("button");
       btn.id = BTN_ID;
@@ -93,30 +112,15 @@ export const init = () => {
 
       btn.addEventListener("click", () => {
         const target = trackedEl || findScrollEl(findRoot());
-        if (target) {
-            target.scrollTo({ top: target.scrollHeight, behavior: "smooth" });
-        }
+        if (target) target.scrollTo({ top: target.scrollHeight, behavior: "smooth" });
       });
     }
-
-    // update 只做轻量计算，不重新扫描 DOM
-    const update = () => {
-      const scrollEl = trackedEl;
-      if (!scrollEl || !scrollEl.isConnected) {
-        btn.classList.remove("visible");
-        return;
-      }
-      
-      const gap = scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight;
-      const shouldShow = scrollEl.clientHeight > 0 && gap > THRESHOLD;
-      btn.classList.toggle("visible", shouldShow);
-    };
 
     if (el !== trackedEl) {
         trackedEl?.removeEventListener("scroll", update);
         el.addEventListener("scroll", update, { passive: true });
         
-        // 终极防水漏：在 root 级别捕获所有滚动事件，即使内部具体 DOM 被替换也能监听到
+        // root 级别捕获兜底，应对内部 DOM 替换
         if (!trackedEl && root) {
             root.addEventListener("scroll", update, true); 
         }
@@ -128,7 +132,6 @@ export const init = () => {
 
   ensureButton();
 
-  // 防抖 300ms，与 cascade 版本保持一致
   let timer = null;
   const observer = new MutationObserver(() => {
     clearTimeout(timer);
@@ -138,5 +141,5 @@ export const init = () => {
   
   window.addEventListener("resize", ensureButton);
   
-  console.log("[Manager] 滚动按钮已初始化 (全窗口支持)");
+  console.log("[Manager] 滚动按钮已初始化 (状态锁定模式)");
 };
