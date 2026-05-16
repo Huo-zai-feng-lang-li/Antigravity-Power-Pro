@@ -30,22 +30,30 @@ const findScrollEl = (root) => {
     let bestHeight = 0;
 
     const check = (el) => {
-        if (el.scrollHeight <= el.clientHeight + 50) return;
+        if (!el || el.scrollHeight <= el.clientHeight + 50) return;
+        
+        // 架构过滤：排除宽度过窄的侧边导航栏（通常 < 300px）
+        if (el.clientWidth < 350) return;
+
         const ov = window.getComputedStyle(el).overflowY;
         if (ov !== "auto" && ov !== "scroll" && ov !== "overlay") return;
+        
         if (el.scrollHeight > bestHeight) {
             bestHeight = el.scrollHeight;
             best = el;
         }
     };
 
-    root.querySelectorAll("*").forEach(el => {
-        check(el);
-        if (el.shadowRoot) {
-            el.shadowRoot.querySelectorAll("*").forEach(check);
-        }
-    });
+    const traverse = (node) => {
+        if (!node) return;
+        const all = node.querySelectorAll("*");
+        all.forEach(el => {
+            check(el);
+            if (el.shadowRoot) traverse(el.shadowRoot);
+        });
+    };
 
+    traverse(root);
     return best;
 };
 

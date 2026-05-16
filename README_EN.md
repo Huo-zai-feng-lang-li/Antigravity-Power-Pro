@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro/releases">
-    <img src="https://img.shields.io/badge/Version-v2.6.64-gold.svg?style=flat-square" alt="Version">
+    <img src="https://img.shields.io/badge/Version-v2.6.65-gold.svg?style=flat-square" alt="Version">
   </a>
   <a href="https://codeium.com/antigravity">
     <img src="https://img.shields.io/badge/Supports_Antigravity-v1.23.2-green.svg?style=flat-square" alt="Antigravity">
@@ -108,7 +108,8 @@ For manual installation, please refer to [manual-install.md](patcher/patches/man
 
 | Patch Version | Supported Antigravity Version | Date       | Update Content                                                                     |
 | ------------- | ----------------------------- | ---------- | ---------------------------------------------------------------------------------- |
-| v2.6.60       | v1.23.2 / Windsurf            | 2026-05-15 | **Ultimate Fix**: Native DOM inject via Range Selection targeting old text completely bypassing React append loop |
+| v2.6.65       | v1.23.2 / Windsurf            | 2026-05-16 | **Sync**: Manager panel scroll patch supports Shadow DOM traversal, aligning with sidebar logic |
+| v2.6.64       | v1.23.2 / Windsurf            | 2026-05-16 | **Refactor**: Scroll performance refactor — State Lock mode to solve long-session lag, fixed memory leak |
 | v2.6.56       | v1.23.2 / Windsurf            | 2026-05-15 | **Fix**: Native DOM inject via ClipboardEvent/execCommand, bypassing React Virtual DOM blocks |
 | v2.6.55       | v1.23.2 / Windsurf            | 2026-05-15 | **Fix**: Manager scroll priority +10000 to prevent hijacked tracking by sidebars   |
 | v2.6.54       | v1.23.2 / Windsurf            | 2026-05-15 | **Fix**: Manager scroll conditionally mounted to `.monaco-workbench` safely        |
