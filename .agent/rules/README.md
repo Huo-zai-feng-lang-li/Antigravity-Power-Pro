@@ -4,7 +4,7 @@ globs: *
 ---
 
 - **配置零覆盖原则**: 补丁更新时，禁止覆盖用户已有的 `config.json`。必须采用增量合并逻辑，确保用户的 `apiKey` 和自定义 API 路径在升级后依然有效。在 Rust 侧后端或 Vue 侧保存时也要分情况合并。
-- **版本全量同步**: 每次发布新 Tag 前，必须确保 6 处版本号完全一致：`patcher/package.json`、`patcher/src-tauri/tauri.conf.json`、`patcher/src-tauri/Cargo.toml`、`patcher/src/App.vue`、`README.md`、`README_EN.md`。
+- **版本全量同步**: 每次发布新 Tag 前，必须确保 6 处版本号完全一致。**操作指南**：手动修改 `patcher/package.json` 的 `version` 后，必须运行 `npm run --prefix patcher sync-version` 自动对齐其余 5 处 (`tauri.conf.json`、`Cargo.toml`、`App.vue`、`README.md`、`README_EN.md`)。
 - **发布审计**: 打 Tag 必须包含 `git push origin --tags` 等全链路声明，遵照 `/tag` 工作流要求。
 
 > 目标: 让 AI 一眼理解本项目在做什么, 补丁如何落地, 关键入口在哪里。

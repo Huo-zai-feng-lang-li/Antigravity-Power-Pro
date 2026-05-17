@@ -152,6 +152,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
+import { invoke } from "@tauri-apps/api/core";
 
 export interface PromptEnhanceConfig {
   enabled: boolean;
@@ -169,6 +170,11 @@ interface ProviderInfo {
   keyPlaceholder?: string;
   modelHint?: string;
   models?: { label: string; value: string }[];
+}
+
+interface PromptConnectionResult {
+  success: boolean;
+  message: string;
 }
 
 const PROVIDERS: Record<string, ProviderInfo> = {
@@ -289,59 +295,22 @@ async function testConnection() {
   testResult.value = null;
 
   try {
-    let response: Response;
-
-    // Anthropic 使用不同的 API 格式
-    if (
-      selectedProvider.value === "anthropic" ||
-      model.value.apiBase.includes("anthropic")
-    ) {
-      response = await fetch(`${model.value.apiBase}/v1/messages`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": model.value.apiKey,
-          "anthropic-version": "2023-06-01",
-        },
-        body: JSON.stringify({
-          model: model.value.model,
-          max_tokens: 10,
-          messages: [{ role: "user", content: "Hi" }],
-        }),
-      });
-    } else {
-      // OpenAI 兼容格式
-      response = await fetch(`${model.value.apiBase}/chat/completions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${model.value.apiKey}`,
-        },
-        body: JSON.stringify({
-          model: model.value.model,
-          messages: [{ role: "user", content: "Hi" }],
-          max_tokens: 10,
-        }),
-      });
-    }
-
-    if (response.ok) {
-      testResult.value = { success: true, message: "✓ 连接成功!" };
-    } else {
-      const errorData = await response.json().catch(() => ({}));
-      testResult.value = {
-        success: false,
-        message: `✗ 连接失败: ${errorData.error?.message || response.statusText}`,
-      };
-    }
-  } catch (error: any) {
-    const msg: string = error?.message || "";
-    const isCors = msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("fetch");
+    const result = await invoke<PromptConnectionResult>("test_prompt_connection", {
+      config: {
+        provider: selectedProvider.value,
+        apiBase: model.value.apiBase,
+        apiKey: model.value.apiKey,
+        model: model.value.model,
+      },
+    });
+    testResult.value = {
+      success: result.success,
+      message: result.success ? `✓ ${result.message}` : `✗ ${result.message}`,
+    };
+  } catch (error: unknown) {
     testResult.value = {
       success: false,
-      message: isCors
-        ? "⚠️ 安装器跨域限制，无法直接测试。请在 IDE 中验证 — 提示词增强按钮有响应即表示配置正确。"
-        : `✗ 网络错误: ${msg}`,
+      message: `✗ 测试失败: ${error instanceof Error ? error.message : String(error)}`,
     };
   } finally {
     isTesting.value = false;

@@ -3,6 +3,7 @@
 mod detect;
 mod patch;
 mod config;
+mod prompt;
 
 pub use detect::{detect_antigravity_path, detect_windsurf_path};
 pub use patch::{
@@ -12,3 +13,4 @@ pub use patch::{
     check_windsurf_patch_status, read_windsurf_patch_config,
 };
 pub use config::{get_config, save_config};
+pub use prompt::test_prompt_connection;

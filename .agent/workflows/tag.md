@@ -6,19 +6,12 @@ description: 打 tag 发版前的检查清单和代码规范
 
 ## 前置检查 (必须全部通过才能打 tag)
 
-### 1. 版本号同步 (6 处)
-
-以下文件的版本号必须一致, 缺一不可:
+### 1. 版本号同步 (自动化)
 
 // turbo-all
-
 ```bash
-grep -n '"version"' patcher/package.json
-grep -n '"version"' patcher/src-tauri/tauri.conf.json
-grep -n 'version = ' patcher/src-tauri/Cargo.toml
-grep -n 'APP_VERSION' patcher/src/App.vue
-grep -n 'version-v' README.md | head -1
-grep -n 'v2\.' README_EN.md | head -1
+# 只要修改了 patcher/package.json 即可执行同步
+npm run --prefix patcher sync-version
 ```
 
 ### 2. CHANGELOG.md 更新
@@ -80,7 +73,7 @@ rg --files patcher/patches
 
 ### Step 1: 递增版本号
 
-同时修改 **6 个文件**的版本号 (如 2.6.57 -> 2.6.58)：`patcher/package.json`、`tauri.conf.json`、`Cargo.toml`、`App.vue`、`README.md`、`README_EN.md`。
+修改 **patcher/package.json** 的版本号，然后运行 `npm run --prefix patcher sync-version` 自动对齐其余 5 处。
 
 ### Step 2: 更新文档
 

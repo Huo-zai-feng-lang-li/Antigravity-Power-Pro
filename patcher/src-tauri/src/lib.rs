@@ -10,6 +10,7 @@ use commands::{
     get_config, save_config,
     detect_windsurf_path, install_windsurf_patch, uninstall_windsurf_patch,
     update_windsurf_config, check_windsurf_patch_status, read_windsurf_patch_config,
+    test_prompt_connection,
 };
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -32,7 +33,8 @@ pub fn run() {
             uninstall_windsurf_patch,
             update_windsurf_config,
             check_windsurf_patch_status,
-            read_windsurf_patch_config
+            read_windsurf_patch_config,
+            test_prompt_connection
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

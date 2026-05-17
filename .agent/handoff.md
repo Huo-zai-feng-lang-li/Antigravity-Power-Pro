@@ -1,37 +1,23 @@
-# 最新接续状态 (2026-05-16 19:06)
+# Antigravity Power Pro Project Handoff (v2.6.71)
 
-## 核心进展
-- **本轮发布目标为 v2.6.69**：删除非核心残留文件与引用后走 `/tag` 工作流；远端 tag 触发 GitHub 自动构建部署。
-- **非核心功能已物理移除**：copy、Mermaid、Math、表格修复相关 JS/CSS/工具文件已删除，Cascade 主链路不再 import 这些模块。
-- **保留功能边界已收敛**：滚动到底部与提示词增强默认开启；字体大小调节保留为可选功能，但默认关闭。
-- **Manager 性能边界已收敛**：提示词增强关闭时不再加载增强模块；扫描从固定 2 秒轮询改为 MutationObserver 节流触发。
-- **共享模块部署已修复**：`shared/enhance.js` 作为真实共享目录嵌入，Manager/Windsurf 单独安装也会写入 `workbench/shared/`。
+## 当前状态 (Current Status)
+- **版本**: v2.6.71
+- **核心变更**:
+  - 在 Cascade 侧边栏新增了左右间距控制（默认 8px / 3px），并已实现自动化配置生效。
+  - **版本管理架构升级**：引入了 `scripts/sync-version.js`，通过修改 `patcher/package.json` 并运行 `npm run --prefix patcher sync-version` 即可全量同步 6 处版本号。
+  - **连接测试闭环**：提示词增强连接测试已从前端 `fetch` 改为 Tauri 后端命令，避免安装器跨域假失败。
+  - **功能收敛**：已彻底删除 Mermaid、Math、Table Fix 等非核心功能。
 
-## 功能边界红线
-- **默认开启**：滚动到底部按钮、提示词增强按钮。
-- **保留但默认关闭**：字体大小调节。
-- 当前规则只维护仍存在的功能边界；已删除链路不再作为可配置功能记录。
+## 待办事项 (Next Steps)
+1. **正式发版**：执行 `/tag` 工作流，打上 `v2.6.71` 的 Tag 并推送到远端触发构建。
+2. **文档维护**：定期检查 `CHANGELOG.md` 确保记录了 v2.6.71 的连接测试与版本同步脚本修复。
 
-## 关键实现点
-- `FEATURE_DEFAULTS_VERSION = 1` 是当前默认策略边界。
-- 旧配置识别逻辑在 `patcher/src-tauri/src/commands/patch.rs`：缺少 `featureDefaultsVersion` 时返回 `0`，交给前端迁移。
-- 前端迁移逻辑在 `patcher/src/App.vue`：`normalizeDefaultOffFeatures()` 当前只负责清洗旧配置中的 `fontSizeEnabled`。
-- 补丁运行时迁移逻辑在：
-  - `patcher/patches/cascade-panel/cascade-panel.js`
-  - `patcher/patches/manager-panel/manager-panel.js`
-  - `patcher/patches/windsurf-panel/windsurf-panel.js`
-- 嵌入清单由 `patcher/src-tauri/build.rs` 生成；`shared/` 不能伪装成面板目录，必须以真实 `shared/*` 路径嵌入。
+## 技术规范提醒 (Critical Reminders)
+- **版本同步**：禁止手动在各处改版本号，必须使用同步脚本。
+- **DOM 策略**：严禁硬编码 Tailwind 语义类名，必须使用特征无关的 `findScrollEl` 策略。
+- **配置合并**：补丁更新时必须遵循增量合并，严禁覆盖用户的 `apiKey`。
+- **共享模块**：`shared/enhance.js` 为核心逻辑，修改将影响双面板。
 
-## 已验证
-- `npm run build` 通过。
-- `cargo check` 通过。
-- 关键 JS `node --check` 通过：Cascade、Manager、Windsurf、shared enhance。
-- `git diff --check` 通过。
-- 历史残留扫描通过：仅剩 CHANGELOG 历史记录与 README_EN 当前移除说明。
-- 嵌入清单确认 `shared/enhance.js` 以真实 `shared/` 路径入包。
-- tag 推送待执行。
-
-## 后续注意
-- 用户明确偏好：不需要本地启动运行；发版走 tag，GitHub 自动构建。
-- 更新日志、提交说明、交付说明优先使用中文。
-- 下次修改功能默认值前，必须先检查 `.agent/rules/README.md` 与本文件，确认没有误放开非核心功能。
+## 历史遗留
+- `handoff_2.6.69版本.md` 已被清理。
+- 所有 2.6.69 的功能清理任务已完成闭环。

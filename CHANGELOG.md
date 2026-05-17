@@ -2,6 +2,24 @@
 
 本文件记录每个版本的 Bug 修复和关键备忘, 防止后续改代码时重复踩坑. 时间格式如 `2026-05-15 09:00:00`同步的是git 提交时间
 
+## v2.6.71 (2026-05-17 00:00:00)
+
+### 安装器连接测试与版本同步闭环
+
+| 修复项 | 根因 | 影响范围 |
+|--------|------|----------|
+| **提示词增强连接测试总是提示跨域限制** | 安装器前端直接 `fetch` LLM API，会被 WebView/CORS 限制拦截，无法代表真实配置是否可用 | `src/components/PromptEnhanceCard.vue`、`src-tauri/src/commands/prompt.rs` |
+| **版本同步脚本无法从 tag 工作流运行** | tag 流已要求 `npm run --prefix patcher sync-version`，但 `patcher/package.json` 缺少脚本入口且运行依赖被误删 | `patcher/package.json`、`scripts/sync-version.js`、`.agent/rules/README.md`、`.agent/workflows/tag.md` |
+| **修复方案** | 新增 Tauri 后端 `test_prompt_connection` 命令，由 Rust 侧请求 OpenAI 兼容/Anthropic API；恢复安装器 npm scripts 与 dependencies，并挂载 `sync-version` 脚本 | 安装器、发版工作流 |
+
+### 踩坑备忘
+
+- 安装器内测试外部 LLM API 不应使用前端 `fetch`，必须走 Tauri 后端命令，避免 CORS 假失败。
+- `sync-version.js` 以 `patcher/package.json` 为唯一版本源；发布前只改 package 版本，然后运行 `npm run --prefix patcher sync-version`。
+- 已发布的 tag 不要移动；如果 `v2.6.70` 已在远端存在，后续修复必须递增为新版本。
+
+---
+
 ## v2.6.70 (2026-05-17 00:00:00)
 
 ### Antigravity 侧边栏间距配置
