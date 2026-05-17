@@ -2,6 +2,8 @@
   "featureDefaultsVersion": 1,
   "fontSizeEnabled": false,
   "fontSize": 14,
+  "sidePaddingLeft": 8,
+  "sidePaddingRight": 3,
   "scrollToBottom": true,
   "placeholder": "🤖Hello、我已就绪，火力即刻全爆💩📢📣",
   "promptEnhance": {

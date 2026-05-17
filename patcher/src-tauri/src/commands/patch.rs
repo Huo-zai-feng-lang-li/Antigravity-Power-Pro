@@ -51,6 +51,10 @@ pub struct FeatureConfig {
     pub font_size_enabled: bool,
     #[serde(rename = "fontSize")]
     pub font_size: f32,
+    #[serde(rename = "sidePaddingLeft")]
+    pub side_padding_left: f32,
+    #[serde(rename = "sidePaddingRight")]
+    pub side_padding_right: f32,
     /// 提示词增强配置
     #[serde(rename = "promptEnhance")]
     pub prompt_enhance: PromptEnhanceConfig,
@@ -64,6 +68,8 @@ impl Default for FeatureConfig {
             scroll_to_bottom: true,
             font_size_enabled: false,
             font_size: 14.0,
+            side_padding_left: 8.0,
+            side_padding_right: 3.0,
             prompt_enhance: PromptEnhanceConfig::default(),
         }
     }
@@ -554,6 +560,8 @@ fn write_config_file(config_path: &PathBuf, features: &FeatureConfig) -> Result<
         "scrollToBottom": features.scroll_to_bottom,
         "fontSizeEnabled": features.font_size_enabled,
         "fontSize": features.font_size,
+        "sidePaddingLeft": clamp_side_padding(features.side_padding_left),
+        "sidePaddingRight": clamp_side_padding(features.side_padding_right),
         "promptEnhance": {
             "enabled": features.prompt_enhance.enabled,
             "provider": features.prompt_enhance.provider,
@@ -568,6 +576,10 @@ fn write_config_file(config_path: &PathBuf, features: &FeatureConfig) -> Result<
         .map_err(|e| format!("写入侧边栏配置失败: {}", e))?;
     
     Ok(())
+}
+
+fn clamp_side_padding(value: f32) -> f32 {
+    value.clamp(0.0, 48.0)
 }
 
 /// Manager 配置文件生成

@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro/releases">
-    <img src="https://img.shields.io/badge/version-v2.6.69-gold?style=flat-square" alt="版本">
+    <img src="https://img.shields.io/badge/version-v2.6.70-gold?style=flat-square" alt="版本">
 
   </a>
   <a href="https://codeium.com/antigravity">
@@ -93,6 +93,7 @@
 
 | 补丁版本    | 支持 IDE 版本      | 发布日期   | 重大更新内容                                                                                         |
 | :---------- | :----------------- | :--------- | :--------------------------------------------------------------------------------------------------- |
+| **v2.6.70** | v1.23.2 / Windsurf | 2026-05-17 | **配置**: Antigravity 侧边栏新增左右间距控制，默认 8px / 3px，仅作用于 Cascade 侧边栏 | ✅ 推荐 |
 | **v2.6.69** | v1.23.2 / Windsurf | 2026-05-16 | **清理**: 物理删除复制、Mermaid、Math、表格修复链路；字体调节保留但默认关闭；Manager 提示词扫描改为 DOM 变更触发 | ✅ 推荐 |
 | **v2.6.68** | v1.23.2 / Windsurf | 2026-05-16 | **修复**: 旧配置自动关闭复制、字体、渲染类非核心开关，并同步写入 workbench 运行配置，避免 copy 按钮继续显示 | ✅ 推荐 |
 | **v2.6.67** | v1.23.2 / Windsurf | 2026-05-16 | **配置**: 默认仅开启滚动到底部和提示词增强，复制按钮与字体调节保留可选但默认关闭 | ✅ 推荐 |

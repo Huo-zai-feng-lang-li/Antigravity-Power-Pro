@@ -49,6 +49,8 @@
   "scrollToBottom": true,
   "fontSizeEnabled": false,
   "fontSize": 14,
+  "sidePaddingLeft": 8,
+  "sidePaddingRight": 3,
   "promptEnhance": {
     "enabled": true
   }

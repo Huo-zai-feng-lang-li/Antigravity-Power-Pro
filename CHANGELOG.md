@@ -2,6 +2,23 @@
 
 本文件记录每个版本的 Bug 修复和关键备忘, 防止后续改代码时重复踩坑. 时间格式如 `2026-05-15 09:00:00`同步的是git 提交时间
 
+## v2.6.70 (2026-05-17 00:00:00)
+
+### Antigravity 侧边栏间距配置
+
+| 修复项 | 根因 | 影响范围 |
+|--------|------|----------|
+| **侧边栏内容区左右留白过大且无法调节** | Cascade 面板内部 `.px-4` 由 IDE 原生 Tailwind 工具类控制，安装器没有暴露侧边栏间距配置 | `src/components/FeatureCard.vue`、`src/App.vue`、`cascade-panel/`、`src-tauri/src/commands/patch.rs` |
+| **修复方案** | 新增 `sidePaddingLeft` / `sidePaddingRight` 配置，默认 8px / 3px；运行时用 CSS 变量覆盖 `.antigravity-agent-side-panel .px-4`，并限制在 0-48px | Antigravity Cascade 侧边栏 |
+
+### 踩坑备忘
+
+- 该配置只属于 Antigravity Cascade 侧边栏，不要同步到 Manager 或 Windsurf。
+- CSS 选择器必须带 `.antigravity-agent-side-panel` 作用域，避免误伤其他 Tailwind `.px-4` 元素。
+- 配置需要同时进入安装器默认值、Rust 写入、内置 `config.json`、运行时 fallback 和手动安装文档。
+
+---
+
 ## v2.6.69 (2026-05-16 19:06:41)
 
 ### 非核心功能物理移除

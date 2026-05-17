@@ -19,6 +19,8 @@ const DEFAULT_CONFIG = {
   featureDefaultsVersion: FEATURE_DEFAULTS_VERSION,
   fontSizeEnabled: false,
   fontSize: 14,
+  sidePaddingLeft: 8,
+  sidePaddingRight: 3,
   scrollToBottom: true,
   placeholder: "Ask Antigravity...",
   promptEnhance: {
@@ -62,9 +64,29 @@ const applyFontSize = (userConfig) => {
   }
 };
 
+const toSafePixels = (value, fallback) => {
+  const number = Number(value);
+  const safeValue = Number.isFinite(number) ? number : fallback;
+  return `${Math.min(48, Math.max(0, safeValue))}px`;
+};
+
+const applySidePadding = (userConfig) => {
+  const root = document.documentElement;
+  if (!root) return;
+  root.style.setProperty(
+    "--cascade-panel-padding-left",
+    toSafePixels(userConfig?.sidePaddingLeft, DEFAULT_CONFIG.sidePaddingLeft),
+  );
+  root.style.setProperty(
+    "--cascade-panel-padding-right",
+    toSafePixels(userConfig?.sidePaddingRight, DEFAULT_CONFIG.sidePaddingRight),
+  );
+};
+
 (async () => {
   const config = await loadConfig();
   applyFontSize(config);
+  applySidePadding(config);
 
   const { start } = await import("./scan.js");
   start(config);

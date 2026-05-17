@@ -13,7 +13,7 @@ import ManagerFeatureCard from "./components/ManagerFeatureCard.vue";
 import { getVersion } from "@tauri-apps/api/app";
 
 // 常量
-const APP_VERSION = ref("2.6.69");
+const APP_VERSION = ref("2.6.70");
 const GITHUB_URL = "https://github.com/Huo-zai-feng-lang-li/Antigravity-Power-Pro";
 // 每次更新 DEFAULT_SYSTEM_PROMPT 时递增此版本号，旧版 config 会自动重置
 const SYSTEM_PROMPT_VERSION = 2;
@@ -82,6 +82,8 @@ const features = ref({
   scrollToBottom: true,
   fontSizeEnabled: false,
   fontSize: 14,
+  sidePaddingLeft: 8,
+  sidePaddingRight: 3,
   promptEnhance: {
     enabled: true,
     provider: "openai",
@@ -151,6 +153,25 @@ type FeatureDefaultsConfig = {
   fontSizeEnabled?: boolean;
 };
 type DefaultOffFeatureKey = Exclude<keyof FeatureDefaultsConfig, "featureDefaultsVersion">;
+type PromptEnhanceDiskConfig = Partial<{
+  enabled: boolean;
+  provider: string;
+  apiBase: string;
+  apiKey: string;
+  model: string;
+  systemPrompt: string;
+  systemPromptVersion: number;
+}>;
+type FeatureBaseConfig = FeatureDefaultsConfig & {
+  scrollToBottom?: boolean;
+  fontSize?: number;
+  promptEnhance?: PromptEnhanceDiskConfig;
+};
+type CascadePatchConfig = FeatureBaseConfig & {
+  enabled?: boolean;
+  sidePaddingLeft?: number;
+  sidePaddingRight?: number;
+};
 
 const FONT_DEFAULT_OFF_KEYS: readonly DefaultOffFeatureKey[] = ["fontSizeEnabled"];
 
@@ -173,7 +194,7 @@ function normalizeDefaultOffFeatures<T extends FeatureDefaultsConfig>(
 
 function mergePromptEnhance(
   defaults: typeof features.value.promptEnhance,
-  disk: Record<string, unknown>,
+  disk: PromptEnhanceDiskConfig,
 ): typeof features.value.promptEnhance {
   const merged = { ...defaults };
   // enabled 始终取磁盘值
@@ -335,20 +356,17 @@ async function checkPatchStatus(path: string) {
     isInstalled.value = await invoke<boolean>("check_patch_status", { path });
     if (isInstalled.value) {
       // 读取侧边栏配置
-      const config = await invoke<{
-        fontSizeEnabled?: boolean;
-        fontSize?: number;
-      } | null>("read_patch_config", { path });
+      const config = await invoke<CascadePatchConfig | null>("read_patch_config", { path });
       if (config) {
         const merged = normalizeDefaultOffFeatures(
-          { ...features.value, ...config },
+          { ...features.value, ...config, promptEnhance: features.value.promptEnhance },
           config,
           FONT_DEFAULT_OFF_KEYS,
         );
-        if ((config as any).promptEnhance) {
+        if (config.promptEnhance) {
           merged.promptEnhance = mergePromptEnhance(
             features.value.promptEnhance,
-            (config as any).promptEnhance,
+            config.promptEnhance,
           );
         }
         features.value = merged;

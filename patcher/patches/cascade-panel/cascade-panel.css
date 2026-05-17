@@ -1,5 +1,7 @@
 :root {
     --cascade-panel-font-size: var(--vscode-font-size, 15px);
+    --cascade-panel-padding-left: 8px;
+    --cascade-panel-padding-right: 3px;
 }
 
 html {
@@ -9,6 +11,11 @@ html {
 body {
     margin: 0;
     font-size: var(--cascade-panel-font-size);
+}
+
+.antigravity-agent-side-panel .px-4 {
+    padding-left: var(--cascade-panel-padding-left) !important;
+    padding-right: var(--cascade-panel-padding-right) !important;
 }
 
 #cascade-scroll-bottom-btn {

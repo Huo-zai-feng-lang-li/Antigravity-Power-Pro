@@ -35,6 +35,35 @@
           >
         </div>
       </label>
+
+      <label class="feature-item" :class="{ 'item-disabled': !model.enabled }">
+        <div class="feature-info">
+          <span class="feature-name">侧边栏左右间距</span>
+          <p class="feature-desc">覆盖 Cascade 面板内容区 px-4 的左右留白</p>
+        </div>
+        <div class="feature-controls">
+          <span class="field-label">左</span>
+          <input
+            type="number"
+            v-model.number="model.sidePaddingLeft"
+            class="pixel-input"
+            min="0"
+            max="48"
+            step="1"
+            :disabled="!model.enabled"
+          >
+          <span class="field-label">右</span>
+          <input
+            type="number"
+            v-model.number="model.sidePaddingRight"
+            class="pixel-input"
+            min="0"
+            max="48"
+            step="1"
+            :disabled="!model.enabled"
+          >
+        </div>
+      </label>
     </div>
   </section>
 </template>
@@ -45,6 +74,8 @@ export interface FeatureFlags {
   scrollToBottom: boolean;
   fontSizeEnabled: boolean;
   fontSize: number;
+  sidePaddingLeft: number;
+  sidePaddingRight: number;
 }
 
 const model = defineModel<FeatureFlags>({ required: true });
@@ -142,7 +173,13 @@ const model = defineModel<FeatureFlags>({ required: true });
   gap: 8px;
 }
 
-.font-size-input {
+.field-label {
+  font-size: 12px;
+  color: var(--ag-text-secondary);
+}
+
+.font-size-input,
+.pixel-input {
   width: 64px;
   padding: 6px 8px;
   background: var(--ag-surface-2);
@@ -153,7 +190,12 @@ const model = defineModel<FeatureFlags>({ required: true });
   text-align: center;
 }
 
-.font-size-input:disabled {
+.pixel-input {
+  width: 56px;
+}
+
+.font-size-input:disabled,
+.pixel-input:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
